@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+logs/
+outputs/
+# docs/media keeps a few small reference videos and figures; datasets live in $HF_LEROBOT_HOME
+MUJOCO_LOG.TXT

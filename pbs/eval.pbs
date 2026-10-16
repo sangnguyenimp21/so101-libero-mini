@@ -1,0 +1,42 @@
+#!/bin/bash
+#PBS -P CFP05-CF-002
+#PBS -j oe
+#PBS -k oed
+#PBS -N so101lm-eval
+#PBS -q auto
+#PBS -l select=1:ngpus=1
+#PBS -l walltime=01:30:00
+# Evaluate one checkpoint (or the scripted expert) on the fixed evaluation init states.
+#   qsub -v CKPT=outputs/train/act_t1_200/checkpoints/last/pretrained_model,TASKS=cylinder_to_tray,OUT=outputs/eval/x pbs/eval.pbs
+#   qsub -v CKPT=expert,TASKS=so101_mini,OUT=outputs/eval/expert pbs/eval.pbs
+# Variables: CKPT TASKS [cylinder_to_tray] EPISODES [50] VIDEOS [10] OUT WORKERS [4] SO101_RENDER [osmesa; egl]
+#   EVAL_ARGS [space-separated extra flags]
+cd "$PBS_O_WORKDIR"
+set -o pipefail
+mkdir -p logs/pbs
+JOB="${PBS_JOBID%%.*}"
+export PYTHONFAULTHANDLER=1
+{
+echo "==== host $(hostname) $(nvidia-smi --query-gpu=name --format=csv,noheader | head -1) $(date)"
+# Rendering: OSMesa (CPU) by default, policy on the GPU. EGL contexts next to CUDA abort on some nodes (hopper-24 even
+# in one process; hopper-30 with several worker processes although tests/egl_selftest.py passed), and OSMesa and EGL
+# images differ by < 1/255. SO101_RENDER=egl forces EGL, then with a single worker and after the self-test.
+RENDER="${SO101_RENDER:-osmesa}"
+WORKERS="${WORKERS:-4}"
+mkdir -p "$(dirname "${OUT:?set OUT}")"
+if [ "$RENDER" = egl ]; then
+    WORKERS=1
+    if ! bash scripts/env.sh python tests/egl_selftest.py; then
+        echo "WARNING: EGL rendering aborts next to CUDA on $(hostname): evaluating with OSMesa (CPU) instead"
+        RENDER=osmesa
+    fi
+fi
+# shellcheck disable=SC2086
+SO101_RENDER="$RENDER" bash scripts/env.sh python -m so101_libero.cli.evaluate --policy "${CKPT:?set CKPT}" --tasks ${TASKS:-cylinder_to_tray} \
+    --episodes "${EPISODES:-50}" --videos "${VIDEOS:-10}" --workers "$WORKERS" --out "${OUT:?set OUT}" \
+    ${EVAL_ARGS:-} > "${OUT}.log" 2>&1
+status=$?
+grep -E "WARNING|Error" "${OUT}.log" | head -5; tail -n 40 "${OUT}.log"
+[ "$status" -eq 0 ] || { echo "EVALUATION FAILED (exit $status), log ${OUT}.log"; exit "$status"; }
+echo "==== DONE $(date)"
+} > "logs/pbs/$JOB.log" 2>&1

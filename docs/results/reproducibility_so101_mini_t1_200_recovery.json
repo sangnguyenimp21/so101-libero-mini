@@ -1,0 +1,295 @@
+{
+  "repo_id": "local/so101_mini_t1_200_recovery",
+  "expert_config": {
+    "max_joint_speed": 1.3089969389957472,
+    "min_segment_time": 0.5,
+    "pregrasp_height": [
+      0.065,
+      0.085
+    ],
+    "grasp_height": [
+      0.017,
+      0.021
+    ],
+    "approach_offset": 0.006,
+    "open_deg": 32.0,
+    "close_deg": -10.0,
+    "release_deg": 20.0,
+    "carry_height": [
+      0.075,
+      0.09
+    ],
+    "release_height": [
+      0.036,
+      0.044
+    ],
+    "table_release_gap": [
+      0.003,
+      0.006
+    ],
+    "place_jitter": 0.005,
+    "retreat_height": 0.1,
+    "place_margin": 0.012,
+    "close_time": 0.5,
+    "settle_time": 0.25,
+    "hold_time": 0.4,
+    "time_scale": [
+      0.9,
+      1.15
+    ],
+    "max_tilt_deg": 45.0,
+    "yaw_clearance": 0.012,
+    "max_tracking_error_deg": 8.0,
+    "legacy_ik": true,
+    "max_grasp_retries": 2,
+    "miss_prob": 0.3,
+    "miss_offset": [
+      0.012,
+      0.02
+    ]
+  },
+  "checked": 30,
+  "bit_identical": 30,
+  "episodes": [
+    {
+      "episode_index": 0,
+      "seed": 0,
+      "task_id": "cylinder_to_tray",
+      "bit_identical": true,
+      "max_abs_diff": 0.0,
+      "frames": 175
+    },
+    {
+      "episode_index": 7,
+      "seed": 7,
+      "task_id": "cylinder_to_tray",
+      "bit_identical": true,
+      "max_abs_diff": 0.0,
+      "frames": 158
+    },
+    {
+      "episode_index": 14,
+      "seed": 14,
+      "task_id": "cylinder_to_tray",
+      "bit_identical": true,
+      "max_abs_diff": 0.0,
+      "frames": 165
+    },
+    {
+      "episode_index": 21,
+      "seed": 21,
+      "task_id": "cylinder_to_tray",
+      "bit_identical": true,
+      "max_abs_diff": 0.0,
+      "frames": 162
+    },
+    {
+      "episode_index": 27,
+      "seed": 27,
+      "task_id": "cylinder_to_tray",
+      "bit_identical": true,
+      "max_abs_diff": 0.0,
+      "frames": 182
+    },
+    {
+      "episode_index": 34,
+      "seed": 34,
+      "task_id": "cylinder_to_tray",
+      "bit_identical": true,
+      "max_abs_diff": 0.0,
+      "frames": 164
+    },
+    {
+      "episode_index": 41,
+      "seed": 41,
+      "task_id": "cylinder_to_tray",
+      "bit_identical": true,
+      "max_abs_diff": 0.0,
+      "frames": 258
+    },
+    {
+      "episode_index": 48,
+      "seed": 48,
+      "task_id": "cylinder_to_tray",
+      "bit_identical": true,
+      "max_abs_diff": 0.0,
+      "frames": 265
+    },
+    {
+      "episode_index": 55,
+      "seed": 55,
+      "task_id": "cylinder_to_tray",
+      "bit_identical": true,
+      "max_abs_diff": 0.0,
+      "frames": 180
+    },
+    {
+      "episode_index": 62,
+      "seed": 62,
+      "task_id": "cylinder_to_tray",
+      "bit_identical": true,
+      "max_abs_diff": 0.0,
+      "frames": 178
+    },
+    {
+      "episode_index": 69,
+      "seed": 69,
+      "task_id": "cylinder_to_tray",
+      "bit_identical": true,
+      "max_abs_diff": 0.0,
+      "frames": 185
+    },
+    {
+      "episode_index": 75,
+      "seed": 75,
+      "task_id": "cylinder_to_tray",
+      "bit_identical": true,
+      "max_abs_diff": 0.0,
+      "frames": 159
+    },
+    {
+      "episode_index": 82,
+      "seed": 82,
+      "task_id": "cylinder_to_tray",
+      "bit_identical": true,
+      "max_abs_diff": 0.0,
+      "frames": 181
+    },
+    {
+      "episode_index": 89,
+      "seed": 89,
+      "task_id": "cylinder_to_tray",
+      "bit_identical": true,
+      "max_abs_diff": 0.0,
+      "frames": 162
+    },
+    {
+      "episode_index": 96,
+      "seed": 96,
+      "task_id": "cylinder_to_tray",
+      "bit_identical": true,
+      "max_abs_diff": 0.0,
+      "frames": 156
+    },
+    {
+      "episode_index": 103,
+      "seed": 103,
+      "task_id": "cylinder_to_tray",
+      "bit_identical": true,
+      "max_abs_diff": 0.0,
+      "frames": 172
+    },
+    {
+      "episode_index": 110,
+      "seed": 110,
+      "task_id": "cylinder_to_tray",
+      "bit_identical": true,
+      "max_abs_diff": 0.0,
+      "frames": 157
+    },
+    {
+      "episode_index": 117,
+      "seed": 117,
+      "task_id": "cylinder_to_tray",
+      "bit_identical": true,
+      "max_abs_diff": 0.0,
+      "frames": 263
+    },
+    {
+      "episode_index": 124,
+      "seed": 124,
+      "task_id": "cylinder_to_tray",
+      "bit_identical": true,
+      "max_abs_diff": 0.0,
+      "frames": 171
+    },
+    {
+      "episode_index": 130,
+      "seed": 130,
+      "task_id": "cylinder_to_tray",
+      "bit_identical": true,
+      "max_abs_diff": 0.0,
+      "frames": 194
+    },
+    {
+      "episode_index": 137,
+      "seed": 137,
+      "task_id": "cylinder_to_tray",
+      "bit_identical": true,
+      "max_abs_diff": 0.0,
+      "frames": 184
+    },
+    {
+      "episode_index": 144,
+      "seed": 144,
+      "task_id": "cylinder_to_tray",
+      "bit_identical": true,
+      "max_abs_diff": 0.0,
+      "frames": 170
+    },
+    {
+      "episode_index": 151,
+      "seed": 151,
+      "task_id": "cylinder_to_tray",
+      "bit_identical": true,
+      "max_abs_diff": 0.0,
+      "frames": 172
+    },
+    {
+      "episode_index": 158,
+      "seed": 158,
+      "task_id": "cylinder_to_tray",
+      "bit_identical": true,
+      "max_abs_diff": 0.0,
+      "frames": 170
+    },
+    {
+      "episode_index": 165,
+      "seed": 165,
+      "task_id": "cylinder_to_tray",
+      "bit_identical": true,
+      "max_abs_diff": 0.0,
+      "frames": 282
+    },
+    {
+      "episode_index": 172,
+      "seed": 172,
+      "task_id": "cylinder_to_tray",
+      "bit_identical": true,
+      "max_abs_diff": 0.0,
+      "frames": 170
+    },
+    {
+      "episode_index": 178,
+      "seed": 178,
+      "task_id": "cylinder_to_tray",
+      "bit_identical": true,
+      "max_abs_diff": 0.0,
+      "frames": 258
+    },
+    {
+      "episode_index": 185,
+      "seed": 186,
+      "task_id": "cylinder_to_tray",
+      "bit_identical": true,
+      "max_abs_diff": 0.0,
+      "frames": 173
+    },
+    {
+      "episode_index": 192,
+      "seed": 193,
+      "task_id": "cylinder_to_tray",
+      "bit_identical": true,
+      "max_abs_diff": 0.0,
+      "frames": 245
+    },
+    {
+      "episode_index": 199,
+      "seed": 201,
+      "task_id": "cylinder_to_tray",
+      "bit_identical": true,
+      "max_abs_diff": 0.0,
+      "frames": 247
+    }
+  ]
+}

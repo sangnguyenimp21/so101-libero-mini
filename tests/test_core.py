@@ -1,0 +1,115 @@
+"""Fast physics-only tests:  bash scripts/env.sh python -m pytest -q tests"""
+
+import math
+
+import mujoco
+import numpy as np
+import pytest
+
+from so101_libero.expert.ik import IKSolver, top_down_frame
+from so101_libero.sim.robot import GRIPPER_RANGE_RAD, lerobot_to_sim, sim_to_lerobot
+from so101_libero.tasks.base import InContainer
+from so101_libero.tasks.registry import TABLETOP, TASKS, get_suite
+
+
+def test_unit_conversion_roundtrip():
+    q = np.array([0.3, -1.0, 0.5, 1.2, -2.0, 0.4])
+    assert np.allclose(lerobot_to_sim(sim_to_lerobot(q)), q, atol=1e-5)
+    g = sim_to_lerobot(np.array([0, 0, 0, 0, 0, GRIPPER_RANGE_RAD[0]]))[5], \
+        sim_to_lerobot(np.array([0, 0, 0, 0, 0, GRIPPER_RANGE_RAD[1]]))[5]
+    assert g[0] == pytest.approx(0.0, abs=1e-4) and g[1] == pytest.approx(100.0, abs=1e-3)
+    assert sim_to_lerobot(np.radians([10, 20, 30, 40, 50, 0]))[:5] == pytest.approx([10, 20, 30, 40, 50], abs=1e-4)
+
+
+def test_scene_invariants(env_t1):
+    m = env_t1.model
+    assert m.opt.timestep * env_t1.cfg.substeps == pytest.approx(1 / 30)
+    assert m.opt.enableflags & mujoco.mjtEnableBit.mjENBL_MULTICCD
+    assert m.opt.cone == mujoco.mjtCone.mjCONE_ELLIPTIC
+    cyl = m.geom("red_cylinder_geom")
+    assert np.allclose(cyl.size[:2], [0.015, 0.015])  # 3 cm diameter x 3 cm tall
+    assert np.allclose(m.geom("blue_cube_geom").size, [0.015] * 3)  # 3 cm cube
+    assert m.actuator("gripper").forcerange[1] == pytest.approx(1.2)
+
+
+def test_ik_top_down_accuracy(env_t1):
+    ik = IKSolver(env_t1.h)
+    rng = np.random.default_rng(1)
+    for _ in range(25):
+        r, a = rng.uniform(0.12, 0.22), rng.uniform(-1.2, 1.2)
+        tgt = np.array([ik.pan_axis_xy[0] + r * math.cos(a), r * math.sin(a), rng.uniform(0.017, 0.07)])
+        res = ik.solve_multi(tgt, top_down_frame(a), [np.r_[a, -0.5, 0.7, 1.2, 0.0], np.r_[a, 0, 0, 1.5, 0]])
+        assert res.success
+        pos, rot = ik.fk(res.q)
+        assert np.linalg.norm(pos - tgt) < 1e-3
+        assert rot[2, 2] > math.cos(math.radians(1.0))  # approach within 1 deg of vertical
+
+
+def test_layout_sampling_is_collision_free_and_in_regions():
+    rng = np.random.default_rng(0)
+    items = {i.name: i for i in (*TABLETOP.objects, *TABLETOP.containers)}
+    for _ in range(200):
+        poses = TABLETOP.sample(rng)
+        for name, (x, y, yaw) in poses.items():
+            reg = TABLETOP.regions[name]
+            assert reg.x[0] <= x <= reg.x[1] and reg.y[0] <= y <= reg.y[1] and reg.yaw[0] <= yaw <= reg.yaw[1]
+        names = list(poses)
+        for i, a in enumerate(names):
+            for b in names[i + 1:]:
+                d = math.hypot(poses[a][0] - poses[b][0], poses[a][1] - poses[b][1])
+                assert d >= items[a].footprint_radius + items[b].footprint_radius + TABLETOP.clearance - 1e-9
+
+
+def _place(env, name, xyz):
+    adr = env.h.item_qpos_adr[name]
+    env.data.qpos[adr:adr + 3] = xyz
+    env.data.qpos[adr + 3:adr + 7] = [1, 0, 0, 0]
+    env.data.qvel[env.h.item_dof_adr[name]:env.h.item_dof_adr[name] + 6] = 0
+
+
+def test_in_container_predicate(env_t1):
+    env = env_t1
+    env.reset(seed=3)
+    pred = InContainer("red_cylinder", "black_tray")
+    tray = env.world.pos("black_tray")
+    assert not pred(env.world)  # starts on the table
+    _place(env, "red_cylinder", tray + [0.0, 0.0, 0.005 + 0.015 + 0.001])  # resting on the tray floor
+    for _ in range(100):
+        mujoco.mj_step(env.model, env.data)
+    assert pred(env.world)
+    _place(env, "red_cylinder", tray + [0.0, 0.0, 0.10])  # above the tray: not inside
+    mujoco.mj_forward(env.model, env.data)
+    assert not pred(env.world)
+    _place(env, "red_cylinder", tray + [0.10, 0.0, 0.016])  # beside the tray
+    mujoco.mj_forward(env.model, env.data)
+    assert not pred(env.world)
+
+
+def test_reset_is_deterministic_and_obs_has_no_privileged_keys(env_t1):
+    o1, _ = env_t1.reset(seed=42)
+    s1 = env_t1.init_state
+    o2, _ = env_t1.reset(seed=42)
+    assert s1 == env_t1.init_state
+    assert np.array_equal(o1["observation.state"], o2["observation.state"])
+    assert set(o1) == {"observation.state"}  # render=False: state only; with cameras only images are added
+    o3, _ = env_t1.reset(seed=43)
+    assert s1 != env_t1.init_state
+    o4, _ = env_t1.reset(options={"init_state": s1})
+    assert np.array_equal(o4["observation.state"], o1["observation.state"])
+
+
+@pytest.mark.parametrize("task_id", list(TASKS))
+def test_expert_solves_task(task_id):
+    from so101_libero.env import EnvConfig, SO101TabletopEnv
+    from so101_libero.expert.rollout import run_expert_episode
+
+    env = SO101TabletopEnv(task_id, EnvConfig(render=False, terminate_on_success=False, max_steps=900))
+    for seed in range(3):
+        ep = run_expert_episode(env, seed)
+        assert ep.success, (seed, ep.failure)
+        assert ep.grasp["max_slip_mm"] < 5.0
+        assert ep.max_ik_err < 1e-3
+
+
+def test_suite_registry():
+    assert [t.task_id for t in get_suite("so101_mini")] == ["cylinder_to_tray", "cylinder_to_container", "cube_to_tray"]

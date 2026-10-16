@@ -1,0 +1,52 @@
+#!/bin/bash
+#PBS -P CFP05-CF-002
+#PBS -j oe
+#PBS -k oed
+#PBS -N so101lm-gen
+#PBS -q auto
+#PBS -l select=1:ngpus=1
+#PBS -l walltime=02:00:00
+# Generate expert demonstrations (EGL rendering) and validate the dataset.
+#   qsub -v TASKS=cylinder_to_tray,NUM_DEMOS=200,REPO_ID=local/so101_mini_t1_200 pbs/generate.pbs
+#   qsub -v TASKS=so101_mini,NUM_DEMOS=200,REPO_ID=local/so101_mini_all_200 pbs/generate.pbs
+# TASKS: one task id or suite name (qsub -v splits on commas; for several ids use spaces: TASKS="a b").
+# Variables: TASKS REPO_ID NUM_DEMOS [200, per task] WORKERS [10] RENDER_REF [0; 1 = also save reference renders]
+#   GEN_ARGS [extra generate flags, space-separated, e.g. "--max-grasp-retries 2 --miss-prob 0.3"]
+# A complete existing dataset (meta/so101_libero.json with every task at its target) is kept and re-validated;
+# an incomplete one stops the job (delete it to regenerate). ~600 demos take ~55 min. Log: logs/pbs/<jobid>.log
+cd "$PBS_O_WORKDIR"
+set -o pipefail
+mkdir -p logs/pbs
+JOB="${PBS_JOBID%%.*}"
+TASKS="${TASKS:-cylinder_to_tray}"
+NUM_DEMOS="${NUM_DEMOS:-200}"
+REPO_ID="${REPO_ID:?set REPO_ID, e.g. local/so101_mini_t1_200}"
+WORKERS="${WORKERS:-10}"
+ROOT="/scratch/e1583535/datasets/lerobot/$REPO_ID"
+export PYTHONFAULTHANDLER=1
+{
+set -e
+echo "==== host $(hostname) $(nvidia-smi --query-gpu=name --format=csv,noheader | head -1) $(date)"
+echo "==== generate $NUM_DEMOS demos per task of [$TASKS] -> $ROOT"
+if [ -f "$ROOT/meta/so101_libero.json" ]; then
+    echo "dataset exists, not regenerating"
+else
+    [ -e "$ROOT" ] && { echo "$ROOT is incomplete (no meta/so101_libero.json): delete it and resubmit"; exit 1; }
+    # shellcheck disable=SC2086
+    bash scripts/env.sh python -m so101_libero.cli.generate --tasks $TASKS --num-demos "$NUM_DEMOS" \
+        --workers "$WORKERS" --repo-id "$REPO_ID" ${GEN_ARGS:-} 2>&1 | grep -v -e "^Svt" -e "^SVT" -e "moov atom"
+fi
+python3 -c "
+import json, sys
+m = json.load(open('$ROOT/meta/so101_libero.json'))
+short = {t: v['saved'] for t, v in m['stats'].items() if v['saved'] < m['num_demos_per_task']}
+sys.exit('demo target missed: %s' % short if short else 0)"
+if [ "${RENDER_REF:-0}" = 1 ]; then
+    echo "==== reference renders with $(hostname)'s backend (compare: python tests/render_reference.py --compare)"
+    bash scripts/env.sh python tests/render_reference.py
+fi
+echo "==== validate"
+bash scripts/env.sh python -m so101_libero.cli.validate_dataset --repo-id "$REPO_ID" \
+    --replay-episodes 10
+echo "==== DONE $(date)"
+} > "logs/pbs/$JOB.log" 2>&1

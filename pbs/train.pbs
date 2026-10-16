@@ -1,0 +1,88 @@
+#!/bin/bash
+#PBS -P CFP05-CF-002
+#PBS -j oe
+#PBS -k oed
+#PBS -N so101lm-train
+#PBS -q auto
+#PBS -l select=1:ngpus=1
+#PBS -l walltime=04:00:00
+# Train a policy, then evaluate checkpoints on the fixed evaluation init states (actual simulated success).
+#   qsub -v REPO_ID=local/so101_mini_t1_200,OUT=outputs/train/act_t1_200,EVAL_TASKS=cylinder_to_tray pbs/train.pbs
+#   qsub -W depend=afterok:<gen_job> -v ... pbs/train.pbs          # after a generation job
+# Variables: REPO_ID OUT POLICY [act] STEPS [60000 for a new run; a resumed run keeps its budget unless set]
+#   BATCH_SIZE [16] SAVE_FREQ [10000] EVAL_TASKS [cylinder_to_tray] EVAL_EPISODES [50] EVAL_VIDEOS [10]
+#   EVAL_CKPTS ["last"; "all" = every saved checkpoint; "none" = skip] EVAL_WORKERS [4] EVAL_EGL [0]
+#   EVAL_ARGS [extra evaluate flags, space-separated, e.g. "--n-action-steps 25"] TRAIN_ARGS [extra lerobot-train flags]
+# The job waits (up to WAIT_MIN [90] minutes) for a dataset that is still being generated (meta/so101_libero.json),
+# refuses datasets that missed their demo target, and validates the dataset first if it has not been validated.
+# Evaluation renders with OSMesa (CPU; policy on the GPU): EGL next to CUDA aborts on some nodes. EVAL_EGL=1 keeps
+# EGL for datasets rendered with EGL. Results: $OUT/eval/<ckpt>/results.json. Log: logs/pbs/<jobid>.log. The job exits
+# non-zero if training or any evaluation failed.
+cd "$PBS_O_WORKDIR"
+set -o pipefail
+mkdir -p logs/pbs
+JOB="${PBS_JOBID%%.*}"
+REPO_ID="${REPO_ID:?set REPO_ID}"
+OUT="${OUT:?set OUT}"
+EVAL_TASKS="${EVAL_TASKS:-cylinder_to_tray}"
+EVAL_EPISODES="${EVAL_EPISODES:-50}"
+EVAL_VIDEOS="${EVAL_VIDEOS:-10}"
+EVAL_CKPTS="${EVAL_CKPTS:-last}"
+export PYTHONFAULTHANDLER=1 POLICY="${POLICY:-act}" BATCH_SIZE="${BATCH_SIZE:-16}" \
+       SAVE_FREQ="${SAVE_FREQ:-10000}" NUM_WORKERS="${NUM_WORKERS:-10}"
+[ -n "${STEPS:-}" ] && export STEPS
+DS="${DATASET_ROOT:-/scratch/e1583535/datasets/lerobot/$REPO_ID}"
+{
+set -e
+echo "==== host $(hostname) $(nvidia-smi --query-gpu=name --format=csv,noheader | head -1) $(date)"
+for i in $(seq 1 "${WAIT_MIN:-90}"); do [ -f "$DS/meta/so101_libero.json" ] && break; echo "waiting for $DS ($i min)"; sleep 60; done
+[ -f "$DS/meta/so101_libero.json" ] || { echo "dataset $DS not ready"; exit 1; }
+RENDER=$(python3 -c "import json,sys; m=json.load(open('$DS/meta/so101_libero.json')); \
+short=[t for t,v in m['stats'].items() if v['saved'] < m['num_demos_per_task']]; \
+print('INCOMPLETE:'+','.join(short) if short else (m.get('render_backend') or 'egl'))")
+case "$RENDER" in INCOMPLETE:*) echo "dataset $DS missed its demo target for ${RENDER#INCOMPLETE:}"; exit 1 ;; esac
+CHECK="outputs/dataset_checks/$(basename "$DS")/validation.json"
+# A cached PASS counts only if it is for this dataset root and content (episode/frame counts) and newer than it.
+if ! python3 -c "
+import json, os, sys
+c = json.load(open('$CHECK')); info = json.load(open('$DS/meta/info.json'))
+ok = (c['errors'] == [] and os.path.realpath(c['root']) == os.path.realpath('$DS')
+      and c['episodes'] == info['total_episodes'] and c['frames'] == info['total_frames']
+      and os.path.getmtime('$CHECK') > os.path.getmtime('$DS/meta/info.json'))
+sys.exit(0 if ok else 1)" 2>/dev/null; then
+    echo "==== validating $DS"
+    bash scripts/env.sh python -m so101_libero.cli.validate_dataset --repo-id "$REPO_ID" --root "$DS" --replay-episodes 10
+fi
+echo "==== train $POLICY on $REPO_ID -> $OUT (${STEPS:-default} steps, batch $BATCH_SIZE) extra: ${TRAIN_ARGS:-none}"
+# shellcheck disable=SC2086
+bash scripts/train.sh "$REPO_ID" "$OUT" ${TRAIN_ARGS:-} 2>&1 | grep -v -e "Errno 16" -e "_rmtree_safe_fd" -e "onexc"
+set +e
+# EGL contexts next to CUDA abort on some nodes (also with several worker processes after a passing single-process
+# self-test), so evaluate with OSMesa (CPU) rendering + the policy on the GPU; OSMesa and EGL images differ by < 1/255.
+if [ "$RENDER" = egl ] && [ "${EVAL_EGL:-0}" != 1 ]; then
+    echo "note: training images were rendered with EGL; evaluating with OSMesa (difference < 1/255, EGL aborts on some nodes)"
+    RENDER=osmesa
+fi
+echo "==== evaluate ($EVAL_CKPTS) on [$EVAL_TASKS], $EVAL_EPISODES episodes each, renderer $RENDER  $(date)"
+if [ "$EVAL_CKPTS" = all ]; then CKPTS=$(ls "$OUT/checkpoints" | grep -v last | sort)
+elif [ "$EVAL_CKPTS" = none ]; then CKPTS=""; else CKPTS=last; fi
+FAILED=0
+for c in $CKPTS; do
+    name="$c"; [ "$c" = last ] && name="last_$(tr -dc 0-9 < "$OUT/checkpoints/last/training_state/training_step.json")"
+    python3 -c "import json,sys; sys.exit(0 if json.load(open('$OUT/eval/$name/results.json')).get('complete', True) else 1)" \
+        2>/dev/null && { echo "eval $name exists"; continue; }
+    # shellcheck disable=SC2086
+    SO101_RENDER="$RENDER" bash scripts/env.sh python -m so101_libero.cli.evaluate \
+        --policy "$OUT/checkpoints/$c/pretrained_model" --tasks $EVAL_TASKS --episodes "$EVAL_EPISODES" \
+        --videos "$EVAL_VIDEOS" --workers "${EVAL_WORKERS:-4}" --out "$OUT/eval/$name" ${EVAL_ARGS:-} \
+        > "$OUT/eval_$name.log" 2>&1
+    status=$?
+    grep -E "WARNING|Error" "$OUT/eval_$name.log" | head -5
+    tail -n 25 "$OUT/eval_$name.log"
+    [ "$status" -eq 0 ] || { echo "EVALUATION OF $c FAILED (exit $status), log $OUT/eval_$name.log"; FAILED=1; }
+done
+echo "==== success rates"
+bash scripts/env.sh python -m so101_libero.cli.summarize "$OUT"/eval/*/results.json 2>/dev/null || true
+echo "==== DONE $(date)"
+exit "$FAILED"
+} > "logs/pbs/$JOB.log" 2>&1

@@ -1,0 +1,38 @@
+{
+  "so101_mini_t1_200": {
+    "slip_median_mm": 0.47,
+    "slip_max_mm": 2.07,
+    "penetration_mm": [
+      1.05,
+      1.18
+    ],
+    "normal_force_median_n": 33.0,
+    "peak_arm_joint_speed_deg_s": 156.4,
+    "episodes": 200,
+    "frames": 34656
+  },
+  "so101_mini_all_200": {
+    "slip_median_mm": 0.53,
+    "slip_max_mm": 2.19,
+    "penetration_mm": [
+      1.05,
+      1.43
+    ],
+    "normal_force_median_n": 32.9,
+    "peak_arm_joint_speed_deg_s": 157.5,
+    "episodes": 600,
+    "frames": 104065
+  },
+  "so101_mini_t1_200_recovery": {
+    "slip_median_mm": 0.48,
+    "slip_max_mm": 2.11,
+    "penetration_mm": [
+      1.06,
+      1.19
+    ],
+    "normal_force_median_n": 33.1,
+    "peak_arm_joint_speed_deg_s": 156.5,
+    "episodes": 200,
+    "frames": 39695
+  }
+}

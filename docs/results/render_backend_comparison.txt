@@ -1,0 +1,13 @@
+WARNING: Could not find any nv files on this host!
+s0_t0_front              mean |diff|   0.64/255  p99   5.0  pixels differing >16:  0.27%
+s0_t0_wrist              mean |diff|   0.96/255  p99   5.0  pixels differing >16:  0.01%
+s0_t60_front             mean |diff|   0.68/255  p99   5.0  pixels differing >16:  0.44%
+s0_t60_wrist             mean |diff|   0.28/255  p99   2.0  pixels differing >16:  0.01%
+s0_t119_front            mean |diff|   0.75/255  p99   6.0  pixels differing >16:  0.53%
+s0_t119_wrist            mean |diff|   0.42/255  p99   4.0  pixels differing >16:  0.00%
+s1_t0_front              mean |diff|   0.65/255  p99   5.0  pixels differing >16:  0.27%
+s1_t0_wrist              mean |diff|   0.98/255  p99   5.0  pixels differing >16:  0.01%
+s1_t60_front             mean |diff|   0.70/255  p99   6.0  pixels differing >16:  0.53%
+s1_t60_wrist             mean |diff|   0.35/255  p99   3.0  pixels differing >16:  0.01%
+s1_t119_front            mean |diff|   0.74/255  p99   6.0  pixels differing >16:  0.50%
+s1_t119_wrist            mean |diff|   0.62/255  p99   3.0  pixels differing >16:  0.01%
