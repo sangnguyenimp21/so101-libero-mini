@@ -6,13 +6,14 @@
 #     scripts/setup_smolvla.sh pins on Hopper) and mujoco 3.3.7. That MuJoCo reproduces the scene hashes in
 #     init_states/; newer ones write different MJCF (evaluation then refuses the frozen states) and drop
 #     mjENBL_MULTICCD, which sim/scene.py sets.
-#  2. $OSMESA_PREFIX [$SCRATCH/opt/osmesa]: conda-forge mesalib 25.0.4 (the last series with OSMesa), the CPU-rendering
-#     fallback, in its own prefix as in scripts/setup_osmesa.sh: only libOSMesa is loaded (so101_libero/_gl.py).
+#  2. $OSMESA_PREFIX [$SCRATCH/opt/osmesa; $SCRATCH = $SCRATCH_ROOT, default ~/so101lm]: conda-forge mesalib 25.0.4
+#     (the last series with OSMesa), the CPU-rendering fallback, in its own prefix as in scripts/setup_osmesa.sh: only
+#     libOSMesa is loaded (so101_libero/_gl.py).
 #  3. lerobot/smolvla_base and its VLM backbone into $HF_HOME ($SCRATCH/cache); the jobs run with HF_HUB_OFFLINE=1.
 #   bash scripts/setup_conda_env.sh        (overrides: ENV_NAME, SCRATCH_ROOT, OSMESA_PREFIX, CONDA_ROOT [~/miniconda3])
 set -euo pipefail
 ENV_NAME="${ENV_NAME:-so101lm}"
-SCRATCH="${SCRATCH_ROOT:-/scratch/e1583535}"
+SCRATCH="${SCRATCH_ROOT:-$HOME/so101lm}"
 OSMESA_PREFIX="${OSMESA_PREFIX:-$SCRATCH/opt/osmesa}"
 export PIP_CACHE_DIR="$SCRATCH/pip-cache" HF_HOME="$SCRATCH/cache" HF_HUB_OFFLINE=0
 CF=(--override-channels -c conda-forge)  # conda-forge only: no Anaconda channel terms to accept

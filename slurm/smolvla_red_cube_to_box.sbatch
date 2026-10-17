@@ -21,7 +21,7 @@
 #     learning rate over 30k steps whatever --steps says, so without it the LR sits at its 2.5e-6 floor after 30k.
 #     ~0.17 s/step on an H200 (80k ~ 4 h; the H100 is not measured). Resumes from $OUT/checkpoints/last.
 #  4. evaluation of EVAL_CKPTS on the frozen states, OSMesa rendering + policy on the GPU (~15 min per checkpoint)
-# Variables [defaults]: ENV_NAME [so101lm] SCRATCH_ROOT [/scratch/e1583535] CONDA_ROOT [~/miniconda3]
+# Variables [defaults]: ENV_NAME [so101lm] SCRATCH_ROOT [~/so101lm: datasets, HF cache, OSMesa] CONDA_ROOT [~/miniconda3]
 #   TASKS [red_cube_to_box] NUM_DEMOS [500] REPO_ID [local/so101_real_cube_box_500] GEN_WORKERS [10]
 #   GEN_RENDER [auto | egl | osmesa] GEN_ARGS [--max-grasp-retries 2 --miss-prob 0.3 --miss-offset 0.018 0.026
 #   --home-noise-deg 3] OUT [outputs/train/smolvla_real_cube_box_500] STEPS [80000] DECAY_STEPS [= STEPS]
@@ -37,7 +37,7 @@ cd "${SLURM_SUBMIT_DIR:-$PWD}"
 [ -f so101_libero/__init__.py ] || { echo "submit from the project root: sbatch slurm/$(basename "$0")" >&2; exit 1; }
 PROJECT_ROOT="$PWD"
 ENV_NAME="${ENV_NAME:-so101lm}"
-SCRATCH="${SCRATCH_ROOT:-/scratch/e1583535}"
+SCRATCH="${SCRATCH_ROOT:-$HOME/so101lm}"  # must be shared by all nodes (not /tmp): later jobs reuse it
 OSMESA_PREFIX="${OSMESA_PREFIX:-$SCRATCH/opt/osmesa}"
 TASKS="${TASKS:-red_cube_to_box}"
 NUM_DEMOS="${NUM_DEMOS:-500}"
@@ -63,6 +63,8 @@ DS="$SCRATCH/datasets/lerobot/$REPO_ID"
 { mkdir -p "$SCRATCH" && [ -w "$SCRATCH" ]; } 2>/dev/null \
     || { echo "SCRATCH_ROOT=$SCRATCH is not writable on $(hostname): set SCRATCH_ROOT to a large writable dir" >&2; exit 1; }
 echo "==== host $(hostname) | job ${SLURM_JOB_ID:-n/a} | $(nvidia-smi --query-gpu=name,memory.total --format=csv,noheader | head -1) | $(date)"
+avail() { local d="$1"; while [ ! -d "$d" ]; do d="$(dirname "$d")"; done; df -h --output=avail "$d" | tail -1 | tr -d " "; }
+echo "free space: SCRATCH_ROOT=$SCRATCH $(avail "$SCRATCH") | OUT=$OUT $(avail "$OUT")"
 
 # ---- 1. runtime. The lock stops two jobs from installing into the same env at once.
 mkdir -p "$HOME/.cache"
