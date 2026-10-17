@@ -60,6 +60,11 @@ class ExpertConfig:
     max_grasp_retries: int = 0
     miss_prob: float = 0.0
     miss_offset: tuple[float, float] = (0.012, 0.02)
+    # Offsets and openings above are tuned for a 3 cm wide object. For a wider/narrower one (per-episode sizes) the
+    # approach and miss offsets shift by the difference in half width (the fixed jaw keeps its clearance) and the
+    # release opening grows by this many degrees per mm of extra width (never shrinks below release_deg).
+    nominal_half_width: float = 0.015
+    release_deg_per_mm: float = 1.1  # jaw gap grows ~0.9 mm per degree around 20-32 deg
 
 
 def min_jerk(n: int) -> np.ndarray:
@@ -86,6 +91,7 @@ class PickPlaceExpert:
         self.dt = env.dt
         self.obj = env.h.objects[plan.obj]
         self.container = env.h.containers[plan.target] if isinstance(plan, PickPlace) else None
+        self._dw = self.obj.grasp_width / 2 - self.cfg.nominal_half_width  # 0.0 exactly for 3 cm objects
         self.phase = "start"
         self.done = False
         self.failure: str | None = None
@@ -205,7 +211,11 @@ class PickPlaceExpert:
 
     @property
     def _release(self) -> float:
-        return self.cfg.release_deg * DEG
+        return (self.cfg.release_deg + max(0.0, 2e3 * self._dw) * self.cfg.release_deg_per_mm) * DEG
+
+    @property
+    def _approach_offset(self) -> float:
+        return self.cfg.approach_offset + self._dw
 
     def _u(self, rng_pair: tuple[float, float]) -> float:
         return float(self.rng.uniform(*rng_pair))
@@ -217,12 +227,12 @@ class PickPlaceExpert:
         closing = np.array([math.cos(yaw), math.sin(yaw), 0.0])
         # Shift the TCP towards the fixed jaw so that the fixed jaw clears the object on the way down; the moving
         # jaw then pushes the object against the fixed jaw while closing.
-        self._grasp_target = obj - closing * c.approach_offset
+        self._grasp_target = obj - closing * self._approach_offset
         if not retry and c.miss_prob > 0 and self.rng.uniform() < c.miss_prob:
             # Deliberate miss for recovery data: shift along the jaw width (not along the closing axis, where the
             # jaws would land on the object), so the jaws close beside it or on its edge.
             lateral = np.array([-closing[1], closing[0], 0.0]) * self.rng.choice([-1.0, 1.0])
-            self._grasp_target = self._grasp_target + lateral * self._u(c.miss_offset)
+            self._grasp_target = self._grasp_target + lateral * (self._u(c.miss_offset) + self._dw)
             self.deliberate_miss = True
         self._grasp_yaw = yaw
         pre = np.r_[self._grasp_target[:2], self._u(c.pregrasp_height)]
@@ -327,7 +337,7 @@ class PickPlaceExpert:
         scored.sort()
         for _, _, yaw in scored:
             closing = np.array([math.cos(yaw), math.sin(yaw), 0.0])
-            grasp = obj_pos - closing * self.cfg.approach_offset
+            grasp = obj_pos - closing * self._approach_offset
             try:
                 _, q_grasp = self._solve(np.r_[grasp[:2], self.cfg.grasp_height[0]], yaw)
                 _, q_pre = self._solve(np.r_[grasp[:2], self.cfg.pregrasp_height[1]], yaw)
@@ -361,7 +371,7 @@ class PickPlaceExpert:
         the 20 deg release opening)."""
         cdir = np.array([math.cos(yaw), math.sin(yaw)])
         lat = np.array([-cdir[1], cdir[0]])
-        tcp = obj_pos[:2] - cdir * self.cfg.approach_offset
+        tcp = obj_pos[:2] - cdir * self._approach_offset
         jaws = [tcp - cdir * 0.018, tcp + cdir * moving_reach]  # fixed jaw outer face, moving jaw outer face
         best = float("inf")
         for name in (*self.env.h.objects, *self.env.h.containers):

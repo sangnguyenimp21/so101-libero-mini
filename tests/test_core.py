@@ -120,7 +120,7 @@ def test_real_setup_scene_and_registry():
     from so101_libero.sim.scene import FRONT_CAMERA
 
     assert FRONT_CAMERA.roll == pytest.approx(2.3) and FRONT_CAMERA.fovy == pytest.approx(45.0)
-    assert [t.task_id for t in get_suite("so101_real")] == ["red_cube_aside"]
+    assert [t.task_id for t in get_suite("so101_real")] == ["red_cube_aside", "red_cube_to_box"]
     env = SO101TabletopEnv("red_cube_aside", EnvConfig(render=False))
     m = env.model
     assert np.allclose(m.geom("red_cube_geom").size, [0.015] * 3)
@@ -210,3 +210,31 @@ def test_pushed_or_flicked_cube_is_not_a_success():
         mj.mj_step(env.model, env.data)
         env.world.track()
     assert env.world.max_lift.get("red_cube", 0.0) == 0.0 and not env.task.goal[0](env.world)
+
+
+def test_per_episode_cube_size_roundtrip():
+    """red_cube_to_box draws a 2.7-4.0 cm cube per episode, records it in the initial state and restores it from there;
+    fixed-size tasks never get a "sizes" entry."""
+    from so101_libero.env import EnvConfig, SO101TabletopEnv
+
+    env = SO101TabletopEnv("red_cube_to_box", EnvConfig(render=False))
+    gid = env.model.geom("red_cube_geom").id
+    edges = []
+    for seed in range(5):
+        env.reset(seed=seed)
+        size = env.init_state["sizes"]["red_cube"]
+        assert 0.027 - 1e-9 <= 2 * size[0] <= 0.04 + 1e-9 and size[0] == size[1] == size[2]
+        assert np.allclose(env.model.geom_size[gid], size) and env.h.objects["red_cube"].half_height == size[2]
+        assert env.world.pos("red_cube")[2] == pytest.approx(size[2], abs=2e-3)  # resting on the table at its size
+        edges.append(2 * size[0])
+    assert len(set(edges)) == 5
+    s0 = None
+    env.reset(seed=0)
+    s0 = env.init_state
+    q0 = env.data.qpos.copy()
+    env.reset(seed=3)
+    env.reset(options={"init_state": s0})
+    assert np.allclose(env.model.geom_size[gid], s0["sizes"]["red_cube"]) and np.array_equal(env.data.qpos, q0)
+    aside = SO101TabletopEnv("red_cube_aside", EnvConfig(render=False))
+    aside.reset(seed=0)
+    assert "sizes" not in aside.init_state and np.allclose(aside.model.geom("red_cube_geom").size, [0.015] * 3)

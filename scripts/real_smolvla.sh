@@ -6,7 +6,7 @@
 #   RUN=smolvla_all_200 TASK=cube_to_tray DURATION=30 bash scripts/real_smolvla.sh
 #   TASK="Pick up the red cylinder and place it inside the circular container." bash scripts/real_smolvla.sh
 #
-# TASK is a task id (red_cube_aside [default], cylinder_to_tray, cylinder_to_container, cube_to_tray) or a full
+# TASK is a task id (red_cube_aside [default], red_cube_to_box, cylinder_to_tray, cylinder_to_container, cube_to_tray) or a full
 # instruction; it must be the training instruction of RUN. Environment overrides (defaults in brackets):
 # RUN [smolvla_real_cube_300] CKPT [last]
 # PORT [/dev/tty.usbmodem5B610366661] ROBOT_ID [my_follower] FRONT_CAM [3: iPhone] WRIST_CAM [0]
@@ -48,6 +48,7 @@ CROP_RESIZE="${CROP_RESIZE:-1}"
 # Instructions exactly as in training (so101_libero/tasks/registry.py)
 case "$TASK" in
     red_cube_aside) TASK="Pick up the red cube and place it aside." ;;
+    red_cube_to_box) TASK="Pick up the red cube and put it in the black box." ;;
     cylinder_to_tray) TASK="Pick up the red cylinder and place it inside the black tray." ;;
     cylinder_to_container) TASK="Pick up the red cylinder and place it inside the circular container." ;;
     cube_to_tray) TASK="Pick up the blue object and place it inside the black tray." ;;

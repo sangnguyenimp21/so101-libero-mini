@@ -7,7 +7,7 @@ primitive geoms; containers are a base plate plus box walls (a rectangular tray 
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 import mujoco
 import numpy as np
@@ -24,6 +24,13 @@ class ObjectSpec:
     description: str  # how instructions refer to it, e.g. "red cylinder"
     mass: float = 0.02
     friction: tuple[float, float, float] = (1.0, 0.005, 0.0001)
+    # Per-episode size randomization (None = fixed size): every dimension is multiplied by one factor drawn
+    # uniformly from this range at reset (``Layout.sample_sizes``). The model is compiled at ``size``; the episode's
+    # size is written into it by ``SceneHandles.apply_sizes`` and recorded in the initial state ("sizes").
+    scale_range: tuple[float, float] | None = None
+
+    def with_size(self, size: tuple[float, ...]) -> "ObjectSpec":
+        return self if tuple(size) == tuple(self.size) else replace(self, size=tuple(float(v) for v in size))
 
     @property
     def half_height(self) -> float:
@@ -143,6 +150,8 @@ def add_container(parent: mujoco.MjsBody, spec: ContainerSpec) -> mujoco.MjsBody
 RED_CYLINDER = ObjectSpec("red_cylinder", "cylinder", (0.015, 0.015), (0.85, 0.12, 0.10, 1.0), "red cylinder")
 BLUE_CUBE = ObjectSpec("blue_cube", "box", (0.015, 0.015, 0.015), (0.10, 0.30, 0.85, 1.0), "blue cube")
 RED_CUBE = ObjectSpec("red_cube", "box", (0.015, 0.015, 0.015), (0.85, 0.12, 0.10, 1.0), "red cube")
+# The same red cube with a per-episode edge length of 2.7-4.0 cm (scale 0.9-4/3 of the 3 cm cube; mass kept at 20 g).
+RED_CUBE_VAR = replace(RED_CUBE, scale_range=(0.027 / 0.03, 0.04 / 0.03))
 BLACK_TRAY = ContainerSpec("black_tray", "tray", (0.060, 0.045), (0.06, 0.06, 0.06, 1.0), "black tray", mass=0.2)
 ROUND_CONTAINER = ContainerSpec(
     "round_container", "round", (0.045,), (0.92, 0.92, 0.88, 1.0), "circular container", wall_height=0.03, mass=0.15

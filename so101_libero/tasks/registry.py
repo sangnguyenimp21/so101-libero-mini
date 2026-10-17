@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import math
 
-from so101_libero.sim.objects import BLACK_TRAY, BLUE_CUBE, RED_CUBE, RED_CYLINDER, ROUND_CONTAINER
+from so101_libero.sim.objects import BLACK_TRAY, BLUE_CUBE, RED_CUBE, RED_CUBE_VAR, RED_CYLINDER, ROUND_CONTAINER
 from so101_libero.tasks.base import (InContainer, Layout, OnTableInRegion, PickPlace, PlaceAt, PlaceRelative, Region,
                                      RelativeTo, Task)
 
@@ -82,6 +82,22 @@ REAL_TABLETOP = Layout(
 register(Task(task_id="red_cube_aside", language="Pick up the red cube and place it aside.", layout=REAL_TABLETOP,
               goal=(OnTableInRegion("red_cube", ASIDE_ZONE, region_name="aside_zone"),),
               plan=PlaceAt("red_cube", ASIDE_ZONE)), suite="so101_real")
+
+
+# Red cube into the black box: the same red cube, now 2.7-4.0 cm wide (drawn per episode, stored in the initial state),
+# and the black tray (inner 12 x 9 cm, 2.5 cm walls) on the robot's LEFT, centred at (0.15, 0.15) +- 2 cm, yaw +-10 deg
+# (long side along x; with its centre beyond y = 0.17 the outer wall leaves the front camera image). The cube's start
+# region is the red_cube_aside one; starts that overlap the tray's footprint are resampled by the layout, which pushes
+# the cube towards the robot's right.
+REAL_BOX_TABLETOP = Layout(
+    name="real_box_tabletop_v1",
+    objects=(RED_CUBE_VAR,),
+    containers=(BLACK_TRAY,),
+    regions={"red_cube": Region(x=(0.14, 0.24), y=(-0.08, 0.08), yaw=(-45 * DEG, 45 * DEG)),
+             "black_tray": Region(x=(0.13, 0.17), y=(0.13, 0.17), yaw=(-10 * DEG, 10 * DEG))},
+)
+register(pick_place("red_cube_to_box", "Pick up the red cube and put it in the black box.", "red_cube", "black_tray",
+                    layout=REAL_BOX_TABLETOP), suite="so101_real")
 
 
 def get_task(task_id: str) -> Task:

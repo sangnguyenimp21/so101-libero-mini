@@ -48,9 +48,21 @@ class Layout:
     def scene_config(self, **kw) -> SceneConfig:
         return SceneConfig(objects=self.objects, containers=self.containers, **kw)
 
-    def sample(self, rng: np.random.Generator) -> dict[str, tuple[float, float, float]]:
-        """Sample a collision-free start pose (x, y, yaw) for every item (containers first: they are larger)."""
-        items = [*self.containers, *self.objects]
+    def sample_sizes(self, rng: np.random.Generator) -> dict[str, list[float]]:
+        """Episode size of every object with a ``scale_range`` (no random draw at all for fixed-size layouts)."""
+        sizes = {}
+        for o in self.objects:
+            if o.scale_range is not None:
+                scale = float(rng.uniform(*o.scale_range))
+                sizes[o.name] = [float(v) * scale for v in o.size]
+        return sizes
+
+    def sample(self, rng: np.random.Generator,
+               sizes: dict[str, list[float]] | None = None) -> dict[str, tuple[float, float, float]]:
+        """Sample a collision-free start pose (x, y, yaw) for every item (containers first: they are larger), with
+        object footprints at the episode's ``sizes``."""
+        sizes = sizes or {}
+        items = [*self.containers, *(o.with_size(sizes[o.name]) if o.name in sizes else o for o in self.objects)]
         for _ in range(self.max_tries):
             poses: dict[str, tuple[float, float, float]] = {}
             ok = True

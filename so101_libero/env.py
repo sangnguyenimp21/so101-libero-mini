@@ -95,7 +95,11 @@ class SO101TabletopEnv(gym.Env):
             for _ in range(100):
                 q = HOME_QPOS.copy()
                 q[:5] += rng.uniform(-self.cfg.home_noise, self.cfg.home_noise, 5)
-                self._apply_init({"robot_qpos": q.tolist(), "items": self.task.layout.sample(rng)})
+                sizes = self.task.layout.sample_sizes(rng)  # {} (no draw) unless an object has a scale_range
+                init = {"robot_qpos": q.tolist(), "items": self.task.layout.sample(rng, sizes)}
+                if sizes:
+                    init["sizes"] = sizes
+                self._apply_init(init)
                 if not self.task.check(self.world):
                     break
             else:
@@ -110,10 +114,14 @@ class SO101TabletopEnv(gym.Env):
         return self._obs(), self._info(False)
 
     def _apply_init(self, init: dict) -> None:
-        """Set the robot pose and item poses, then let the items settle (physics) before the first observation."""
+        """Set the object sizes (if the state has any), the robot pose and item poses, then let the items settle
+        (physics) before the first observation."""
         self.init_state = {"robot_qpos": list(map(float, init["robot_qpos"])),
                            "items": {k: list(map(float, v)) for k, v in init["items"].items()}}
+        if init.get("sizes"):
+            self.init_state["sizes"] = {k: list(map(float, v)) for k, v in init["sizes"].items()}
         d, h = self.data, self.h
+        h.apply_sizes(self.init_state.get("sizes", {}), d)
         mujoco.mj_resetData(self.model, d)
         q = np.asarray(self.init_state["robot_qpos"])
         d.qpos[h.joint_qpos_adr] = q

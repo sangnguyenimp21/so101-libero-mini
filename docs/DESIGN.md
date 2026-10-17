@@ -221,3 +221,36 @@ Infrastructure: the randomized-data generation job landed on hopper-30, where EG
 10 workers died, the pool then waited for the walltime). `pbs/generate.pbs` now runs `tests/egl_workers_selftest.py`
 (spawned workers rendering with randomization) and falls back to OSMesa; `generate --episode-timeout` (900 s) fails
 the run with exit code 3 instead of hanging when a worker dies.
+
+## Task `red_cube_to_box` (2026-10-17 evening): variable cube size, black box on the left
+
+- **Task.** "Pick up the red cube and put it in the black box." Goal `In(red_cube, black_tray)` (the existing tray,
+  inner 12 × 9 cm, 2.5 cm walls; the user's choice for the real box). Layout `real_box_tabletop_v1`: cube start region as
+  in `red_cube_aside`, tray centred at (0.15, 0.15) ± 2 cm, yaw ± 10°, i.e. the robot's left / lower right of the front
+  image. At y > 0.17 the tray's outer wall left the front image, hence the region (renders of the four corner cases
+  checked). Suite `so101_real`, registry index 5.
+- **Per-episode size.** `ObjectSpec.scale_range` (`RED_CUBE_VAR`: 0.9-4/3 of the 3 cm cube = 2.7-4.0 cm edge).
+  `Layout.sample_sizes` draws one factor per such object *after* the home-pose noise and *before* the poses (layouts
+  without a range draw nothing, so every existing task keeps its random stream); footprints for the collision-free
+  placement use the episode size. The size is stored in the initial state (`"sizes": {"red_cube": [hx, hy, hz]}`), so
+  datasets' side files and the evaluation states carry it, and `SceneHandles.apply_sizes` writes it into the compiled
+  model at `_apply_init`: geom size, bounding sphere, geom AABB, the body's BVH box and inertia (mass kept at 20 g,
+  inertia always scaled from the compiled value so the model depends only on the requested size, not on earlier
+  episodes), then `mj_setConst`. `SceneHandles.objects` returns the specs at the episode size, so predicates, the
+  expert and the placement height all see it. Checked: an expert rollout with a runtime-resized cube equals one with a
+  model compiled at that size to 4e-15 m; re-applying a stored state after another episode is bit-identical
+  (`test_per_episode_cube_size_roundtrip`). Only uniform scaling of boxes is implemented.
+- **Expert.** The approach and deliberate-miss offsets shift by the difference in half width from 3 cm (so the fixed
+  jaw keeps its 6 mm clearance and misses stay clean), and the release opening inside containers grows by 1.1° per mm
+  of extra width (4 cm cube: ~31° instead of 20°, the jaws would otherwise barely let go). All three are exactly
+  unchanged for 3 cm objects, so existing datasets remain reproducible bit for bit. Physics-only check on 120 training
+  seeds with the dataset settings (2 retries, 30 % deliberate misses, 3° home noise): 112/120 successes (156-278
+  steps); failures are 5 × "no collision-free grasp yaw" and 2 × unreachable (cube near the base), 1 drop of a 3.96 cm
+  cube. By size: 2.7-3.0 cm 18/18, 3.0-3.35 37/40, 3.35-3.7 31/32, 3.7-4.0 26/30.
+- **Evaluation states**: 50 of 51 candidates (one "no collision-free grasp yaw"), edges 2.8-4.0 cm (mean 3.4), expert
+  156-193 steps.
+- **Training.** Dataset `local/so101_real_cube_box_500` (500 demos, same expert settings as `so101_real_cube_300`,
+  nominal looks); SmolVLA from `smolvla_base`, 80k steps, batch 32, cosine decay over 80k (`--policy.scheduler_decay_steps`:
+  the 30k-step run's learning rate reached its floor exactly at 30k, so its flat end was the schedule, not
+  convergence), checkpoints every 20k all evaluated to measure what steps beyond 30k buy.
+

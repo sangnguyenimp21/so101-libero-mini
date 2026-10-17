@@ -132,12 +132,17 @@ bash scripts/env.sh python -m so101_libero.cli.check_reproducibility --repo-id l
 qsub -v TASKS=so101_mini,NUM_DEMOS=200,REPO_ID=local/my_all_200 pbs/generate.pbs   # GPU node (EGL), ~55 min
 # real-setup task: recovery grasps (cube-sized miss offset), 3 deg start-pose noise; add --visual-rand for randomized looks
 qsub -l walltime=01:00:00 -v TASKS=red_cube_aside,NUM_DEMOS=300,REPO_ID=local/my_real_cube_300,GEN_ARGS="--max-grasp-retries 2 --miss-prob 0.3 --miss-offset 0.018 0.026 --home-noise-deg 3 --visual-rand" pbs/generate.pbs
+# red cube (2.7-4 cm) into the black box (the miss offset is for a 3 cm cube; the expert shifts it by the size difference)
+qsub -l walltime=03:00:00 -v TASKS=red_cube_to_box,NUM_DEMOS=500,REPO_ID=local/so101_real_cube_box_500,GEN_ARGS="--max-grasp-retries 2 --miss-prob 0.3 --miss-offset 0.018 0.026 --home-noise-deg 3" pbs/generate.pbs
 
 # 3. training (GPU); pbs/train.pbs then evaluates the last checkpoint on the frozen states (OSMesa rendering)
 qsub -v REPO_ID=local/my_t1_200,OUT=outputs/train/my_act_t1,STEPS=80000 pbs/train.pbs     # ~75 min + ~13 min eval
 # real-setup task with W&B logging (training curves + the final simulated evaluation go to the same run)
 qsub -W depend=afterok:<gen_job> -l walltime=03:00:00 -v REPO_ID=local/my_real_cube_300,OUT=outputs/train/my_act_real_cube,STEPS=80000,EVAL_TASKS=red_cube_aside,WANDB=true,WANDB_PROJECT=cs6283,WANDB_ENTITY=tsangb34-national-university-of-singapore-students-union pbs/train.pbs
 qsub -v POLICY=smolvla,REPO_ID=local/my_all_200,OUT=outputs/train/my_smolvla,STEPS=25000,BATCH_SIZE=32,SAVE_FREQ=5000,EVAL_TASKS=so101_mini -l walltime=05:00:00 pbs/train.pbs
+# SmolVLA's cosine schedule decays over policy.scheduler_decay_steps (30000 in smolvla_base), NOT over STEPS: for longer
+# runs pass it too, else the learning rate sits at its 2.5e-6 floor after 30k steps (~0.17 s/step at batch 32 on an H200)
+qsub -W depend=afterok:<gen_job> -l walltime=06:30:00 -v POLICY=smolvla,REPO_ID=local/so101_real_cube_box_500,OUT=outputs/train/smolvla_real_cube_box_500,STEPS=80000,BATCH_SIZE=32,SAVE_FREQ=20000,EVAL_CKPTS=all,EVAL_TASKS=red_cube_to_box,TRAIN_ARGS=--policy.scheduler_decay_steps=80000,WANDB=true,WANDB_PROJECT=cs6283,WANDB_ENTITY=tsangb34-national-university-of-singapore-students-union pbs/train.pbs
 qsub pbs/smoke.pbs                       # ~3 min plumbing test of every stage (log ends "SMOKE TEST PASSED")
 
 # 4. evaluation of a checkpoint (videos, results.json, episodes.csv, success rate + Wilson 95% CI)
@@ -218,6 +223,7 @@ training seeds 400000+, evaluation seeds 10,400,000+):
 | id | instruction | goal |
 |---|---|---|
 | `red_cube_aside` | Pick up the red cube and place it aside. | OnTableIn(red_cube, aside_zone): zone x 0.08-0.18, y 0.13-0.20 m (the robot's left = the lower right of the front image) |
+| `red_cube_to_box` | Pick up the red cube and put it in the black box. | In(red_cube, black_tray); cube edge 2.7-4.0 cm per episode, tray on the robot's left (index 5: training seeds 500000+, evaluation 10,500,000+) |
 
 Items and start regions (world frame, metres; uniform x, y, yaw; collision-free rejection sampling with 2 cm
 clearance; the arm starts at a fixed home pose):
@@ -228,7 +234,8 @@ clearance; the arm starts at a fixed home pose):
 | blue cube | 3 cm | 20 g | 0.16-0.26 / -0.07-0.07 / ±45° (spatial task: 0.17-0.25 / -0.08 to -0.02) |
 | black tray | inner 12 × 9 cm, walls 2.5 cm | 200 g | 0.15-0.21 / -0.19 to -0.13 / ±15° |
 | circular container | inner Ø9 cm, walls 3 cm | 150 g | 0.15-0.21 / 0.13-0.19 / any |
-| red cube (`so101_real` only) | 3 cm | 20 g | 0.14-0.24 / -0.08-0.08 / ±45° |
+| red cube (`so101_real` only) | 3 cm (`red_cube_to_box`: 2.7-4.0 cm, uniform per episode) | 20 g | 0.14-0.24 / -0.08-0.08 / ±45° |
+| black tray (`red_cube_to_box`) | as above | 200 g | 0.13-0.17 / 0.13-0.17 / ±10° (the robot's left) |
 
 Success predicates (pure functions of the simulator state, `so101_libero/tasks/base.py`):
 - `In(obj, container)`: the container stands upright (< 30° tilt) on the table, untouched and at rest; the object's

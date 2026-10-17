@@ -199,10 +199,48 @@ class SceneHandles:
     item_qpos_adr: dict[str, int] = field(default_factory=dict)  # start of the 7-d free-joint qpos
     item_dof_adr: dict[str, int] = field(default_factory=dict)
     item_geoms: dict[str, frozenset[int]] = field(default_factory=dict)
+    # Current per-episode sizes of objects with a ``scale_range`` (absent = the compiled size); see ``apply_sizes``.
+    sizes: dict[str, tuple[float, ...]] = field(default_factory=dict)
+    compiled_inertia: dict[str, np.ndarray] = field(default_factory=dict)  # objects' body inertia at their spec size
 
     @property
     def objects(self) -> dict[str, ObjectSpec]:
-        return {o.name: o for o in self.cfg.objects}
+        """Object specs with the current episode's sizes (what predicates and the expert must use)."""
+        return {o.name: o.with_size(self.sizes[o.name]) if o.name in self.sizes else o for o in self.cfg.objects}
+
+    def apply_sizes(self, sizes: dict[str, list[float]], data: mujoco.MjData) -> None:
+        """Resize objects in the compiled model (objects not listed go back to their compiled size). Writes the
+        geom size, its bounding sphere/box and the body's inertia (mass unchanged), then recomputes the model's
+        derived constants (``mj_setConst``). A no-op, bit for bit, when every object keeps its size."""
+        m = self.model
+        changed = False
+        for spec in self.cfg.objects:
+            size = tuple(float(v) for v in sizes.get(spec.name, spec.size))
+            if size == self.sizes.get(spec.name, tuple(spec.size)):
+                continue
+            if spec.shape != "box":
+                raise NotImplementedError(f"runtime resizing of {spec.shape} objects ({spec.name})")
+            scale = size[0] / spec.size[0]
+            if not np.allclose(np.asarray(size) / np.asarray(spec.size), scale, rtol=1e-9):
+                raise ValueError(f"{spec.name}: only uniform rescaling is supported ({spec.size} -> {size})")
+            changed = True
+            body = self.item_body[spec.name]
+            (g,) = self.item_geoms[spec.name]
+            hx, hy, hz = size
+            m.geom_size[g] = size
+            m.geom_rbound[g] = math.sqrt(hx * hx + hy * hy + hz * hz)
+            m.geom_aabb[g] = [0.0, 0.0, 0.0, hx, hy, hz]
+            for k in range(m.body_bvhnum[body]):  # a single-geom body: its BVH is that geom's box
+                m.bvh_aabb[m.body_bvhadr[body] + k] = [0.0, 0.0, 0.0, hx, hy, hz]
+            # Same mass, uniformly scaled box (principal axes unchanged). Always from the compiled values, so the
+            # model after a reset depends only on the requested size, never on earlier episodes (bit-reproducible).
+            m.body_inertia[body] = self.compiled_inertia[spec.name] * (scale * scale)
+            if size == tuple(spec.size):
+                self.sizes.pop(spec.name, None)
+            else:
+                self.sizes[spec.name] = size
+        if changed:
+            mujoco.mj_setConst(m, data)
 
     @property
     def containers(self) -> dict[str, ContainerSpec]:
@@ -239,6 +277,8 @@ def build_scene(cfg: SceneConfig) -> SceneHandles:
         h.item_qpos_adr[item.name] = int(model.jnt_qposadr[j])
         h.item_dof_adr[item.name] = int(model.jnt_dofadr[j])
         h.item_geoms[item.name] = frozenset(g for g in range(model.ngeom) if model.geom_bodyid[g] == b)
+    for o in cfg.objects:
+        h.compiled_inertia[o.name] = model.body_inertia[h.item_body[o.name]].copy()
     return h
 
 
