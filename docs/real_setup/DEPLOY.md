@@ -65,6 +65,19 @@ python scripts/real/run_policy.py --policy outputs/train/act_real_cube_300_dr/ch
 `python scripts/real/run_policy.py --help` lists every option (device, camera sizes/indices, `--max-step-deg`,
 `--max-relative-target`, `--joint-offset`, `--n-action-steps`, `--temporal-ensemble`, `--torque-off-at-exit`).
 
+### SmolVLA alternative (`outputs/train/smolvla_real_cube_300`)
+
+A language-conditioned SmolVLA fine-tuned from `lerobot/smolvla_base` on the same 300 demonstrations (30k steps,
+batch 32; W&B `cs6283`). It must get the training instruction **"Pick up the red cube and place it aside."** (both
+scripts default to it). It needs the SmolVLA extras (`transformers` etc.) in your LeRobot env, and it pauses briefly at
+each 50-action chunk while it plans (a GPU or `mps` is strongly recommended; the first call warms up for several seconds).
+
+```bash
+bash scripts/real_smolvla.sh                       # lerobot-rollout path; RUN=smolvla_real_cube_300, TASK=red_cube_aside by default
+python scripts/real/run_policy.py --policy outputs/train/smolvla_real_cube_300/checkpoints/last/pretrained_model \
+    --log-dir outputs/real/smolvla_run1 --seconds 30   # standalone loop (go-home, clamps, logging)
+```
+
 ## 5. If it does not work
 
 | symptom | likely cause / what to try |
