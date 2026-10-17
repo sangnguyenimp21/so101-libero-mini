@@ -1,8 +1,8 @@
-# Task: black robot + real front camera view in the sim, then retrain
+# Task: black robot + real front camera view in the sim
 
 Repo: `so101-libero-mini`. Read `README.md` first. Change only two things in the sim: the robot's colour and the
-front camera. Then regenerate the datasets and retrain. Leave everything else as it is: table, objects, item start
-regions, background, wrist camera, lighting.
+front camera. Leave everything else as it is: table, objects, item start regions, background, wrist camera,
+lighting. Don't regenerate data or train yet; I'll say what to run next.
 
 ## 1. Robot colour: matte, near black
 
@@ -52,16 +52,6 @@ if cam.roll:
 world.add_camera(name=cam.name, pos=list(cam.pos), quat=list(quat), fovy=cam.fovy)
 ```
 
-Check: render the front camera at 256x256 with the robot at its home pose and save it as
-`docs/real_setup/sim_front_home.png`. The robot should stand in the upper middle of the image, seen steeply from
-above, with the table in front of it.
-
-## 3. Regenerate the data and retrain
-
-- Generate new datasets with the updated scene under new names, with the same tasks, episode counts and settings
-  as the current ones (see the README). For example `local/so101_black_t1_200`,
-  `local/so101_black_t1_200_recovery` and `local/so101_black_all_200`. Validate them as before.
-- Train ACT (single task and multi-task) and SmolVLA exactly as before with `scripts/train.sh`. Images stay
-  256x256, and the camera keys stay `front` / `wrist`.
-- Evaluate in sim as before.
-- Report the success rates and the checkpoint paths (`outputs/train/<run>/checkpoints/last/pretrained_model`).
+Check: render the front camera at 256x256 with the robot at its home pose, save it as a new file
+`outputs/sim_front_home.png` (create `outputs/` if it doesn't exist) and look at it. The robot should stand in the
+upper middle of the image, seen steeply from above, with the table in front of it.
