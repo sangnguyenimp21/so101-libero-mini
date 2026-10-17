@@ -5,7 +5,7 @@
 #PBS -N so101lm-gen
 #PBS -q auto
 #PBS -l select=1:ngpus=1
-#PBS -l walltime=02:00:00
+#PBS -l walltime=03:00:00
 # Generate expert demonstrations (EGL rendering) and validate the dataset.
 #   qsub -v TASKS=cylinder_to_tray,NUM_DEMOS=200,REPO_ID=local/so101_mini_t1_200 pbs/generate.pbs
 #   qsub -v TASKS=so101_mini,NUM_DEMOS=200,REPO_ID=local/so101_mini_all_200 pbs/generate.pbs
@@ -15,6 +15,7 @@
 # A complete existing dataset (meta/so101_libero.json with every task at its target) is kept and re-validated;
 # an incomplete one stops the job (delete it to regenerate). ~600 demos take ~55 min. Log: logs/pbs/<jobid>.log
 # Rendering: EGL after a multi-process self-test (tests/egl_workers_selftest.py), else OSMesa; SO101_RENDER overrides.
+# The OSMesa fallback is CPU-bound: on a 12-core GPU allocation ~2.7 demos/min (300 demos ~2 h), hence the walltime.
 cd "$PBS_O_WORKDIR"
 set -o pipefail
 mkdir -p logs/pbs
