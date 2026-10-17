@@ -11,6 +11,8 @@
 # FRONT_CROP / WRIST_CROP [centre square of each camera, e.g. 0,280,720,720] as TOP,LEFT,HEIGHT,WIDTH; CROP_RESIZE [1]
 # Each frame is cropped to that box and resized to the training 256x256 (scripts/deploy_policy.py, written to
 # outputs/deploy/); CROP_RESIZE=0 feeds the raw frames instead.
+# DEBUG [1]: save what the policy sees to outputs/debug/<RUN>_<time>/: frame_<tick>.jpg (front | wrist at 256x256 +
+# joint state) every DEBUG_EVERY [10] control ticks, and log.csv (state + commanded action every tick).
 # Camera indices move when cameras (or the iPhone) connect: check them with `lerobot-find-cameras opencv`. With the
 # iPhone (Continuity Camera) as front camera keep Center Stage / video effects off, so the view never pans or zooms.
 # ACT ignores language, so the run decides the task (act_t1_200_recovery: red cylinder -> black tray).
@@ -21,11 +23,11 @@ conda activate lerobot
 set -u
 
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-RUN="${RUN:-act_all_200}"
+RUN="${RUN:-act_real_cube_300}"
 CKPT="${CKPT:-last}"
 PORT="${PORT:-/dev/tty.usbmodem5B610366661}"
 ROBOT_ID="${ROBOT_ID:-my_follower}"
-FRONT_CAM="${FRONT_CAM:-3}"
+FRONT_CAM="${FRONT_CAM:-1}"
 WRIST_CAM="${WRIST_CAM:-0}"
 FRONT_W="${FRONT_W:-1280}"
 FRONT_H="${FRONT_H:-720}"
@@ -39,19 +41,32 @@ center() { local s=$(( $1 < $2 ? $1 : $2 )); echo "$(( ($2 - s) / 2 )),$(( ($1 -
 FRONT_CROP="${FRONT_CROP:-$(center "$FRONT_W" "$FRONT_H")}"
 WRIST_CROP="${WRIST_CROP:-$(center "$WRIST_W" "$WRIST_H")}"
 CROP_RESIZE="${CROP_RESIZE:-1}"
+DEBUG="${DEBUG:-1}"
+DEBUG_EVERY="${DEBUG_EVERY:-10}"
 
 POLICY_PATH="$PROJECT_ROOT/outputs/train/$RUN/checkpoints/$CKPT/pretrained_model"
 [ -d "$POLICY_PATH" ] || { echo "no checkpoint at $POLICY_PATH" >&2; exit 1; }
+ROLLOUT=(lerobot-rollout)
 if [ "$CROP_RESIZE" = 1 ]; then
+    DEBUG_ARGS=()
+    if [ "$DEBUG" = 1 ]; then
+        DEBUG_DIR="$PROJECT_ROOT/outputs/debug/${RUN}_$(date +%Y%m%d_%H%M%S)"
+        DEBUG_ARGS=(--debug-dir "$DEBUG_DIR" --debug-every "$DEBUG_EVERY")
+        ROLLOUT=(python "$PROJECT_ROOT/scripts/rollout_debug.py")  # lerobot-rollout + the debug processor steps
+        echo "debug frames and action log -> $DEBUG_DIR"
+    fi
     POLICY_PATH="$(python "$PROJECT_ROOT/scripts/deploy_policy.py" "$POLICY_PATH" \
-        "$PROJECT_ROOT/outputs/deploy/${RUN}_${CKPT}" --crop front="$FRONT_CROP" --crop wrist="$WRIST_CROP")"
+        "$PROJECT_ROOT/outputs/deploy/${RUN}_${CKPT}" --crop front="$FRONT_CROP" --crop wrist="$WRIST_CROP" \
+        ${DEBUG_ARGS[@]+"${DEBUG_ARGS[@]}"})"
     echo "crop front=$FRONT_CROP wrist=$WRIST_CROP -> 256x256"
+elif [ "$DEBUG" = 1 ]; then
+    echo "DEBUG needs CROP_RESIZE=1 (the debug steps live in the deploy copy); running without debug output"
 fi
 
 CAMERAS="{ front: {type: opencv, index_or_path: $FRONT_CAM, width: $FRONT_W, height: $FRONT_H, fps: $FPS},
            wrist: {type: opencv, index_or_path: $WRIST_CAM, width: $WRIST_W, height: $WRIST_H, fps: $FPS} }"
 
-exec lerobot-rollout \
+exec "${ROLLOUT[@]}" \
     --strategy.type=base \
     --policy.path="$POLICY_PATH" \
     --policy.device="$DEVICE" \
