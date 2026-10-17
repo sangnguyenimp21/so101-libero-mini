@@ -82,8 +82,9 @@ init_states/<task>.json            frozen evaluation states (50 per task, expert
 scripts/env.sh                     run anything in the runtime (Singularity image + venv + GL + thread settings)
 scripts/train.sh                   lerobot-train wrapper with project defaults (presets: act, diffusion, smolvla)
 scripts/eval_variants.sh           evaluate one checkpoint with several inference settings
-scripts/setup_*.sh                 one-time setup (OSMesa, EGL shim, SmolVLA extras)
+scripts/setup_*.sh                 one-time setup (OSMesa, EGL shim, SmolVLA extras; conda runtime for SLURM)
 pbs/                               Hopper GPU jobs: smoke, generate, train (+eval), eval (+ small diagnostics)
+slurm/                             SLURM H100 job: red_cube_to_box SmolVLA end to end (conda env, data, train, eval)
 tests/                             pytest (physics-only) + render / EGL diagnostics
 docs/                              DESIGN.md, media/, results/ (stored measurement outputs)
 ```
@@ -101,6 +102,8 @@ bash scripts/setup_osmesa.sh       # CPU rendering (login node, CPU-rendered job
 bash scripts/setup_egl_shim.sh     # GPU rendering in the image: libGLdispatch + NVIDIA EGL vendor file
 bash scripts/setup_smolvla.sh      # only for SmolVLA: transformers & co. in an overlay dir + model download
 ```
+Clusters without the image (the SLURM job in `slurm/`) use a conda env instead: `bash scripts/setup_conda_env.sh`
+(conda-forge python 3.10 + lerobot[smolvla] 0.4.2, mujoco 3.3.7, OSMesa, SmolVLA weights; the job runs it itself).
 ACT's ImageNet ResNet18 weights must be in `/scratch/e1583535/cache/torch/hub/checkpoints` (`$TORCH_HOME`; they are,
 `check_env` reports it). Harmless messages: Singularity's "Could not find any nv files" on CPU nodes, and MuJoCo's
 "Nan, Inf or huge value in QVEL" from the divergence unit test (logged to `MUJOCO_LOG.TXT`).
@@ -143,6 +146,9 @@ qsub -v POLICY=smolvla,REPO_ID=local/my_all_200,OUT=outputs/train/my_smolvla,STE
 # SmolVLA's cosine schedule decays over policy.scheduler_decay_steps (30000 in smolvla_base), NOT over STEPS: for longer
 # runs pass it too, else the learning rate sits at its 2.5e-6 floor after 30k steps (~0.17 s/step at batch 32 on an H200)
 qsub -W depend=afterok:<gen_job> -l walltime=06:30:00 -v POLICY=smolvla,REPO_ID=local/so101_real_cube_box_500,OUT=outputs/train/smolvla_real_cube_box_500,STEPS=80000,BATCH_SIZE=32,SAVE_FREQ=20000,EVAL_CKPTS=all,EVAL_TASKS=red_cube_to_box,TRAIN_ARGS=--policy.scheduler_decay_steps=80000,WANDB=true,WANDB_PROJECT=cs6283,WANDB_ENTITY=tsangb34-national-university-of-singapore-students-union pbs/train.pbs
+# the same red_cube_to_box run on a SLURM H100 node as one job: conda env, generation if the dataset is missing,
+# training, evaluation; resubmitting resumes (variables in the script header)
+WANDB=true WANDB_PROJECT=cs6283 WANDB_ENTITY=tsangb34-national-university-of-singapore-students-union sbatch slurm/smolvla_red_cube_to_box.sbatch
 qsub pbs/smoke.pbs                       # ~3 min plumbing test of every stage (log ends "SMOKE TEST PASSED")
 
 # 4. evaluation of a checkpoint (videos, results.json, episodes.csv, success rate + Wilson 95% CI)
