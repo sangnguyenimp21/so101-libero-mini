@@ -2,7 +2,7 @@
  "task_id": "cube_to_tray",
  "language": "Pick up the blue object and place it inside the black tray.",
  "layout": "tabletop_v1",
- "scene_hash": "5dd094ae6e573203",
+ "scene_hash": "ed8284913895c4d8",
  "rules_hash": "1806e5b948a61f11",
  "seed_base": 10200000,
  "num": 50,

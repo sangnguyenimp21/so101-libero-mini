@@ -14,6 +14,7 @@
 #   GEN_ARGS [extra generate flags, space-separated, e.g. "--max-grasp-retries 2 --miss-prob 0.3"]
 # A complete existing dataset (meta/so101_libero.json with every task at its target) is kept and re-validated;
 # an incomplete one stops the job (delete it to regenerate). ~600 demos take ~55 min. Log: logs/pbs/<jobid>.log
+# Rendering: EGL after a multi-process self-test (tests/egl_workers_selftest.py), else OSMesa; SO101_RENDER overrides.
 cd "$PBS_O_WORKDIR"
 set -o pipefail
 mkdir -p logs/pbs
@@ -27,7 +28,15 @@ export PYTHONFAULTHANDLER=1
 {
 set -e
 echo "==== host $(hostname) $(nvidia-smi --query-gpu=name --format=csv,noheader | head -1) $(date)"
-echo "==== generate $NUM_DEMOS demos per task of [$TASKS] -> $ROOT"
+# EGL aborts the interpreter in worker processes on some nodes (hopper-30; a single process may still pass): test it
+# with spawned workers first and fall back to OSMesa (CPU) rendering, which differs from EGL by < 1/255.
+RENDER="${SO101_RENDER:-auto}"
+if [ "$RENDER" = auto ] && [ -e /dev/nvidia0 ]; then
+    if bash scripts/env.sh python tests/egl_workers_selftest.py "$WORKERS"; then RENDER=egl
+    else echo "EGL aborts in worker processes on $(hostname): rendering with OSMesa (CPU) instead"; RENDER=osmesa; export LP_NUM_THREADS="${LP_NUM_THREADS:-2}"; fi
+fi
+export SO101_RENDER="$RENDER"
+echo "==== generate $NUM_DEMOS demos per task of [$TASKS] -> $ROOT (renderer $RENDER)"
 if [ -f "$ROOT/meta/so101_libero.json" ]; then
     echo "dataset exists, not regenerating"
 else

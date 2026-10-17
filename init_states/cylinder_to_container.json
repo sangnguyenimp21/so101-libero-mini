@@ -2,7 +2,7 @@
  "task_id": "cylinder_to_container",
  "language": "Pick up the red cylinder and place it inside the circular container.",
  "layout": "tabletop_v1",
- "scene_hash": "5dd094ae6e573203",
+ "scene_hash": "ed8284913895c4d8",
  "rules_hash": "c323d6299da9b438",
  "seed_base": 10100000,
  "num": 50,

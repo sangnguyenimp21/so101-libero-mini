@@ -254,7 +254,12 @@ def sim_camera() -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     fwd /= np.linalg.norm(fwd)
     right = np.cross(fwd, [0.0, 0.0, 1.0])  # same frame as scene.look_at_quat, with OpenCV's y down / z forward
     right /= np.linalg.norm(right)
-    R = np.stack([right, np.cross(fwd, right), fwd])
+    down = np.cross(fwd, right)
+    # CameraSpec.roll: scene.camera_quat rotates the camera about its own (backward) z axis by +roll after the
+    # look-at, i.e. about the viewing direction by -roll in this frame.
+    roll = math.radians(getattr(FRONT_CAMERA, "roll", 0.0))
+    right, down = math.cos(roll) * right - math.sin(roll) * down, math.cos(roll) * down + math.sin(roll) * right
+    R = np.stack([right, down, fwd])
     return K, R, -R @ pos
 
 

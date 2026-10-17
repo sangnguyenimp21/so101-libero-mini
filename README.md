@@ -30,7 +30,11 @@ fixed, and the adversarial review: [docs/DESIGN.md](docs/DESIGN.md).
 | ACT with recovery demonstrations | tested: 94 % already at 40k steps (baseline 74 %) |
 | SmolVLA language-conditioned multi-task (3 tasks) | trained and evaluated: works but far from ACT's level (see Results) |
 | relative-placement task (`cylinder_left_of_cube`) | expert + evaluation states only; no dataset / policy trained yet |
-| sim-to-real transfer to a real SO-101 | not attempted (see Limitations) |
+| scene matched to the physical setup (near-black arm, measured front camera; `docs/real_setup/`) | implemented, home-pose render checked against the photo |
+| task `red_cube_aside` for the physical setup (zone predicate with a lift requirement, expert plan, 50 frozen states) | implemented, tested (expert 80/80 on training seeds, 97/100 with recovery grasps) |
+| appearance domain randomization for sim-to-real (`--visual-rand`) | implemented, unit-tested, rendered samples checked |
+| ACT policy for the real setup (nominal and randomized data) | see Results (real-setup rows) |
+| real-robot deployment script (`scripts/real/run_policy.py`) + camera check | implemented, tested end to end in the simulator; **not yet run on hardware** |
 
 ## Architecture (and why)
 
@@ -117,6 +121,7 @@ bash scripts/env.sh python -m pytest -q tests -p no:cacheprovider              #
 SO101_RENDER=none bash scripts/env.sh python -m so101_libero.cli.evaluate --policy expert \
     --tasks so101_mini so101_extra --episodes 50 --no-render --workers 6     # expert on all frozen states (~15 s)
 bash scripts/env.sh python -m so101_libero.cli.render_video --task cylinder_to_tray --seeds 0 1 --out outputs/videos
+bash scripts/env.sh python -m so101_libero.cli.render_video --task red_cube_aside --seeds 400000 --out outputs/videos
 
 # 2. demonstrations -> LeRobot dataset (/scratch/e1583535/datasets/lerobot/<repo-id>), validation, reproducibility
 bash scripts/env.sh python -m so101_libero.cli.generate --tasks cylinder_to_tray --num-demos 200 --workers 8 \
@@ -125,9 +130,13 @@ bash scripts/env.sh python -m so101_libero.cli.generate --tasks cylinder_to_tray
 bash scripts/env.sh python -m so101_libero.cli.validate_dataset --repo-id local/my_t1_200 --replay-episodes 10
 bash scripts/env.sh python -m so101_libero.cli.check_reproducibility --repo-id local/so101_mini_t1_200 --episodes 30
 qsub -v TASKS=so101_mini,NUM_DEMOS=200,REPO_ID=local/my_all_200 pbs/generate.pbs   # GPU node (EGL), ~55 min
+# real-setup task: recovery grasps (cube-sized miss offset), 3 deg start-pose noise; add --visual-rand for randomized looks
+qsub -l walltime=01:00:00 -v TASKS=red_cube_aside,NUM_DEMOS=300,REPO_ID=local/my_real_cube_300,GEN_ARGS="--max-grasp-retries 2 --miss-prob 0.3 --miss-offset 0.018 0.026 --home-noise-deg 3 --visual-rand" pbs/generate.pbs
 
 # 3. training (GPU); pbs/train.pbs then evaluates the last checkpoint on the frozen states (OSMesa rendering)
 qsub -v REPO_ID=local/my_t1_200,OUT=outputs/train/my_act_t1,STEPS=80000 pbs/train.pbs     # ~75 min + ~13 min eval
+# real-setup task with W&B logging (training curves + the final simulated evaluation go to the same run)
+qsub -W depend=afterok:<gen_job> -l walltime=03:00:00 -v REPO_ID=local/my_real_cube_300,OUT=outputs/train/my_act_real_cube,STEPS=80000,EVAL_TASKS=red_cube_aside,WANDB=true,WANDB_PROJECT=cs6283,WANDB_ENTITY=tsangb34-national-university-of-singapore-students-union pbs/train.pbs
 qsub -v POLICY=smolvla,REPO_ID=local/my_all_200,OUT=outputs/train/my_smolvla,STEPS=25000,BATCH_SIZE=32,SAVE_FREQ=5000,EVAL_TASKS=so101_mini -l walltime=05:00:00 pbs/train.pbs
 qsub pbs/smoke.pbs                       # ~3 min plumbing test of every stage (log ends "SMOKE TEST PASSED")
 
@@ -135,6 +144,7 @@ qsub pbs/smoke.pbs                       # ~3 min plumbing test of every stage (
 SO101_RENDER=osmesa bash scripts/env.sh python -m so101_libero.cli.evaluate \
     --policy outputs/train/act_t1_200/checkpoints/last/pretrained_model --tasks cylinder_to_tray \
     --episodes 50 --videos 10 --workers 6 --out outputs/eval/my_act_t1_last    # ~10 min, CPU node or GPU node
+#   + --visual-rand: the same frozen states under randomized lighting/colours/camera jitter (robustness check)
 qsub -v CKPT=outputs/train/smolvla_all_200/checkpoints/025000/pretrained_model,TASKS=so101_mini,OUT=outputs/eval/my_smolvla pbs/eval.pbs
 bash scripts/eval_variants.sh <checkpoint> <out_dir> cylinder_to_tray n50 n10 te   # inference settings
 bash scripts/env.sh python -m so101_libero.cli.summarize outputs/train/*/eval*/*/results.json   # markdown table
@@ -173,7 +183,9 @@ native crash costs a retry of that episode, not the evaluation.
 ## Conventions
 
 - World frame: robot base at the origin on the table top (z = 0), facing +x; +y is the robot's left. The front
-  camera faces the robot, so the robot's left appears on the right of the image.
+  camera faces the robot, so the robot's left appears on the right of the image. The front camera is the real one
+  (measured, `docs/real_setup/PROMPT.md`): 67 cm from the base, looking down 56°, vertical FOV 45° of the square image;
+  the table is visible up to ~0.26 m in front of the base.
 - Units: arm joints in degrees, gripper 0 (closed) .. 100 (open), mapped linearly onto the model's -10°..100°.
   Sim zero = LeRobot calibration midpoint (Menagerie derives from `so101_new_calib`). For a real follower with the
   default `use_degrees=False` (values in ±100), convert per joint with its calibration range before deployment.
@@ -200,6 +212,13 @@ Suite `so101_extra` (other goal type, same items; the cube starts right of centr
 |---|---|---|
 | `cylinder_left_of_cube` | Move the red object to the left of the blue object. | LeftOf(red_cylinder, blue_cube) |
 
+Suite `so101_real` (the physical setup of `docs/real_setup/PROMPT.md`: one red cube on an empty table; registry index 4,
+training seeds 400000+, evaluation seeds 10,400,000+):
+
+| id | instruction | goal |
+|---|---|---|
+| `red_cube_aside` | Pick up the red cube and place it aside. | OnTableIn(red_cube, aside_zone): zone x 0.08-0.18, y 0.13-0.20 m (the robot's left = the lower right of the front image) |
+
 Items and start regions (world frame, metres; uniform x, y, yaw; collision-free rejection sampling with 2 cm
 clearance; the arm starts at a fixed home pose):
 
@@ -209,6 +228,7 @@ clearance; the arm starts at a fixed home pose):
 | blue cube | 3 cm | 20 g | 0.16-0.26 / -0.07-0.07 / ±45° (spatial task: 0.17-0.25 / -0.08 to -0.02) |
 | black tray | inner 12 × 9 cm, walls 2.5 cm | 200 g | 0.15-0.21 / -0.19 to -0.13 / ±15° |
 | circular container | inner Ø9 cm, walls 3 cm | 150 g | 0.15-0.21 / 0.13-0.19 / any |
+| red cube (`so101_real` only) | 3 cm | 20 g | 0.14-0.24 / -0.08-0.08 / ±45° |
 
 Success predicates (pure functions of the simulator state, `so101_libero/tasks/base.py`):
 - `In(obj, container)`: the container stands upright (< 30° tilt) on the table, untouched and at rest; the object's
@@ -217,6 +237,9 @@ Success predicates (pure functions of the simulator state, `so101_libero/tasks/b
 - `LeftOf(obj, ref)` ("left" = the robot's left, +y): obj is ≥ 4 cm further left than ref and within 6 cm of it
   front/back (x); both rest directly on the table (not in a container), untouched and at rest; ref moved < 1 cm since the
   start (moving the reference instead of the object does not count).
+- `OnTableIn(obj, zone)` (`red_cube_aside`): obj rests directly on the table with its centre inside the zone, upright (< 30°),
+  released and at rest, ≥ 4 cm from its start, **and was raised ≥ 2 cm at some point in the episode** (the environment
+  tracks the highest point each object reached; pushing the cube into the zone is not "picking it up").
 - A goal must hold for 5 consecutive control steps. Episodes end on success, if an object leaves the table, if the
   simulation diverges (MuJoCo's auto-reset would otherwise teleport everything to the origin), or after 450 steps
   (15 s). Initial states in which the goal already holds are resampled. Expert demonstrations continue past success
@@ -231,6 +254,15 @@ each task's seed range). A pick-and-place goal is one line (`pick_place(...)`); 
 (`WorldState -> bool`) and, for demonstrations, an expert plan (see `PlaceRelative`). New items go in
 `sim/objects.py` and a `Layout`; changing the scene changes its hash, so rebuild the evaluation states with
 `bash scripts/env.sh python -m so101_libero.cli.make_init_states --tasks <suite or id> --force`.
+
+## Real-world deployment (`docs/real_setup/`)
+
+`docs/real_setup/PROMPT.md` is the measured physical setup (front camera pose/FOV, black arm) that the simulation now
+reproduces; `docs/real_setup/DEPLOY.md` is the deployment guide for the red-cube policy: what the policy expects
+(camera placement, units, home pose, cube), the checklist (calibration zero, camera alignment, dry run), and the two
+ways to run it — `scripts/real_act.sh` (your `lerobot-rollout` wrapper with the crop/resize deploy copy) or
+`scripts/real/run_policy.py` (standalone loop with go-home, per-step clamps and logging; `--robot sim` runs the same
+code path in the simulator). `scripts/real/check_cameras.py` blends the real front camera with the sim render.
 
 ## Reproducibility
 
@@ -324,10 +356,13 @@ How to read these:
 
 ## Limitations
 
-- **Simulation only.** No policy was run on a real SO-101. The front camera is a generic placement and the wrist
-  camera is Menagerie's mount with a 90° field of view; neither is calibrated to a real rig, lens distortion is not
-  modelled, and the scene has flat colours with no lighting / texture / camera randomization. Policies trained here
-  will not work on real images without domain randomization and/or real data.
+- **Simulation only.** No policy was run on a real SO-101 yet (`scripts/real/run_policy.py` was tested only with
+  `--robot sim`). The front camera is the measured one (`docs/real_setup/PROMPT.md`; lens distortion is not
+  modelled); the wrist camera is Menagerie's mount with a 90° field of view, not measured on the real gripper. The
+  real table ends at the robot's base while the simulated one continues 22 cm behind it (dark checker floor beyond);
+  the background band above the robot in the front image therefore differs from the real wall/carpet. Appearance
+  randomization (lights, colours, camera jitter, noise; `--visual-rand`) is available and was used for the
+  `*_dr` datasets; textures, real lens distortion and real data are not.
 - **Units for the real arm.** Data use LeRobot's `use_degrees=True` convention (record new real data with
   `--robot.use_degrees=true` to match); the user's existing real SO-101 datasets use `RANGE_M100_100`. In degrees
   mode 0° is the midpoint of each joint's recorded calibration range, so "sim zero = calibration zero" must be

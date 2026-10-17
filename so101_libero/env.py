@@ -37,6 +37,9 @@ class EnvConfig:
     home_noise: float = 0.0  # uniform noise (rad) added to the home pose of the 5 arm joints at reset
     terminate_on_success: bool = True
     max_steps: int | None = None  # default: the task's horizon
+    # Appearance-only domain randomization (lights, colours, camera jitter, image noise; so101_libero/sim/randomize.py)
+    # resampled at every reset from the reset seed (or options["visual_seed"]). Physics is untouched.
+    visual_rand: bool = False
 
 
 class SO101TabletopEnv(gym.Env):
@@ -67,6 +70,13 @@ class SO101TabletopEnv(gym.Env):
                 spaces[f"observation.images.{cam}"] = gym.spaces.Box(0, 255, (H, W, 3), np.uint8)
         self.observation_space = gym.spaces.Dict(spaces)
         self._renderer = mujoco.Renderer(self.model, H, W) if self.cfg.render else None
+        self.randomizer = None
+        self.visual_sample: dict | None = None  # the appearance sample of the current episode (side-file metadata)
+        self._aug_rng = np.random.default_rng(0)
+        if self.cfg.visual_rand and self.cfg.render:
+            from so101_libero.sim.randomize import VisualRandomizer
+
+            self.randomizer = VisualRandomizer(self.model, self.h.cfg.cameras)
 
         self._step = 0
         self._streak = 0
@@ -90,6 +100,11 @@ class SO101TabletopEnv(gym.Env):
                     break
             else:
                 raise RuntimeError(f"{self.task.task_id}: goal holds in 100 sampled initial states")
+        if self.randomizer is not None:
+            vseed = seed if seed is not None else options.get("visual_seed", 0)
+            # data= : camera/light placement is cached in MjData (mj_camlight) and must be refreshed before frame 0
+            self.visual_sample = self.randomizer.randomize(np.random.default_rng([int(vseed), 4242]), data=self.data)
+            self._aug_rng = np.random.default_rng([int(vseed), 4243])
         self._step = 0
         self._streak = 0
         return self._obs(), self._info(False)
@@ -114,6 +129,8 @@ class SO101TabletopEnv(gym.Env):
         if self._diverged():
             raise RuntimeError(f"simulation diverged while settling the initial state {self.init_state}")
         self.world.init_pos = {n: self.world.pos(n) for n in self.h.item_body}
+        self.world.max_lift, self.world.held_xy = {}, {}
+        self.world.track()
 
     def step(self, action):
         a = np.asarray(action, dtype=np.float64).reshape(6)
@@ -126,6 +143,7 @@ class SO101TabletopEnv(gym.Env):
         # Kept as is on purpose: recomputing them would change what the expert reads and so the generated datasets
         # (which are reproducible bit for bit from their seeds); 2 ms is < 0.3 deg of arm motion.
         self._step += 1
+        self.world.track()
         failure = self._failure()
         if failure == "simulation diverged":
             self._streak = 0  # an auto-reset puts every item at the origin: never a success
@@ -147,7 +165,10 @@ class SO101TabletopEnv(gym.Env):
         if self._renderer is None:
             raise RuntimeError("environment created with render=False")
         self._renderer.update_scene(self.data, camera=CAMERAS.get(camera, camera))
-        return self._renderer.render().copy()
+        img = self._renderer.render().copy()
+        if self.randomizer is not None:
+            img = self.randomizer.augment(img, self._aug_rng)
+        return img
 
     def render(self):
         """Front and wrist views side by side (for videos)."""

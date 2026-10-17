@@ -30,13 +30,14 @@ _ENV = None
 _EXPERT_CFG = None
 
 
-def _worker_init(task_ids, image_size, render, expert_kw):
+def _worker_init(task_ids, image_size, render, expert_kw, visual_rand=False, home_noise=0.0):
     import so101_libero  # noqa: F401  (GL setup before mujoco)
     from so101_libero.env import EnvConfig, SO101TabletopEnv
     from so101_libero.expert.pick_place import ExpertConfig
 
     global _ENV, _EXPERT_CFG
-    cfg = EnvConfig(image_size=image_size, render=render, terminate_on_success=False, max_steps=900)
+    cfg = EnvConfig(image_size=image_size, render=render, terminate_on_success=False, max_steps=900,
+                    visual_rand=visual_rand, home_noise=home_noise)
     _ENV = {t: SO101TabletopEnv(t, cfg) for t in task_ids}
     _EXPERT_CFG = ExpertConfig(**expert_kw)
 
@@ -47,6 +48,7 @@ def _run(job):
     task_id, seed = job
     ep = run_expert_episode(_ENV[task_id], seed, cfg=_EXPERT_CFG, record=True)
     out = {"summary": ep.summary()}
+    out["summary"]["visual"] = _ENV[task_id].visual_sample  # appearance sample of this episode (None if disabled)
     if ep.success:
         obs = [o for o, _ in ep.frames]
         out["states"] = np.stack([o["observation.state"] for o in obs])
@@ -87,6 +89,14 @@ def snapshot_sources(path: Path, files: dict[str, bytes] | None = None) -> None:
             tar.addfile(info, io.BytesIO(data))
 
 
+def _visual_rand_config() -> dict:
+    import dataclasses
+
+    from so101_libero.sim.randomize import DEFAULT
+
+    return dataclasses.asdict(DEFAULT)
+
+
 def git_commit() -> str | None:
     try:
         root = Path(__file__).resolve().parents[2]
@@ -111,8 +121,20 @@ def main() -> None:
     ap.add_argument("--max-grasp-retries", type=int, default=0, help="expert retries a failed grasp (recovery demos)")
     ap.add_argument("--miss-prob", type=float, default=0.0,
                     help="probability of a deliberately offset first grasp attempt (needs --max-grasp-retries)")
+    ap.add_argument("--miss-offset", type=float, nargs=2, default=[0.012, 0.02], metavar=("LO", "HI"),
+                    help="sideways offset range (m) of a deliberate miss; use >= the object's half width + 3 mm "
+                         "(0.018 0.026 for a 3 cm cube) so the miss does not become an unstable edge grasp")
     ap.add_argument("--legacy-expert", action="store_true",
                     help="reproduce datasets generated before 2026-10-17 01:45 (ExpertConfig.legacy_ik)")
+    ap.add_argument("--visual-rand", action="store_true",
+                    help="appearance-only domain randomization of the images (lights, colours, camera jitter, "
+                         "noise; so101_libero/sim/randomize.py), seeded by the episode seed; physics unchanged")
+    ap.add_argument("--home-noise-deg", type=float, default=0.0,
+                    help="uniform noise added to the 5 arm joints of the start pose (a real arm never starts exactly "
+                         "at the home pose)")
+    ap.add_argument("--episode-timeout", type=float, default=900.0,
+                    help="seconds to wait for one episode result; a worker that died (e.g. an EGL abort) or hangs "
+                         "then fails the run with exit code 3 instead of blocking until the job's walltime")
     ap.add_argument("--overwrite", action="store_true")
     args = ap.parse_args()
 
@@ -150,13 +172,15 @@ def main() -> None:
     from so101_libero.expert.pick_place import ExpertConfig
 
     expert_kw = {"max_joint_speed": _math.radians(args.max_joint_speed), "legacy_ik": args.legacy_expert,
-                 "max_grasp_retries": args.max_grasp_retries, "miss_prob": args.miss_prob}
+                 "max_grasp_retries": args.max_grasp_retries, "miss_prob": args.miss_prob,
+                 "miss_offset": tuple(args.miss_offset)}
     expert_cfg = dataclasses.asdict(ExpertConfig(**expert_kw))
     ctx = mp.get_context("spawn")
     t0 = time.time()
     stats = {}
     with ctx.Pool(args.workers, initializer=_worker_init,
-                  initargs=(task_ids, tuple(args.image_size), True, expert_kw)) as pool:
+                  initargs=(task_ids, tuple(args.image_size), True, expert_kw, args.visual_rand,
+                            _math.radians(args.home_noise_deg))) as pool:
         for task_id in task_ids:
             task = TASKS[task_id]
             base = args.seed_start + all_ids.index(task_id) * TASK_SEED_STRIDE
@@ -168,7 +192,13 @@ def main() -> None:
             for job in itertools.islice(jobs, window):
                 pending.append(pool.apply_async(_run, (job,)))
             while pending and saved < args.num_demos:
-                res = pending.popleft().get()
+                try:
+                    res = pending.popleft().get(timeout=args.episode_timeout)
+                except mp.TimeoutError:
+                    print(f"[{task_id}] no episode result within {args.episode_timeout:.0f} s: a worker died or hangs "
+                          "(an EGL abort shows as 'Fatal Python error' above); aborting", file=sys.stderr, flush=True)
+                    pool.terminate()
+                    sys.exit(3)
                 nxt = next(jobs, None)
                 if nxt is not None:
                     pending.append(pool.apply_async(_run, (nxt,)))
@@ -176,7 +206,7 @@ def main() -> None:
                 if "states" in res:
                     record = {k: s[k] for k in ("seed", "task_id", "steps", "success_step", "max_ik_err_mm",
                                                 "grasp", "phases", "init_state", "regrasps", "deliberate_miss",
-                                                "regrasp_frames")}
+                                                "regrasp_frames", "visual")}
                     record["task"] = task.language
                     idx = writer.add_episode(task.language, res["states"], res["actions"], res["images"], record)
                     saved += 1
@@ -188,7 +218,7 @@ def main() -> None:
                                                           "init_state")})
                     print(f"[{task_id}] seed {s['seed']}: REJECTED ({s['failure']})", flush=True)
             for r in pending:  # finish in-flight work before the next task (results unused)
-                r.wait()
+                r.wait(args.episode_timeout)
             attempts = saved + sum(fails.values())
             stats[task_id] = {"saved": saved, "attempts_used": attempts, "failures": dict(fails),
                               "expert_success_rate": round(saved / max(attempts, 1), 4), "seed_base": base}
@@ -201,7 +231,8 @@ def main() -> None:
         "repo_id": args.repo_id, "tasks": task_ids, "num_demos_per_task": args.num_demos,
         "max_attempts_per_task": max_attempts, "seed_start": args.seed_start, "task_seed_stride": TASK_SEED_STRIDE,
         "image_size": list(args.image_size), "fps": fps, "stats": stats, "git_commit": git_commit(),
-        **started, "expert_config": expert_cfg,
+        **started, "expert_config": expert_cfg, "visual_rand": args.visual_rand, "home_noise_deg": args.home_noise_deg,
+        "visual_rand_config": _visual_rand_config() if args.visual_rand else None,
         "so101_libero_version": so101_libero.__version__, "wall_time_s": round(time.time() - t0, 1),
         "render_backend": os.environ.get("MUJOCO_GL"),
     })

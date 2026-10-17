@@ -113,3 +113,100 @@ def test_expert_solves_task(task_id):
 
 def test_suite_registry():
     assert [t.task_id for t in get_suite("so101_mini")] == ["cylinder_to_tray", "cylinder_to_container", "cube_to_tray"]
+
+
+def test_real_setup_scene_and_registry():
+    from so101_libero.env import EnvConfig, SO101TabletopEnv
+    from so101_libero.sim.scene import FRONT_CAMERA
+
+    assert FRONT_CAMERA.roll == pytest.approx(2.3) and FRONT_CAMERA.fovy == pytest.approx(45.0)
+    assert [t.task_id for t in get_suite("so101_real")] == ["red_cube_aside"]
+    env = SO101TabletopEnv("red_cube_aside", EnvConfig(render=False))
+    m = env.model
+    assert np.allclose(m.geom("red_cube_geom").size, [0.015] * 3)
+    assert set(env.h.objects) == {"red_cube"} and not env.h.containers
+    cam = m.camera("front")
+    assert np.allclose(m.cam_pos[cam.id], [0.374, 0.009, 0.557]) and m.cam_fovy[cam.id] == pytest.approx(45.0)
+    for i in range(m.nmat):  # every robot material is near black, table/floor keep their own colours
+        name = m.material(i).name
+        if name not in ("table_mat", "floor_mat"):
+            assert np.allclose(m.mat_rgba[i][:3], 0.12, atol=1e-6), name
+
+
+def test_on_table_in_region_requires_lift_rest_release_and_zone():
+    import mujoco as mj
+
+    from so101_libero.env import EnvConfig, SO101TabletopEnv
+    from so101_libero.tasks.registry import ASIDE_ZONE
+
+    env = SO101TabletopEnv("red_cube_aside", EnvConfig(render=False, terminate_on_success=False))
+    env.reset(seed=1)
+    pred = env.task.goal[0]
+    ws = env.world
+    assert not pred(ws)  # starts outside the zone, never lifted
+    cx, cy = (ASIDE_ZONE.x[0] + ASIDE_ZONE.x[1]) / 2, (ASIDE_ZONE.y[0] + ASIDE_ZONE.y[1]) / 2
+    _place(env, "red_cube", [cx, cy, 0.0151])
+    for _ in range(100):
+        mj.mj_step(env.model, env.data)
+    assert not pred(ws)  # in the zone, at rest, but it was pushed there, never raised 2 cm
+    ws.max_lift["red_cube"] = 0.05  # as if it had been carried ...
+    assert not pred(ws)  # ... but never released here (no held position)
+    ws.held_xy["red_cube"] = np.array([cx + 0.2, cy])  # released 20 cm away, then shoved into the zone
+    assert not pred(ws)
+    ws.held_xy["red_cube"] = np.array([cx + 0.02, cy - 0.01])  # released right here
+    assert pred(ws)
+    assert ws.tcp_pos()[2] > 0.1 or np.linalg.norm(ws.tcp_pos() - ws.pos("red_cube")) > 0.04  # arm is at home: far away
+    # the cube lying on another face (rolled 90 deg) is still a placed cube
+    adr = env.h.item_qpos_adr["red_cube"]
+    _place(env, "red_cube", [cx, cy, 0.0151])
+    env.data.qpos[adr + 3:adr + 7] = [math.cos(math.pi / 4), math.sin(math.pi / 4), 0, 0]
+    for _ in range(100):
+        mj.mj_step(env.model, env.data)
+    assert ws.upright("red_cube") and pred(ws)
+    _place(env, "red_cube", [cx, cy, 0.0151])
+    env.data.qvel[env.h.item_dof_adr["red_cube"]] = 0.2  # moving: not at rest
+    mj.mj_forward(env.model, env.data)
+    assert not pred(ws)
+    _place(env, "red_cube", [ASIDE_ZONE.x[1] + 0.03, cy, 0.0151])  # outside the zone
+    for _ in range(50):
+        mj.mj_step(env.model, env.data)
+    assert not pred(ws)
+    _place(env, "red_cube", [cx, cy, 0.06])  # hovering above the zone (held / dropped from above)
+    mj.mj_forward(env.model, env.data)
+    assert not pred(ws)
+    # a tipped cube (resting on an edge is unstable; check the orientation test directly): 40 deg roll
+    adr = env.h.item_qpos_adr["red_cube"]
+    _place(env, "red_cube", [cx, cy, 0.0151])
+    env.data.qpos[adr + 3:adr + 7] = [math.cos(math.radians(20)), math.sin(math.radians(20)), 0, 0]
+    mj.mj_forward(env.model, env.data)
+    assert not ws.upright("red_cube")
+
+
+def test_env_tracks_lift_and_resets_it():
+    from so101_libero.env import EnvConfig, SO101TabletopEnv
+    from so101_libero.expert.rollout import run_expert_episode
+
+    env = SO101TabletopEnv("red_cube_aside", EnvConfig(render=False, terminate_on_success=False, max_steps=900))
+    ep = run_expert_episode(env, 400001)
+    assert ep.success and env.world.lifted("red_cube") and env.world.max_lift["red_cube"] > 0.04
+    assert env.world.release_offset("red_cube") < 0.02  # released where it now rests
+    env.reset(seed=400002)
+    assert env.world.max_lift.get("red_cube", 0.0) < 0.002 and "red_cube" not in env.world.held_xy
+
+
+def test_pushed_or_flicked_cube_is_not_a_success():
+    import mujoco as mj
+
+    from so101_libero.env import EnvConfig, SO101TabletopEnv
+    from so101_libero.tasks.registry import ASIDE_ZONE
+
+    env = SO101TabletopEnv("red_cube_aside", EnvConfig(render=False, terminate_on_success=False))
+    env.reset(seed=4)
+    cx, cy = (ASIDE_ZONE.x[0] + ASIDE_ZONE.x[1]) / 2, (ASIDE_ZONE.y[0] + ASIDE_ZONE.y[1]) / 2
+    # a ballistic hop: thrown 5 cm up without any grasp, lands in the zone -> max_lift stays 0 (not carried)
+    _place(env, "red_cube", [cx, cy, 0.0151])
+    env.data.qvel[env.h.item_dof_adr["red_cube"] + 2] = 1.0
+    for _ in range(600):
+        mj.mj_step(env.model, env.data)
+        env.world.track()
+    assert env.world.max_lift.get("red_cube", 0.0) == 0.0 and not env.task.goal[0](env.world)

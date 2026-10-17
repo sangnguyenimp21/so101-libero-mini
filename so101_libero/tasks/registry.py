@@ -8,8 +8,9 @@ from __future__ import annotations
 
 import math
 
-from so101_libero.sim.objects import BLACK_TRAY, BLUE_CUBE, RED_CYLINDER, ROUND_CONTAINER
-from so101_libero.tasks.base import InContainer, Layout, PickPlace, PlaceRelative, Region, RelativeTo, Task
+from so101_libero.sim.objects import BLACK_TRAY, BLUE_CUBE, RED_CUBE, RED_CYLINDER, ROUND_CONTAINER
+from so101_libero.tasks.base import (InContainer, Layout, OnTableInRegion, PickPlace, PlaceAt, PlaceRelative, Region,
+                                     RelativeTo, Task)
 
 DEG = math.pi / 180
 
@@ -65,6 +66,22 @@ TABLETOP_SPATIAL = Layout(
 register(Task(task_id="cylinder_left_of_cube", language="Move the red object to the left of the blue object.",
               layout=TABLETOP_SPATIAL, goal=(RelativeTo("red_cylinder", "blue_cube", "left"),),
               plan=PlaceRelative("red_cylinder", "blue_cube", "left")), suite="so101_extra")
+
+
+# Suite so101_real: the physical setup (docs/real_setup/PROMPT.md): a single 3 cm red cube on an otherwise empty
+# table. "Aside" is a fixed zone on the robot's LEFT (+y; the right-hand side of the front camera image). Both regions
+# lie inside the real front camera's view (table x <= ~0.26 m is visible) and inside the arm's top-down workspace
+# (0.13-0.22 m from the pan axis for the release spot; grasps also use tilted approaches).
+ASIDE_ZONE = Region(x=(0.08, 0.18), y=(0.13, 0.20))
+REAL_TABLETOP = Layout(
+    name="real_tabletop_v1",
+    objects=(RED_CUBE,),
+    containers=(),
+    regions={"red_cube": Region(x=(0.14, 0.24), y=(-0.08, 0.08), yaw=(-45 * DEG, 45 * DEG))},
+)
+register(Task(task_id="red_cube_aside", language="Pick up the red cube and place it aside.", layout=REAL_TABLETOP,
+              goal=(OnTableInRegion("red_cube", ASIDE_ZONE, region_name="aside_zone"),),
+              plan=PlaceAt("red_cube", ASIDE_ZONE)), suite="so101_real")
 
 
 def get_task(task_id: str) -> Task:

@@ -22,7 +22,7 @@ import numpy as np
 from so101_libero.env import SO101TabletopEnv
 from so101_libero.expert.ik import IKSolver, grasp_frame, wrap_angle
 from so101_libero.sim.robot import gripper_rad_to_lerobot
-from so101_libero.tasks.base import SIDES, PickPlace, PlaceRelative
+from so101_libero.tasks.base import SIDES, PickPlace, PlaceAt, PlaceRelative
 
 DEG = math.pi / 180
 
@@ -74,7 +74,7 @@ class PlanError(RuntimeError):
 class PickPlaceExpert:
     """Call ``act()`` once per control step; it returns the action or None once ``done``."""
 
-    def __init__(self, env: SO101TabletopEnv, plan: PickPlace | PlaceRelative, rng: np.random.Generator,
+    def __init__(self, env: SO101TabletopEnv, plan: PickPlace | PlaceRelative | PlaceAt, rng: np.random.Generator,
                  cfg: ExpertConfig | None = None):
         self.env, self.plan, self.rng = env, plan, rng
         self.cfg = cfg or ExpertConfig()
@@ -232,6 +232,8 @@ class PickPlaceExpert:
     def _plan_transport(self) -> None:
         if isinstance(self.plan, PlaceRelative):
             return self._plan_transport_relative()
+        if isinstance(self.plan, PlaceAt):
+            return self._plan_transport_at()
         c = self.cfg
         center = self.ws.pos(self.plan.target)
         rot = self.ws.rot(self.plan.target)
@@ -271,6 +273,42 @@ class PickPlaceExpert:
         self._place_target = tgt
         tcp = self.ws.tcp_pos()
         self._arc(tcp, np.r_[tgt[:2], tcp[2]], self._closed)
+
+    def _plan_transport_at(self) -> None:
+        """Random table spot inside the plan's region (shrunk by its margin) that is clear of other items and
+        reachable at carry and release height; up to 20 candidates, else the episode fails (recorded)."""
+        p, c = self.plan, self.cfg
+        lo = np.array([p.region.x[0], p.region.y[0]]) + p.margin
+        hi = np.array([p.region.x[1], p.region.y[1]]) - p.margin
+        if np.any(hi < lo):
+            raise PlanError("placement region smaller than its margin")
+        tcp = self.ws.tcp_pos()
+        z_release = self._grasp_z + c.table_release_gap[1]
+        for _ in range(20):
+            tgt = np.r_[self.rng.uniform(lo, hi), 0.0]
+            yaw = self._yaw_at(tgt)
+            if self._spot_blocked(tgt) or self._jaw_clearance(tgt, yaw, moving_reach=0.046) < 0.004:
+                continue
+            try:
+                self._solve(np.r_[tgt[:2], tcp[2]], yaw)
+                self._solve(np.r_[tgt[:2], z_release], yaw)
+            except PlanError:
+                continue
+            self._place_target = tgt
+            self._arc(tcp, np.r_[tgt[:2], tcp[2]], self._closed)
+            return
+        raise PlanError("no reachable free spot in the placement region")
+
+    def _spot_blocked(self, tgt: np.ndarray, min_gap: float = 0.008) -> bool:
+        """Would the object placed at ``tgt`` overlap (within ``min_gap``) another item?"""
+        for name in (*self.env.h.objects, *self.env.h.containers):
+            if name == self.plan.obj:
+                continue
+            item = self.env.h.objects.get(name) or self.env.h.containers[name]
+            gap = float(np.linalg.norm(self.ws.pos(name)[:2] - tgt[:2])) - item.footprint_radius - self.obj.footprint_radius
+            if gap < min_gap:
+                return True
+        return False
 
     def _choose_grasp_yaw(self, obj_pos: np.ndarray) -> float:
         """Jaw closing direction: aligned with a cube face (any yaw for a cylinder), preferring small wrist roll

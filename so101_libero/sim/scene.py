@@ -37,11 +37,14 @@ class CameraSpec:
     pos: tuple[float, float, float]
     lookat: tuple[float, float, float]
     fovy: float = 45.0
+    roll: float = 0.0  # degrees about the viewing axis, applied after the look-at orientation
 
 
-# Third-person view facing the robot from the front, elevated ~40 deg (LIBERO "agentview"-like): the whole
-# workspace (tray on the image left, round container on the right) and the arm are visible.
-FRONT_CAMERA = CameraSpec("front", pos=(0.56, 0.0, 0.46), lookat=(0.15, 0.0, 0.01), fovy=52.0)
+# The real front camera (docs/real_setup/PROMPT.md, measured on the physical setup): 67 cm from the base, looking
+# down ~56 deg at the base from the front, so the robot stands in the upper middle of the square image and the
+# workspace fills its lower part. The real policy image is the centre square of the camera frame resized to
+# 256x256, which this camera renders directly (fovy = vertical field of view of that square).
+FRONT_CAMERA = CameraSpec("front", pos=(0.374, 0.009, 0.557), lookat=(0.005, 0.003, 0.0), fovy=45.0, roll=2.3)
 
 
 @dataclass(frozen=True)
@@ -57,6 +60,9 @@ class SceneConfig:
     lowpoly_visuals: bool = True  # decimated visual meshes: same physics, ~4x faster CPU rendering
     gripper_force: float = 1.2  # N*m actuator limit of the gripper servo
     elbow_max_deg: float = 90.0
+    # The real arm is printed in matte near-black plastic: every robot material (the vendored XML's yellow/black)
+    # is overridden with this colour; the motors keep their own (dark) material names but get the same colour.
+    robot_rgba: tuple[float, float, float, float] = (0.12, 0.12, 0.12, 1.0)
 
 
 def look_at_quat(pos, target, up=(0.0, 0.0, 1.0)) -> np.ndarray:
@@ -73,9 +79,27 @@ def look_at_quat(pos, target, up=(0.0, 0.0, 1.0)) -> np.ndarray:
     return quat
 
 
+def camera_quat(cam: CameraSpec) -> np.ndarray:
+    """Orientation of a ``CameraSpec``: look-at, then ``roll`` degrees about the camera's own viewing axis."""
+    quat = look_at_quat(cam.pos, cam.lookat)
+    if cam.roll:
+        r, out = np.zeros(4), np.zeros(4)
+        mujoco.mju_axisAngle2Quat(r, np.array([0.0, 0.0, 1.0]), np.radians(cam.roll))
+        mujoco.mju_mulQuat(out, quat, r)
+        quat = out
+    return quat
+
+
 def build_spec(cfg: SceneConfig) -> mujoco.MjSpec:
     spec = mujoco.MjSpec.from_file(str(ROBOT_XML))
     spec.modelname = "so101_tabletop"
+    # Robot colour: matte near black like the real arm (geometry and physics untouched). At this point the spec
+    # holds only the robot's materials (table_mat / floor_mat are added below).
+    for m in spec.materials:
+        if m.name not in ("table_mat", "floor_mat"):
+            m.rgba = list(cfg.robot_rgba)
+            m.specular = 0.15
+            m.shininess = 0.2
     if cfg.lowpoly_visuals:
         visual = {g.meshname for g in spec.geoms if g.type == mujoco.mjtGeom.mjGEOM_MESH and g.contype == 0
                   and g.conaffinity == 0}
@@ -145,7 +169,7 @@ def build_spec(cfg: SceneConfig) -> mujoco.MjSpec:
                     specular=[0, 0, 0], castshadow=False)
 
     for cam in cfg.cameras:
-        world.add_camera(name=cam.name, pos=list(cam.pos), quat=list(look_at_quat(cam.pos, cam.lookat)), fovy=cam.fovy)
+        world.add_camera(name=cam.name, pos=list(cam.pos), quat=list(camera_quat(cam)), fovy=cam.fovy)
 
     for c in cfg.containers:
         add_container(world, c)

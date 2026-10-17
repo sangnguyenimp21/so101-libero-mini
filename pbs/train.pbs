@@ -13,6 +13,9 @@
 #   BATCH_SIZE [16] SAVE_FREQ [10000] EVAL_TASKS [cylinder_to_tray] EVAL_EPISODES [50] EVAL_VIDEOS [10]
 #   EVAL_CKPTS ["last"; "all" = every saved checkpoint; "none" = skip] EVAL_WORKERS [4] EVAL_EGL [0]
 #   EVAL_ARGS [extra evaluate flags, space-separated, e.g. "--n-action-steps 25"] TRAIN_ARGS [extra lerobot-train flags]
+#   WANDB [false] WANDB_PROJECT WANDB_ENTITY WANDB_MODE [online if api.wandb.ai is reachable from the node, else offline]
+#   (W&B: the training curves go to the run named after OUT; the evaluation success rates and a few videos are posted to
+#   the same run afterwards by scripts/wandb_log_eval.py)
 # The job waits (up to WAIT_MIN [90] minutes) for a dataset that is still being generated (meta/so101_libero.json),
 # refuses datasets that missed their demo target, and validates the dataset first if it has not been validated.
 # Evaluation renders with OSMesa (CPU; policy on the GPU): EGL next to CUDA aborts on some nodes. EVAL_EGL=1 keeps
@@ -53,7 +56,13 @@ sys.exit(0 if ok else 1)" 2>/dev/null; then
     echo "==== validating $DS"
     bash scripts/env.sh python -m so101_libero.cli.validate_dataset --repo-id "$REPO_ID" --root "$DS" --replay-episodes 10
 fi
-echo "==== train $POLICY on $REPO_ID -> $OUT (${STEPS:-default} steps, batch $BATCH_SIZE) extra: ${TRAIN_ARGS:-none}"
+if [ "${WANDB:-false}" = true ] && [ -z "${WANDB_MODE:-}" ]; then
+    # Compute nodes may have no route to the internet: then log offline and sync from the login node afterwards.
+    if curl -sS -m 20 -o /dev/null https://api.wandb.ai; then export WANDB_MODE=online
+    else export WANDB_MODE=offline; echo "api.wandb.ai unreachable from $(hostname): W&B logs offline; after the job run: bash scripts/env.sh wandb sync $OUT/wandb/latest-run"; fi
+fi
+export WANDB WANDB_PROJECT WANDB_ENTITY WANDB_MODE
+echo "==== train $POLICY on $REPO_ID -> $OUT (${STEPS:-default} steps, batch $BATCH_SIZE, wandb ${WANDB:-false}/${WANDB_MODE:-}) extra: ${TRAIN_ARGS:-none}"
 # shellcheck disable=SC2086
 bash scripts/train.sh "$REPO_ID" "$OUT" ${TRAIN_ARGS:-} 2>&1 | grep -v -e "Errno 16" -e "_rmtree_safe_fd" -e "onexc"
 set +e
@@ -83,6 +92,23 @@ for c in $CKPTS; do
 done
 echo "==== success rates"
 bash scripts/env.sh python -m so101_libero.cli.summarize "$OUT"/eval/*/results.json 2>/dev/null || true
+# Post the simulated success rates + videos to the training run. Offline: W&B would open a second offline run with
+# the same id, so the evaluation is posted after `wandb sync` from the login node instead (instructions at the end).
+if [ "${WANDB:-false}" = true ] && [ "${WANDB_MODE:-online}" != offline ] && [ -n "$CKPTS" ]; then
+    for c in $CKPTS; do
+        name="$c"; [ "$c" = last ] && name="last_$(tr -dc 0-9 < "$OUT/checkpoints/last/training_state/training_step.json")"
+        [ -f "$OUT/eval/$name/results.json" ] && bash scripts/env.sh python scripts/wandb_log_eval.py --run-dir "$OUT" \
+            --results "$OUT/eval/$name/results.json" --label "$name" --videos 4 || echo "wandb eval logging failed (non-fatal)"
+    done
+fi
+if [ "${WANDB:-false}" = true ] && [ "${WANDB_MODE:-online}" = offline ]; then
+    echo "==== W&B was offline on this node. From the login node run:"
+    echo "  bash scripts/env.sh wandb sync $OUT/wandb/offline-run-*        # the training curves"
+    for c in $CKPTS; do
+        name="$c"; [ "$c" = last ] && name="last_$(tr -dc 0-9 < "$OUT/checkpoints/last/training_state/training_step.json")"
+        echo "  WANDB_PROJECT=$WANDB_PROJECT WANDB_ENTITY=$WANDB_ENTITY bash scripts/env.sh python scripts/wandb_log_eval.py --run-dir $OUT --results $OUT/eval/$name/results.json --label $name"
+    done
+fi
 echo "==== DONE $(date)"
 exit "$FAILED"
 } > "logs/pbs/$JOB.log" 2>&1

@@ -2,7 +2,7 @@
  "task_id": "cylinder_to_tray",
  "language": "Pick up the red cylinder and place it inside the black tray.",
  "layout": "tabletop_v1",
- "scene_hash": "5dd094ae6e573203",
+ "scene_hash": "ed8284913895c4d8",
  "rules_hash": "2b8d22f20e4d0ad5",
  "seed_base": 10000000,
  "num": 50,

@@ -2,7 +2,7 @@
  "task_id": "cylinder_left_of_cube",
  "language": "Move the red object to the left of the blue object.",
  "layout": "tabletop_v1_spatial",
- "scene_hash": "5dd094ae6e573203",
+ "scene_hash": "ed8284913895c4d8",
  "rules_hash": "096ad350496391bd",
  "seed_base": 10300000,
  "num": 50,

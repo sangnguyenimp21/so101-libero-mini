@@ -142,10 +142,11 @@ def add_container(parent: mujoco.MjsBody, spec: ContainerSpec) -> mujoco.MjsBody
 # The default catalogue. Sizes follow the real objects: 3 cm cube, cylinder 3 cm diameter x 3 cm tall.
 RED_CYLINDER = ObjectSpec("red_cylinder", "cylinder", (0.015, 0.015), (0.85, 0.12, 0.10, 1.0), "red cylinder")
 BLUE_CUBE = ObjectSpec("blue_cube", "box", (0.015, 0.015, 0.015), (0.10, 0.30, 0.85, 1.0), "blue cube")
+RED_CUBE = ObjectSpec("red_cube", "box", (0.015, 0.015, 0.015), (0.85, 0.12, 0.10, 1.0), "red cube")
 BLACK_TRAY = ContainerSpec("black_tray", "tray", (0.060, 0.045), (0.06, 0.06, 0.06, 1.0), "black tray", mass=0.2)
 ROUND_CONTAINER = ContainerSpec(
     "round_container", "round", (0.045,), (0.92, 0.92, 0.88, 1.0), "circular container", wall_height=0.03, mass=0.15
 )
 
-OBJECTS = {o.name: o for o in (RED_CYLINDER, BLUE_CUBE)}
+OBJECTS = {o.name: o for o in (RED_CYLINDER, BLUE_CUBE, RED_CUBE)}
 CONTAINERS = {c.name: c for c in (BLACK_TRAY, ROUND_CONTAINER)}

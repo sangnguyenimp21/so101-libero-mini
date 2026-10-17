@@ -123,3 +123,101 @@ cap in `evaluate` never triggered (the crashed episode was removed from the runn
 fixed and covered by `tests/test_eval_crash_retry.py`; it also corrected ~20 small numbers in the docs and made the
 README examples safe to copy (new output names). Historical measurements quoted above (e.g. 0/6 grasps with the
 TheRobotStudio MJCF, the 7°/step jumps, 39/50 exploit successes) come from development runs that were not stored.
+
+## Real-setup round (2026-10-17 afternoon): matching the physical robot, task `red_cube_aside`
+
+Request: make the simulation match the user's physical setup (`docs/real_setup/PROMPT.md`: near-black arm, the front
+camera as measured on the real rig) and train a deployable policy for "pick up the red cube and place it aside".
+
+- **Scene.** `CameraSpec` gained a `roll` (degrees about the viewing axis, applied after the look-at orientation);
+  `FRONT_CAMERA` is now the measured camera: position (0.374, 0.009, 0.557) m, looking at (0.005, 0.003, 0), roll
+  2.3°, fovy 45° (vertical FOV of the square image the policy sees: the real pipeline takes the centre square of the
+  camera frame and resizes it to 256x256, which the simulated camera renders directly). All robot materials are
+  overridden to matte near black (`SceneConfig.robot_rgba`, specular 0.15, shininess 0.2); table, floor, items,
+  lights and the wrist camera are unchanged. Physics is untouched, so the frozen evaluation states of the old tasks
+  were rebuilt with identical physical states (0 rejected candidates, same seeds) under the new scene hash.
+  `outputs/sim_front_home.png` is the home-pose check render (robot upper middle, steep view, workspace below).
+- **Visible workspace.** With this camera the table is visible up to x ≈ 0.26 m in front of the base (the bottom
+  edge of the image) and about ±0.25 m sideways, so the old start regions (x up to 0.26) put items on the image
+  edge; the new task keeps items at x ≤ 0.24.
+- **Task** `red_cube_aside` (suite `so101_real`, registry index 4 → training seeds 400000+, evaluation seeds
+  10,400,000+): a single 3 cm red cube (`RED_CUBE`, same mass/friction as the blue cube) on an otherwise empty
+  table, start region x 0.14–0.24, y ±0.08, yaw ±45°. "Aside" is a fixed zone on the robot's left,
+  `ASIDE_ZONE` = x 0.08–0.18, y 0.13–0.20 (the lower right of the front image). Nothing else is on the table: the
+  user's demo table will hold only the cube (a policy trained with the trays as distractors would need their exact
+  look; distractors are a possible later extension of the layout).
+- **Goal predicate** `OnTableInRegion(obj, region)`: the cube rests on the table (not in a container, ≤ 2 mm
+  height tolerance), upright (< 30° tilt), its centre inside the zone, released (no robot contact), at rest
+  (< 5 cm/s), moved ≥ 4 cm from its start, and **was lifted ≥ 2 cm at some point in the episode**. The lift
+  requirement is per-episode history, not a function of the current state alone: `WorldState.track()` (called by the
+  environment after every control step and reset at `_apply_init`) keeps the highest point each object's bottom
+  reached. Without it, pushing the cube into the zone would count as "pick up ... and place". The rules hash covers
+  the predicate (regions included), so changing the zone invalidates the evaluation states as intended.
+- **Expert plan** `PlaceAt(obj, region, margin=0.025)`: same grasp as the other tasks, then an arc at carry height to
+  a random spot inside the zone shrunk by the margin (cube half-size + jitter), chosen among up to 20 candidates that
+  are clear of other items and reachable (IK at carry and release height), then lowering to 3–6 mm above the table,
+  a 20° release, retreat and hold. Physics-only check on 80 training seeds: 80/80 successes, 152–210 steps
+  (5–7 s), max slip in the jaws 2.45 mm. With recovery demonstrations and a 3° start-pose noise (the settings used
+  for the datasets below) 97/100: the 3 rejections were two unreachable pre-grasp/carry poses for a cube pushed to
+  ~0.13 m from the base and one drop (all recorded, none saved).
+- **Deliberate-miss offset.** The recovery mechanism's 12–20 mm sideways miss, tuned for the Ø3 cm cylinder,
+  produced marginal edge grasps on the cube (3 drops in 60 episodes: both jaws touch the cube's edge, "grasped"
+  holds, the cube slips during transport). `generate --miss-offset LO HI` (default unchanged) sets it; the cube
+  datasets use 18–26 mm (≥ half width + 3 mm), which gives clean misses followed by re-grasps (25 re-grasps in 100
+  episodes, 1 drop).
+- **Start-pose noise.** `generate --home-noise-deg D` adds uniform noise to the five arm joints of the start pose
+  (`EnvConfig.home_noise`); a real arm never starts exactly at the home pose. The evaluation states keep the exact
+  home pose.
+- **Evaluation states** for `red_cube_aside`: 50 states from 51 candidates (one rejected: "no collision-free grasp
+  yaw", a cube close to the base at an unlucky yaw), expert 158–199 steps.
+- **W&B.** Training logs go to the user's project (`WANDB=true WANDB_PROJECT=cs6283 WANDB_ENTITY=...` on
+  `pbs/train.pbs`; `scripts/train.sh` passes `--wandb.entity/--wandb.mode`). GPU nodes reach api.wandb.ai (probe job
+  `pbs/net_probe.pbs`, credentials from `~/.netrc` inside the container); `train.pbs` still checks reachability and
+  falls back to offline logging with a `wandb sync` hint. After the evaluation, `scripts/wandb_log_eval.py` resumes
+  the run and posts the simulated success rates, Wilson intervals, outcome counts and a few evaluation videos.
+- **Appearance randomization** (`so101_libero/sim/randomize.py`, `generate/evaluate --visual-rand`,
+  `EnvConfig.visual_rand`). Per episode, seeded by the episode seed (`default_rng([seed, 4242])`, image noise from
+  `[seed, 4243]`), the model's visual fields are resampled in place: the two lights (position ±0.35 m, re-aimed at the
+  workspace, diffuse/specular gain 0.6–1.2 with a ±10 % warm/cool tint), the headlight (0.7–1.15), the table material
+  (0.7–1.06 brightness, ±8 % per channel), floor (0.6–1.4), robot materials (0.6–1.8 of the 0.12 near black), item
+  colours (0.75–1.15, ±10 % per channel), the front camera (position and look-at ±1.5 cm, roll ±1.5°, fovy ±2°), the
+  wrist camera (±3 mm, ±2°, fovy ±5°), plus per-episode image post-processing (contrast/brightness ±10 %, gaussian
+  noise σ ≤ 3/255, a 30 % chance of a 0.3–0.8 px blur). The light/table ranges are narrower than first planned: the
+  nominal scene already sits at the saturation knee (15 % of front-image pixels ≥ 250), and ×1.5 gains washed out
+  the table in a tenth of the samples (measured on 96 samples: p90 saturation now 6 %, robot/table contrast ≥ 76/255,
+  red/blue dominance of the objects never below 4× / 2×). Physics is untouched (qpos bit-identical with and without
+  randomization, unit-tested), so datasets stay bit-reproducible in states and actions and the open-loop replay
+  validation still applies; the appearance sample is stored per episode (`visual` in the episodes side file) and the
+  config in `meta/so101_libero.json`. Camera and light placement live in `MjData` (`mj_camlight`), so the randomizer
+  is given the data at reset: otherwise frame 0 of an episode would show the previous episode's camera (found by the
+  module's author, 17/255 mean difference). The nominal evaluation states are evaluated both as they are and with
+  `--visual-rand` (same physical states, randomized looks) to measure the appearance robustness of each policy.
+
+### Review of this round (adversarial workflow, partly cut short by an API spend limit) and fixes
+
+Confirmed and fixed:
+- **"Placed" was under-specified.** `OnTableInRegion` accepted (a) a cube resting on *another* face as "not upright"
+  (false negative, and `classify` called it "not settled"), (b) a lift of any kind (a flicked cube hopping 2 cm, no
+  grasp) and (c) a lift somewhere else followed by shoving the cube into the zone, and (d) success 5 steps after the
+  release with the jaws still around the cube (knocking it over while retreating would not count). Now
+  `WorldState.track()` records the carry height and the held position **only while the object is pinched between
+  both jaws**; the predicate requires the carry (≥ 2 cm), a release point within 5 cm of where the cube rests, the
+  TCP ≥ 4 cm away from the cube, and boxes may rest on any face. `classify` uses the predicate's own definitions
+  (`lift_below_min`, `in_zone_tipped_or_stacked`, `in_zone_but_pushed_after_release`, `in_zone_gripper_still_near`)
+  and records `max_lift_cm`. The rules hash changed, so the evaluation states were rebuilt (same 50 states, expert
+  158–199 steps); the nominal dataset's demonstrations satisfy the stricter goal (open-loop replay check).
+- **Evaluations with episode errors looked complete.** `evaluate` now exits with code 2 when any episode errored
+  (results are still written with `complete: false`), so `train.pbs`/`eval_real.pbs` flag the run.
+- **W&B offline fallback** would have posted the evaluation into a second offline run; now the evaluation is posted
+  only when online, and the job prints the exact `wandb sync` + `wandb_log_eval.py` commands at the end otherwise.
+  A resumed training also receives `--wandb.mode`.
+- **`scripts/camera_align.py` ignored `CameraSpec.roll`** in its sim camera matrix (numerically verified against
+  `scene.camera_quat` now). Its printed marker sheet is placed 17.5 cm in front of the pan axis and would reach
+  x ≈ 0.31 m, beyond the measured camera's view (x ≤ 0.26): use the outline mode (default) with this camera.
+- Documented gaps: the simulated table extends 22 cm behind the base (the real one ends there); a cube at the
+  far-left corner of the start region touches the bottom image border (its top face is always visible).
+
+Infrastructure: the randomized-data generation job landed on hopper-30, where EGL aborts in worker processes (all
+10 workers died, the pool then waited for the walltime). `pbs/generate.pbs` now runs `tests/egl_workers_selftest.py`
+(spawned workers rendering with randomization) and falls back to OSMesa; `generate --episode-timeout` (900 s) fails
+the run with exit code 3 instead of hanging when a worker dies.

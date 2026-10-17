@@ -76,6 +76,34 @@ class WorldState:
         self.h = handles
         self.d = data
         self.init_pos: dict[str, np.ndarray] = {}  # settled item positions at reset (set by the env)
+        # Per-episode history, updated by the environment after every control step (``track``):
+        #   max_lift: highest point (m) each object's bottom reached above the table WHILE PINCHED BETWEEN THE JAWS;
+        #   held_xy:  the object's last table position while it was pinched (where it was released from).
+        # "Pick up and place" goals read them: pushing an object, flicking it, or dropping it elsewhere and shoving it
+        # into place do not count.
+        self.max_lift: dict[str, float] = {}
+        self.held_xy: dict[str, np.ndarray] = {}
+
+    def track(self) -> None:
+        """Update the per-episode history (called by the environment after each control step)."""
+        for name, spec in self.h.objects.items():
+            if not self.grasped(name):
+                continue
+            p = self.d.xpos[self.h.item_body[name]]
+            self.held_xy[name] = p[:2].copy()
+            z = float(p[2]) - spec.half_height
+            if z > self.max_lift.get(name, 0.0):
+                self.max_lift[name] = z
+
+    def lifted(self, item: str, min_height: float = 0.02) -> bool:
+        """Was ``item`` ever carried ``min_height`` above the table in this episode (needs ``track``)?"""
+        return self.max_lift.get(item, 0.0) >= min_height
+
+    def release_offset(self, item: str) -> float | None:
+        """Horizontal distance (m) between where ``item`` was last held and where it is now; None if never held."""
+        if item not in self.held_xy:
+            return None
+        return float(np.linalg.norm(self.pos(item)[:2] - self.held_xy[item]))
 
     def pos(self, item: str) -> np.ndarray:
         return self.d.xpos[self.h.item_body[item]].copy()
@@ -92,7 +120,12 @@ class WorldState:
         return self.d.qvel[adr:adr + 3].copy()
 
     def upright(self, item: str, max_tilt_deg: float = 30.0) -> bool:
-        return self.rot(item)[2, 2] >= math.cos(math.radians(max_tilt_deg))
+        """Standing on its base (containers, cylinders) within ``max_tilt_deg``; a box may rest on any of its faces."""
+        rot = self.rot(item)
+        spec = self.h.objects.get(item)
+        if spec is not None and spec.shape == "box":
+            return float(np.max(np.abs(rot[2, :]))) >= math.cos(math.radians(max_tilt_deg))
+        return rot[2, 2] >= math.cos(math.radians(max_tilt_deg))
 
     def shift_xy(self, item: str) -> float:
         """Horizontal displacement since the reset (0 if unknown)."""
@@ -238,6 +271,45 @@ class RelativeTo:
         return f"{self.side.capitalize()}Of({self.obj}, {self.ref})"
 
 
+@dataclass(frozen=True)
+class OnTableInRegion:
+    """``obj`` was picked up (carried in the jaws >= ``min_lift`` above the table at some point in the episode), was
+    released within ``max_release_offset`` of where it now rests, and rests on the table inside ``region`` (its centre
+    within the rectangle), on a face (boxes) / upright, released, at rest, at least ``min_shift`` from where it
+    started, with the gripper's TCP at least ``min_tcp_distance`` away (the arm has let go and moved off). A region
+    placement goal ("put it aside / over there") without a reference object."""
+
+    obj: str
+    region: Region
+    region_name: str = "zone"
+    min_lift: float = 0.02
+    min_shift: float = 0.04
+    max_speed: float = 0.05
+    max_tilt_deg: float = 30.0
+    max_release_offset: float = 0.05  # carried into the zone, not dropped elsewhere and shoved
+    min_tcp_distance: float = 0.04  # m between the TCP and the object's centre
+
+    def __call__(self, ws: WorldState) -> bool:
+        p = ws.pos(self.obj)
+        if not (self.region.x[0] <= p[0] <= self.region.x[1] and self.region.y[0] <= p[1] <= self.region.y[1]):
+            return False
+        if not OnTable(self.obj)(ws) or not ws.upright(self.obj, self.max_tilt_deg):
+            return False
+        if ws.touching_robot(self.obj) or not ws.at_rest(self.obj, self.max_speed):
+            return False
+        if float(np.linalg.norm(ws.tcp_pos() - p)) < self.min_tcp_distance:
+            return False
+        if ws.init_pos and ws.shift_xy(self.obj) < self.min_shift:
+            return False
+        off = ws.release_offset(self.obj)
+        if off is None or off > self.max_release_offset:
+            return False
+        return ws.lifted(self.obj, self.min_lift)
+
+    def describe(self) -> str:
+        return f"OnTableIn({self.obj}, {self.region_name})"
+
+
 # ------------------------------------------------------------------------------------------------- tasks
 @dataclass(frozen=True)
 class PickPlace:
@@ -258,12 +330,22 @@ class PlaceRelative:
 
 
 @dataclass(frozen=True)
+class PlaceAt:
+    """Expert plan: pick ``obj`` and put it on the table at a random spot inside ``region`` shrunk by ``margin``
+    (object half-size + placement jitter) on every side."""
+
+    obj: str
+    region: Region
+    margin: float = 0.025
+
+
+@dataclass(frozen=True)
 class Task:
     task_id: str
     language: str
     layout: Layout
     goal: tuple  # predicates; all must hold
-    plan: PickPlace | PlaceRelative | None = None
+    plan: PickPlace | PlaceRelative | PlaceAt | None = None
     max_steps: int = 450  # 15 s at 30 Hz
     success_hold_steps: int = 5  # goal must hold this many consecutive control steps
     tags: tuple[str, ...] = field(default_factory=tuple)
