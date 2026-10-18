@@ -28,12 +28,13 @@ conda activate lerobot
 set -u
 
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-RUN="${RUN:-smolvla_real_cube_box_500}"
+RUN="${RUN:-smolvla_real_cube_white_tray_100}"
 CKPT="${CKPT:-040000}"
-TASK="${TASK:-red_cube_to_box}"
+TASK="${TASK:-red_cube_to_white_tray}"
 PORT="${PORT:-/dev/tty.usbmodem5B610366661}"
 # PORT="${PORT:-/dev/tty.usbmodem5C821064861}"
-ROBOT_ID="${ROBOT_ID:-my_follower}"
+ROBOT_ID="${ROBOT_ID:-my_follower_sim}"
+# ROBOT_ID="${ROBOT_ID:-my_follower}"
 # ROBOT_ID="${ROBOT_ID:-home_follower2}"
 FRONT_CAM="${FRONT_CAM:-3}"
 WRIST_CAM="${WRIST_CAM:-0}"
@@ -56,7 +57,7 @@ CROP_RESIZE="${CROP_RESIZE:-1}"
 case "$TASK" in
     red_cube_aside) TASK="Pick up the red cube and place it aside." ;;
     red_cube_to_box) TASK="Pick up the red cube and put it in the black box." ;;
-    red_cube_to_white_tray) TASK="Pick up the red cube and put it in the white tray." ;;
+    red_cube_to_white_tray | red_cube_far_to_white_tray) TASK="Pick up the red cube and put it in the white tray." ;;
     cylinder_to_tray) TASK="Pick up the red cylinder and place it inside the black tray." ;;
     cylinder_to_container) TASK="Pick up the red cylinder and place it inside the circular container." ;;
     cube_to_tray) TASK="Pick up the blue object and place it inside the black tray." ;;
@@ -74,8 +75,10 @@ CAMERAS="{ front: {type: opencv, index_or_path: $FRONT_CAM, width: $FRONT_W, hei
            wrist: {type: opencv, index_or_path: $WRIST_CAM, width: $WRIST_W, height: $WRIST_H, fps: $FPS} }"
 
 echo "task: $TASK"
-# lerobot-rollout replaces the checkpoint's saved rename map, so repeat the training one (front/wrist -> camera1/2)
-exec lerobot-rollout \
+# lerobot-rollout replaces the checkpoint's saved rename map, so repeat the training one (front/wrist -> camera1/2).
+# scripts/rollout_tolerant.py = lerobot-rollout that waits out camera stalls (> 500 ms aborts plain lerobot-rollout;
+# CAMERA_STALL_MS [2000] is the longest stall it waits for).
+exec python "$PROJECT_ROOT/scripts/rollout_tolerant.py" \
     --strategy.type=base \
     --policy.path="$POLICY_PATH" \
     --policy.device="$DEVICE" \

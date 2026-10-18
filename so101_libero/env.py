@@ -93,7 +93,7 @@ class SO101TabletopEnv(gym.Env):
             # Resample (same deterministic stream) while the goal already holds at the start (e.g. the object
             # happens to lie left of the reference): such episodes would be trivial.
             for _ in range(100):
-                q = HOME_QPOS.copy()
+                q = HOME_QPOS.copy() if self.task.start_deg is None else lerobot_to_sim(np.asarray(self.task.start_deg))
                 q[:5] += rng.uniform(-self.cfg.home_noise, self.cfg.home_noise, 5)
                 sizes = self.task.layout.sample_sizes(rng)  # {} (no draw) unless an object has a scale_range
                 init = {"robot_qpos": q.tolist(), "items": self.task.layout.sample(rng, sizes, seed=seed)}

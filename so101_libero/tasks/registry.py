@@ -10,6 +10,7 @@ import math
 
 from so101_libero.sim.objects import (BLACK_TRAY, BLUE_CUBE, RED_CUBE, RED_CUBE_VAR, RED_CYLINDER, ROUND_CONTAINER,
                                       WHITE_TRAY)
+from so101_libero.sim.robot import REST_DEG
 from so101_libero.tasks.base import (GridRegion, InContainer, Layout, OnTableInRegion, PickPlace, PlaceAt, PlaceRelative,
                                      Region, RelativeTo, Task)
 
@@ -119,6 +120,25 @@ REAL_WHITE_TRAY_TABLETOP = Layout(
 )
 register(pick_place("red_cube_to_white_tray", "Pick up the red cube and put it in the white tray.", "red_cube",
                     "white_tray", layout=REAL_WHITE_TRAY_TABLETOP), suite="so101_real")
+
+
+# The same white tray, the cube at ONE far spot: 26 cm straight ahead of the shoulder's pan axis (x = 0.039 + 0.26),
+# +-1 cm and +-15 deg for placing it by hand (set FAR_CUBE_SPOT to a zero-width region for an exactly fixed cube).
+# Beyond ~23 cm from the pan axis the front camera's policy crop no longer shows the table, so the policy finds the
+# cube by its fixed place and the wrist camera. Episodes start in the folded rest pose (as real rollouts do) and the
+# demonstrations end by parking there again (via home) and holding, so the policy stops after the task.
+FAR_CUBE_SPOT = Region(x=(0.289, 0.309), y=(-0.01, 0.01), yaw=(-15 * DEG, 15 * DEG))
+REAL_WHITE_TRAY_FAR_TABLETOP = Layout(
+    name="real_white_tray_far_cube_v1",
+    objects=(RED_CUBE,),
+    containers=(WHITE_TRAY,),
+    regions={"red_cube": FAR_CUBE_SPOT, "white_tray": REAL_WHITE_TRAY_TABLETOP.regions["white_tray"]},
+    clearance=0.015,
+    tray_rectangles=True,
+)
+register(pick_place("red_cube_far_to_white_tray", "Pick up the red cube and put it in the white tray.", "red_cube",
+                    "white_tray", layout=REAL_WHITE_TRAY_FAR_TABLETOP, start_deg=tuple(float(v) for v in REST_DEG),
+                    return_to_start=True), suite="so101_real")
 
 
 def get_task(task_id: str) -> Task:

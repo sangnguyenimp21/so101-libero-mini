@@ -120,7 +120,8 @@ def test_real_setup_scene_and_registry():
     from so101_libero.sim.scene import FRONT_CAMERA
 
     assert FRONT_CAMERA.roll == pytest.approx(2.3) and FRONT_CAMERA.fovy == pytest.approx(45.0)
-    assert [t.task_id for t in get_suite("so101_real")] == ["red_cube_aside", "red_cube_to_box", "red_cube_to_white_tray"]
+    assert [t.task_id for t in get_suite("so101_real")] == ["red_cube_aside", "red_cube_to_box", "red_cube_to_white_tray",
+                                                          "red_cube_far_to_white_tray"]
     env = SO101TabletopEnv("red_cube_aside", EnvConfig(render=False))
     m = env.model
     assert np.allclose(m.geom("red_cube_geom").size, [0.015] * 3)
@@ -274,3 +275,22 @@ def test_white_tray_task_cells_tray_gap_and_tall_wall_heights():
             else:
                 assert c.carry_height[0] <= carry <= c.carry_height[1]
                 assert c.release_height[0] <= release <= c.release_height[1]
+
+
+def test_far_cube_task_starts_and_parks_at_rest():
+    """red_cube_far_to_white_tray: the cube lies 26 cm ahead of the pan axis, the arm starts in the folded rest pose,
+    and the expert's demonstration ends parked at that pose (rest -> home -> pick, place -> home -> rest -> hold)."""
+    from so101_libero.env import EnvConfig, SO101TabletopEnv
+    from so101_libero.expert.rollout import run_expert_episode
+    from so101_libero.sim.robot import REST_DEG, sim_to_lerobot
+
+    env = SO101TabletopEnv("red_cube_far_to_white_tray", EnvConfig(render=False, terminate_on_success=False, max_steps=900))
+    ep = run_expert_episode(env, 0, record=True)
+    assert ep.success, ep.failure
+    x, y, _ = ep.init_state["items"]["red_cube"]
+    assert 0.289 <= x <= 0.309 and abs(y) <= 0.01
+    assert np.allclose(sim_to_lerobot(np.array(ep.init_state["robot_qpos"])), REST_DEG, atol=1e-3)
+    phases = [p for _, p in ep.phases]
+    assert phases[0] == "unfold" and phases[-2:] == ["return", "hold"]
+    assert np.allclose(ep.frames[-1][1], REST_DEG, atol=1e-3)  # last action: the rest pose
+    assert ep.success_step < env.task.max_steps

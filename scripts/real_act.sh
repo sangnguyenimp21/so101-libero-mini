@@ -54,7 +54,7 @@ DEBUG_EVERY="${DEBUG_EVERY:-10}"
 
 POLICY_PATH="$PROJECT_ROOT/outputs/train/$RUN/checkpoints/$CKPT/pretrained_model"
 [ -d "$POLICY_PATH" ] || { echo "no checkpoint at $POLICY_PATH" >&2; exit 1; }
-ROLLOUT=(lerobot-rollout)
+ROLLOUT=(python "$PROJECT_ROOT/scripts/rollout_tolerant.py")  # lerobot-rollout that waits out camera stalls
 if [ "$CROP_RESIZE" = 1 ]; then
     DEBUG_ARGS=()
     if [ "$DEBUG" = 1 ]; then

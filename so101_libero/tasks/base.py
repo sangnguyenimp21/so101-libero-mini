@@ -400,6 +400,11 @@ class Task:
     max_steps: int = 450  # 15 s at 30 Hz
     success_hold_steps: int = 5  # goal must hold this many consecutive control steps
     tags: tuple[str, ...] = field(default_factory=tuple)
+    # Arm pose at reset in LeRobot units (None: the home pose). When set, the expert first moves to the home pose.
+    start_deg: tuple[float, ...] | None = None
+    # Demonstrations end by moving back to the start pose (via home, gripper closing) and holding there, so a policy
+    # learns to park after the task instead of hovering over the target.
+    return_to_start: bool = False
 
     def check(self, ws: WorldState) -> bool:
         return all(p(ws) for p in self.goal)

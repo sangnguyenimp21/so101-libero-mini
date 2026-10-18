@@ -21,7 +21,7 @@ import numpy as np
 
 from so101_libero.env import SO101TabletopEnv
 from so101_libero.expert.ik import IKSolver, grasp_frame, wrap_angle
-from so101_libero.sim.robot import gripper_rad_to_lerobot
+from so101_libero.sim.robot import HOME_QPOS, gripper_rad_to_lerobot, lerobot_to_sim
 from so101_libero.tasks.base import SIDES, PickPlace, PlaceAt, PlaceRelative
 
 DEG = math.pi / 180
@@ -44,6 +44,7 @@ class ExpertConfig:
     # Inside tall containers the object is released with its bottom at most this far below the rim: release_height is
     # raised by whatever it lacks (nothing for walls up to ~4 cm), so the jaws stay clear of the walls.
     release_depth: float = 0.025
+    park_hold_time: float = 2.0  # tasks with return_to_start: final hold at the start pose (the policy learns to stay)
     release_height: tuple[float, float] = (0.036, 0.044)  # TCP height when opening inside the container
     table_release_gap: tuple[float, float] = (0.003, 0.006)  # object bottom above the table when placing on it
     place_jitter: float = 0.005  # random offset of table placements (m)
@@ -130,7 +131,10 @@ class PickPlaceExpert:
     def _advance(self) -> None:
         c, ws = self.cfg, self.ws
         p = self.phase
-        if p == "start":
+        if p == "start" and self.env.task.start_deg is not None:  # e.g. from the folded rest pose: unfold first
+            self._enter("unfold")
+            self._joint_move(HOME_QPOS[:5], self._q[5])
+        elif p in ("start", "unfold"):
             self._enter("approach")
             self._plan_approach()
         elif p == "approach":
@@ -176,6 +180,15 @@ class PickPlaceExpert:
             self._enter("retreat")
             tcp = ws.tcp_pos()
             self._cartesian(np.r_[tcp[:2], c.retreat_height], self._yaw_now(), self._release)
+        elif p == "retreat" and self.env.task.return_to_start:  # park: back to home, then the start pose
+            self._enter("return")
+            start = lerobot_to_sim(np.asarray(self.env.task.start_deg if self.env.task.start_deg is not None
+                                              else np.r_[np.degrees(HOME_QPOS[:5]), 0.0]))
+            self._joint_move(HOME_QPOS[:5], start[5])
+            self._joint_move(start[:5], start[5])
+        elif p == "return":
+            self._enter("hold")
+            self._hold(c.park_hold_time)
         elif p == "retreat":
             self._enter("hold")
             self._hold(c.hold_time)

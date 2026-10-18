@@ -56,3 +56,8 @@ def lerobot_to_sim(a: np.ndarray) -> np.ndarray:
 # Start ("home") pose: gripper above the workspace centre, tilted down towards the table, jaws slightly open.
 HOME_DEG = np.array([0.0, -60.0, 35.0, 85.0, 0.0, 0.0])  # joint angles in degrees (sim convention)
 HOME_QPOS = np.radians(HOME_DEG)
+# Folded rest pose in LeRobot units (gripper 0..100), for tasks that start and end at rest. The real arm rests at
+# about [0, -101, 88, 63..73, -4, 3] (my_follower_sim calibration); the simulator's lift limit (-100) and its boxy
+# forearm/shoulder colliders (contact from elbow ~90) need it a little less folded: jaws 2.6 cm above the table,
+# collision-free under +-2 deg start noise.
+REST_DEG = np.array([0.0, -94.0, 82.0, 68.0, 0.0, 3.0])

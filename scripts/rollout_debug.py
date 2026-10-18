@@ -95,5 +95,7 @@ class DebugActionLogger(ActionProcessorStep):
 
 if __name__ == "__main__":
     from lerobot.scripts.lerobot_rollout import main
+    from rollout_tolerant import tolerate_camera_stalls  # scripts/ is on sys.path: this file runs as a script
 
+    tolerate_camera_stalls()
     main()
