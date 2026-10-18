@@ -156,6 +156,10 @@ BLACK_TRAY = ContainerSpec("black_tray", "tray", (0.060, 0.045), (0.06, 0.06, 0.
 ROUND_CONTAINER = ContainerSpec(
     "round_container", "round", (0.045,), (0.92, 0.92, 0.88, 1.0), "circular container", wall_height=0.03, mass=0.15
 )
+# The real white tray of red_cube_to_white_tray: inner 14 x 9 cm, 6 cm walls. It is fixed on the real table; the
+# simulated one stays a free body, made heavy so the arm cannot shove it around.
+WHITE_TRAY = ContainerSpec("white_tray", "tray", (0.070, 0.045), (0.93, 0.93, 0.91, 1.0), "white tray",
+                           wall_height=0.06, mass=1.0)
 
 OBJECTS = {o.name: o for o in (RED_CYLINDER, BLUE_CUBE, RED_CUBE)}
-CONTAINERS = {c.name: c for c in (BLACK_TRAY, ROUND_CONTAINER)}
+CONTAINERS = {c.name: c for c in (BLACK_TRAY, ROUND_CONTAINER, WHITE_TRAY)}

@@ -6,8 +6,11 @@
 #   RUN=smolvla_real_cube_300 CKPT=last TASK=red_cube_aside bash scripts/real_smolvla.sh
 #   TASK="Pick up the red cylinder and place it inside the circular container." bash scripts/real_smolvla.sh
 #
-# TASK is a task id (red_cube_aside, red_cube_to_box [default], cylinder_to_tray, cylinder_to_container, cube_to_tray) or a
-# full instruction; it must be the training instruction of RUN. Environment overrides (defaults in brackets):
+# TASK is a task id (red_cube_aside, red_cube_to_box [default], red_cube_to_white_tray, cylinder_to_tray,
+# cylinder_to_container, cube_to_tray) or a full instruction; it must be the training instruction of RUN.
+#   RUN=smolvla_real_cube_white_tray_100 CKPT=040000 TASK=red_cube_to_white_tray ROBOT_ID=my_follower_sim \
+#       bash scripts/real_smolvla.sh
+# Environment overrides (defaults in brackets):
 # RUN [smolvla_real_cube_box_500] CKPT [040000]
 # PORT [/dev/tty.usbmodem5B610366661] ROBOT_ID [my_follower] FRONT_CAM [3: iPhone] WRIST_CAM [0]
 # FRONT_W x FRONT_H [1280x720] WRIST_W x WRIST_H [640x480] FPS [30] DURATION [45 s; 0 = until Ctrl+C]
@@ -53,6 +56,7 @@ CROP_RESIZE="${CROP_RESIZE:-1}"
 case "$TASK" in
     red_cube_aside) TASK="Pick up the red cube and place it aside." ;;
     red_cube_to_box) TASK="Pick up the red cube and put it in the black box." ;;
+    red_cube_to_white_tray) TASK="Pick up the red cube and put it in the white tray." ;;
     cylinder_to_tray) TASK="Pick up the red cylinder and place it inside the black tray." ;;
     cylinder_to_container) TASK="Pick up the red cylinder and place it inside the circular container." ;;
     cube_to_tray) TASK="Pick up the blue object and place it inside the black tray." ;;

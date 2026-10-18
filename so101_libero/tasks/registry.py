@@ -8,9 +8,10 @@ from __future__ import annotations
 
 import math
 
-from so101_libero.sim.objects import BLACK_TRAY, BLUE_CUBE, RED_CUBE, RED_CUBE_VAR, RED_CYLINDER, ROUND_CONTAINER
-from so101_libero.tasks.base import (InContainer, Layout, OnTableInRegion, PickPlace, PlaceAt, PlaceRelative, Region,
-                                     RelativeTo, Task)
+from so101_libero.sim.objects import (BLACK_TRAY, BLUE_CUBE, RED_CUBE, RED_CUBE_VAR, RED_CYLINDER, ROUND_CONTAINER,
+                                      WHITE_TRAY)
+from so101_libero.tasks.base import (GridRegion, InContainer, Layout, OnTableInRegion, PickPlace, PlaceAt, PlaceRelative,
+                                     Region, RelativeTo, Task)
 
 DEG = math.pi / 180
 
@@ -98,6 +99,26 @@ REAL_BOX_TABLETOP = Layout(
 )
 register(pick_place("red_cube_to_box", "Pick up the red cube and put it in the black box.", "red_cube", "black_tray",
                     layout=REAL_BOX_TABLETOP), suite="so101_real")
+
+
+# Red cube into the white tray: the 3 cm red cube and a FIXED white tray (inner 14 x 9 cm, 6 cm walls) centred 15 cm in
+# front of the base and 15 cm to its left, long side along x. The cube starts in one of 10 cells (2 rows along x x
+# 5 columns along y, cell = seed % 10, so demonstrations and evaluation states cover the cells equally) of
+# x 0.16-0.24, y -0.10..+0.06: the cube area of the other real tasks moved 2 cm to the right, as the tray's near wall
+# (y = 0.099) would cut through its left edge at y = 0.08, and starting 2 cm further out, as the expert's higher carry
+# over the 6 cm walls (TCP ~10-11.5 cm) is out of reach straight above cubes closer than ~15.5 cm. The tray counts by
+# its outer rectangle, so cubes may start 1.5 cm from its wall.
+REAL_WHITE_TRAY_TABLETOP = Layout(
+    name="real_white_tray_tabletop_v1",
+    objects=(RED_CUBE,),
+    containers=(WHITE_TRAY,),
+    regions={"red_cube": GridRegion(x=(0.16, 0.24), y=(-0.10, 0.06), nx=2, ny=5, yaw=(-45 * DEG, 45 * DEG)),
+             "white_tray": Region(x=(0.15, 0.15), y=(0.15, 0.15), yaw=(0.0, 0.0))},
+    clearance=0.015,
+    tray_rectangles=True,
+)
+register(pick_place("red_cube_to_white_tray", "Pick up the red cube and put it in the white tray.", "red_cube",
+                    "white_tray", layout=REAL_WHITE_TRAY_TABLETOP), suite="so101_real")
 
 
 def get_task(task_id: str) -> Task:

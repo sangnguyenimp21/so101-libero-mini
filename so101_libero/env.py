@@ -96,7 +96,7 @@ class SO101TabletopEnv(gym.Env):
                 q = HOME_QPOS.copy()
                 q[:5] += rng.uniform(-self.cfg.home_noise, self.cfg.home_noise, 5)
                 sizes = self.task.layout.sample_sizes(rng)  # {} (no draw) unless an object has a scale_range
-                init = {"robot_qpos": q.tolist(), "items": self.task.layout.sample(rng, sizes)}
+                init = {"robot_qpos": q.tolist(), "items": self.task.layout.sample(rng, sizes, seed=seed)}
                 if sizes:
                     init["sizes"] = sizes
                 self._apply_init(init)

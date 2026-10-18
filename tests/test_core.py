@@ -120,7 +120,7 @@ def test_real_setup_scene_and_registry():
     from so101_libero.sim.scene import FRONT_CAMERA
 
     assert FRONT_CAMERA.roll == pytest.approx(2.3) and FRONT_CAMERA.fovy == pytest.approx(45.0)
-    assert [t.task_id for t in get_suite("so101_real")] == ["red_cube_aside", "red_cube_to_box"]
+    assert [t.task_id for t in get_suite("so101_real")] == ["red_cube_aside", "red_cube_to_box", "red_cube_to_white_tray"]
     env = SO101TabletopEnv("red_cube_aside", EnvConfig(render=False))
     m = env.model
     assert np.allclose(m.geom("red_cube_geom").size, [0.015] * 3)
@@ -238,3 +238,39 @@ def test_per_episode_cube_size_roundtrip():
     aside = SO101TabletopEnv("red_cube_aside", EnvConfig(render=False))
     aside.reset(seed=0)
     assert "sizes" not in aside.init_state and np.allclose(aside.model.geom("red_cube_geom").size, [0.015] * 3)
+
+
+def test_white_tray_task_cells_tray_gap_and_tall_wall_heights():
+    """red_cube_to_white_tray: consecutive seeds start the cube in the 10 grid cells in turn, 1.5 cm or more from the
+    fixed tray's outer rectangle; the expert carries and releases higher over its 6 cm walls, and exactly as before for
+    the low black tray."""
+    from so101_libero.env import EnvConfig, SO101TabletopEnv
+    from so101_libero.expert.pick_place import PickPlaceExpert
+    from so101_libero.expert.rollout import expert_rng
+    from so101_libero.tasks.base import _gap_to_tray
+
+    task = TASKS["red_cube_to_white_tray"]
+    grid, tray = task.layout.regions["red_cube"], task.layout.containers[0]
+    env = SO101TabletopEnv(task, EnvConfig(render=False))
+    for seed in range(20):
+        env.reset(seed=seed)
+        items = env.init_state["items"]
+        x, y, _ = items["red_cube"]
+        cell = grid.cell(seed % 10)
+        assert cell.x[0] <= x <= cell.x[1] and cell.y[0] <= y <= cell.y[1]
+        assert _gap_to_tray(tray, items["white_tray"], (x, y)) >= 0.0212 + task.layout.clearance - 1e-4
+        assert list(items["white_tray"]) == pytest.approx([0.15, 0.15, 0.0])
+    for task_id, wall in (("red_cube_to_white_tray", 0.06), ("red_cube_to_box", 0.025)):
+        e = SO101TabletopEnv(task_id, EnvConfig(render=False))
+        e.reset(seed=0)
+        ex = PickPlaceExpert(e, e.task.plan, expert_rng(0))
+        c = ex.cfg
+        for grasp_z in (c.grasp_height[0], c.grasp_height[1]):
+            ex._grasp_z = grasp_z
+            carry, release = ex._carry_z(), ex._release_z()
+            if wall > 0.04:  # object bottom 2 cm over the rim while carried, <= 2.5 cm under it when released
+                assert carry - grasp_z >= wall + c.wall_clearance - 1e-9
+                assert release - grasp_z >= wall - c.release_depth - 1e-9
+            else:
+                assert c.carry_height[0] <= carry <= c.carry_height[1]
+                assert c.release_height[0] <= release <= c.release_height[1]

@@ -84,7 +84,8 @@ scripts/train.sh                   lerobot-train wrapper with project defaults (
 scripts/eval_variants.sh           evaluate one checkpoint with several inference settings
 scripts/setup_*.sh                 one-time setup (OSMesa, EGL shim, SmolVLA extras; conda runtime for SLURM)
 pbs/                               Hopper GPU jobs: smoke, generate, train (+eval), eval (+ small diagnostics)
-slurm/                             SLURM H100 job: red_cube_to_box SmolVLA end to end (conda env, data, train, eval)
+slurm/                             SLURM H100 jobs, SmolVLA end to end (conda env, data, train, eval): red_cube_to_box,
+                                   red_cube_to_white_tray (100 demos, BF16, 40k steps, eval every 10k)
 tests/                             pytest (physics-only) + render / EGL diagnostics
 docs/                              DESIGN.md, media/, results/ (stored measurement outputs)
 ```
@@ -230,6 +231,7 @@ training seeds 400000+, evaluation seeds 10,400,000+):
 |---|---|---|
 | `red_cube_aside` | Pick up the red cube and place it aside. | OnTableIn(red_cube, aside_zone): zone x 0.08-0.18, y 0.13-0.20 m (the robot's left = the lower right of the front image) |
 | `red_cube_to_box` | Pick up the red cube and put it in the black box. | In(red_cube, black_tray); cube edge 2.7-4.0 cm per episode, tray on the robot's left (index 5: training seeds 500000+, evaluation 10,500,000+) |
+| `red_cube_to_white_tray` | Pick up the red cube and put it in the white tray. | In(red_cube, white_tray); 3 cm cube in one of 10 cells (cell = seed % 10), fixed tray with 6 cm walls on the robot's left; the expert carries and releases higher over tall walls (index 6: training seeds 600000+, evaluation 10,600,000+) |
 
 Items and start regions (world frame, metres; uniform x, y, yaw; collision-free rejection sampling with 2 cm
 clearance; the arm starts at a fixed home pose):
@@ -242,6 +244,8 @@ clearance; the arm starts at a fixed home pose):
 | circular container | inner Ø9 cm, walls 3 cm | 150 g | 0.15-0.21 / 0.13-0.19 / any |
 | red cube (`so101_real` only) | 3 cm (`red_cube_to_box`: 2.7-4.0 cm, uniform per episode) | 20 g | 0.14-0.24 / -0.08-0.08 / ±45° |
 | black tray (`red_cube_to_box`) | as above | 200 g | 0.13-0.17 / 0.13-0.17 / ±10° (the robot's left) |
+| red cube (`red_cube_to_white_tray`) | 3 cm | 20 g | 2 × 5 grid over 0.16-0.24 / -0.10-0.06 / ±45° (cell = seed % 10; ≥ 1.5 cm from the tray's outer walls) |
+| white tray (`red_cube_to_white_tray`) | inner 14 × 9 cm, walls 6 cm | 1 kg (fixed on the real table) | fixed at 0.15 / 0.15 / 0° (the robot's left, long side along x) |
 
 Success predicates (pure functions of the simulator state, `so101_libero/tasks/base.py`):
 - `In(obj, container)`: the container stands upright (< 30° tilt) on the table, untouched and at rest; the object's

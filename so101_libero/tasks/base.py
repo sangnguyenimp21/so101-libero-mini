@@ -30,8 +30,40 @@ class Region:
     y: tuple[float, float]
     yaw: tuple[float, float] = (-math.pi, math.pi)
 
-    def sample(self, rng: np.random.Generator) -> tuple[float, float, float]:
+    def sample(self, rng: np.random.Generator, seed: int | None = None) -> tuple[float, float, float]:
         return (float(rng.uniform(*self.x)), float(rng.uniform(*self.y)), float(rng.uniform(*self.yaw)))
+
+
+@dataclass(frozen=True)
+class GridRegion:
+    """A rectangle split into ``nx`` x ``ny`` equal cells: an episode starts in cell ``seed % (nx * ny)`` (uniform
+    inside it), so consecutive seeds -- the demonstrations and the evaluation states -- cover every cell equally.
+    Cell k is row k // ny along x (near to far), column k % ny along y (right to left)."""
+
+    x: tuple[float, float]
+    y: tuple[float, float]
+    nx: int
+    ny: int
+    yaw: tuple[float, float] = (-math.pi, math.pi)
+
+    def cell(self, k: int) -> Region:
+        i, j = divmod(k, self.ny)
+        dx, dy = (self.x[1] - self.x[0]) / self.nx, (self.y[1] - self.y[0]) / self.ny
+        return Region(x=(self.x[0] + i * dx, self.x[0] + (i + 1) * dx), y=(self.y[0] + j * dy, self.y[0] + (j + 1) * dy),
+                      yaw=self.yaw)
+
+    def sample(self, rng: np.random.Generator, seed: int | None = None) -> tuple[float, float, float]:
+        n = self.nx * self.ny
+        return self.cell(seed % n if seed is not None else int(rng.integers(n))).sample(rng)
+
+
+def _gap_to_tray(c: ContainerSpec, pose: tuple[float, float, float], xy: tuple[float, float]) -> float:
+    """Distance from a point to the outer rectangle (walls included) of tray ``c`` at ``pose`` (0 inside it)."""
+    cx, cy, yaw = pose
+    dx, dy = xy[0] - cx, xy[1] - cy
+    lx, ly = math.cos(yaw) * dx + math.sin(yaw) * dy, -math.sin(yaw) * dx + math.cos(yaw) * dy
+    ox, oy = abs(lx) - (c.inner_size[0] + c.wall_thickness), abs(ly) - (c.inner_size[1] + c.wall_thickness)
+    return math.hypot(max(ox, 0.0), max(oy, 0.0))
 
 
 @dataclass(frozen=True)
@@ -41,9 +73,12 @@ class Layout:
     name: str
     objects: tuple[ObjectSpec, ...]
     containers: tuple[ContainerSpec, ...]
-    regions: dict[str, Region]
+    regions: dict[str, Region | GridRegion]
     clearance: float = 0.02  # minimum gap between item footprints at the start
     max_tries: int = 1000
+    # False: every item is a circle of its footprint radius (a 15 x 10 cm tray blocks a 9 cm radius). True: trays are
+    # their outer rectangle, so objects may start next to the long sides.
+    tray_rectangles: bool = False
 
     def scene_config(self, **kw) -> SceneConfig:
         return SceneConfig(objects=self.objects, containers=self.containers, **kw)
@@ -57,20 +92,24 @@ class Layout:
                 sizes[o.name] = [float(v) * scale for v in o.size]
         return sizes
 
-    def sample(self, rng: np.random.Generator,
-               sizes: dict[str, list[float]] | None = None) -> dict[str, tuple[float, float, float]]:
+    def sample(self, rng: np.random.Generator, sizes: dict[str, list[float]] | None = None,
+               seed: int | None = None) -> dict[str, tuple[float, float, float]]:
         """Sample a collision-free start pose (x, y, yaw) for every item (containers first: they are larger), with
-        object footprints at the episode's ``sizes``."""
+        object footprints at the episode's ``sizes``. ``seed`` (the episode seed) picks the cell of a GridRegion."""
         sizes = sizes or {}
         items = [*self.containers, *(o.with_size(sizes[o.name]) if o.name in sizes else o for o in self.objects)]
         for _ in range(self.max_tries):
             poses: dict[str, tuple[float, float, float]] = {}
             ok = True
             for it in items:
-                x, y, yaw = self.regions[it.name].sample(rng)
-                for other, (ox, oy, _) in poses.items():
+                x, y, yaw = self.regions[it.name].sample(rng, seed)
+                for other, (ox, oy, oyaw) in poses.items():
                     o = next(i for i in items if i.name == other)
-                    if math.hypot(x - ox, y - oy) < it.footprint_radius + o.footprint_radius + self.clearance:
+                    if self.tray_rectangles and isinstance(o, ContainerSpec) and o.shape == "tray":
+                        overlap = _gap_to_tray(o, (ox, oy, oyaw), (x, y)) < it.footprint_radius + self.clearance
+                    else:
+                        overlap = math.hypot(x - ox, y - oy) < it.footprint_radius + o.footprint_radius + self.clearance
+                    if overlap:
                         ok = False
                         break
                 if not ok:

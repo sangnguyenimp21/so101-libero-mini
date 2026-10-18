@@ -38,6 +38,12 @@ class ExpertConfig:
     close_deg: float = -10.0  # commanded when closing (past contact: the actuator squeezes)
     release_deg: float = 20.0  # opened only this far inside containers (jaw gap ~4.2 cm)
     carry_height: tuple[float, float] = (0.075, 0.09)
+    # The held object's bottom stays this far above the target container's walls while carried: carry_height is
+    # raised by whatever it lacks (nothing for walls up to ~3 cm; the 6 cm white tray lifts it by ~2.5 cm).
+    wall_clearance: float = 0.02
+    # Inside tall containers the object is released with its bottom at most this far below the rim: release_height is
+    # raised by whatever it lacks (nothing for walls up to ~4 cm), so the jaws stay clear of the walls.
+    release_depth: float = 0.025
     release_height: tuple[float, float] = (0.036, 0.044)  # TCP height when opening inside the container
     table_release_gap: tuple[float, float] = (0.003, 0.006)  # object bottom above the table when placing on it
     place_jitter: float = 0.005  # random offset of table placements (m)
@@ -141,7 +147,7 @@ class PickPlaceExpert:
                 return self._retry_or_fail("grasp_failed")
             self._enter("lift")
             tcp = ws.tcp_pos()
-            self._cartesian(np.r_[tcp[:2], self._u(c.carry_height)], self._yaw_now(), self._closed)
+            self._cartesian(np.r_[tcp[:2], self._carry_z()], self._yaw_now(), self._closed)
         elif p == "lift":
             if not self._held():
                 return self._retry_or_fail("dropped_during_lift")
@@ -153,7 +159,7 @@ class PickPlaceExpert:
             self._enter("lower")
             tgt = self._place_target
             if self.container is not None:
-                z = self._u(c.release_height)
+                z = self._release_z()
             else:  # on the table: the object's bottom just above the table top
                 z = self._grasp_z + self._u(c.table_release_gap)
             self._cartesian(np.r_[tgt[:2], z], self._yaw_at(tgt), self._closed)
@@ -238,6 +244,22 @@ class PickPlaceExpert:
         pre = np.r_[self._grasp_target[:2], self._u(c.pregrasp_height)]
         _, q_pre = self._solve(pre, yaw)
         self._joint_move(q_pre, self._open)
+
+    def _carry_z(self) -> float:
+        """TCP height while carrying: the sampled carry height, shifted up (range kept) until the object's bottom
+        (``_grasp_z`` below the TCP) clears the container walls by ``wall_clearance``."""
+        c = self.cfg
+        z = self._u(c.carry_height)
+        if self.container is not None:
+            z += max(0.0, self.container.wall_height + c.wall_clearance + self._grasp_z - c.carry_height[0])
+        return z
+
+    def _release_z(self) -> float:
+        """TCP height when opening inside the container: the sampled release height, shifted up (range kept) until the
+        object's bottom is at most ``release_depth`` below the rim."""
+        c = self.cfg
+        z = self._u(c.release_height)
+        return z + max(0.0, self.container.wall_height - c.release_depth + self._grasp_z - c.release_height[0])
 
     def _plan_transport(self) -> None:
         if isinstance(self.plan, PlaceRelative):
