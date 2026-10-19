@@ -57,6 +57,18 @@ class GridRegion:
         return self.cell(seed % n if seed is not None else int(rng.integers(n))).sample(rng)
 
 
+@dataclass(frozen=True)
+class RelativeRegion:
+    """Start at a fixed offset (``dx``, ``dy``: world frame, metres) from the start position of item ``ref``, with an
+    own yaw range: items that keep their spacing while the group moves. ``ref`` must be placed first (containers come
+    before objects, objects in the layout's order)."""
+
+    ref: str
+    dx: float
+    dy: float
+    yaw: tuple[float, float] = (-math.pi, math.pi)
+
+
 def _gap_to_tray(c: ContainerSpec, pose: tuple[float, float, float], xy: tuple[float, float]) -> float:
     """Distance from a point to the outer rectangle (walls included) of tray ``c`` at ``pose`` (0 inside it)."""
     cx, cy, yaw = pose
@@ -73,7 +85,7 @@ class Layout:
     name: str
     objects: tuple[ObjectSpec, ...]
     containers: tuple[ContainerSpec, ...]
-    regions: dict[str, Region | GridRegion]
+    regions: dict[str, Region | GridRegion | RelativeRegion]
     clearance: float = 0.02  # minimum gap between item footprints at the start
     max_tries: int = 1000
     # False: every item is a circle of its footprint radius (a 15 x 10 cm tray blocks a 9 cm radius). True: trays are
@@ -102,7 +114,15 @@ class Layout:
             poses: dict[str, tuple[float, float, float]] = {}
             ok = True
             for it in items:
-                x, y, yaw = self.regions[it.name].sample(rng, seed)
+                region = self.regions[it.name]
+                if isinstance(region, RelativeRegion):
+                    if region.ref not in poses:
+                        raise ValueError(f"layout {self.name}: {it.name} starts relative to {region.ref}, "
+                                         f"which must be placed before it")
+                    rx, ry, _ = poses[region.ref]
+                    x, y, yaw = rx + region.dx, ry + region.dy, float(rng.uniform(*region.yaw))
+                else:
+                    x, y, yaw = region.sample(rng, seed)
                 for other, (ox, oy, oyaw) in poses.items():
                     o = next(i for i in items if i.name == other)
                     if self.tray_rectangles and isinstance(o, ContainerSpec) and o.shape == "tray":
@@ -361,6 +381,40 @@ class OnTableInRegion:
         return f"OnTableIn({self.obj}, {self.region_name})"
 
 
+@dataclass(frozen=True)
+class StackedOn:
+    """``obj`` rests on top of ``base`` (two boxes, each lying on a face): obj's bottom on base's top (within
+    ``max_gap``), its centre over base's top face (horizontal distance between the centres <= ``max_offset``); base
+    rests directly on the table (it may have been nudged); both upright, released (no robot contact) and at rest, with
+    the gripper's TCP at least ``min_tcp_distance`` from obj (the jaws have let go and moved off: an evaluation stops
+    at success, so a stack knocked over while the open jaws are still around it must not count)."""
+
+    obj: str
+    base: str
+    max_offset: float = 0.012  # m: for 3 cm cubes obj's centre stays over base's top face
+    max_gap: float = 0.004  # m between obj's bottom and base's top
+    max_tilt_deg: float = 20.0
+    max_speed: float = 0.05
+    min_tcp_distance: float = 0.04  # m between the TCP and obj's centre
+
+    def __call__(self, ws: WorldState) -> bool:
+        po, pb = ws.pos(self.obj), ws.pos(self.base)
+        if float(np.linalg.norm(po[:2] - pb[:2])) > self.max_offset:
+            return False
+        if float(np.linalg.norm(ws.tcp_pos() - po)) < self.min_tcp_distance:
+            return False
+        gap = (po[2] - ws.h.objects[self.obj].half_height) - (pb[2] + ws.h.objects[self.base].half_height)
+        if abs(gap) > self.max_gap or not OnTable(self.base)(ws):
+            return False
+        for item in (self.obj, self.base):
+            if not ws.upright(item, self.max_tilt_deg) or ws.touching_robot(item) or not ws.at_rest(item, self.max_speed):
+                return False
+        return True
+
+    def describe(self) -> str:
+        return f"On({self.obj}, {self.base})"
+
+
 # ------------------------------------------------------------------------------------------------- tasks
 @dataclass(frozen=True)
 class PickPlace:
@@ -391,12 +445,20 @@ class PlaceAt:
 
 
 @dataclass(frozen=True)
+class StackOn:
+    """Expert plan: pick ``obj`` and put it on top of ``base`` (another object), centred on base's top face."""
+
+    obj: str
+    base: str
+
+
+@dataclass(frozen=True)
 class Task:
     task_id: str
     language: str
     layout: Layout
     goal: tuple  # predicates; all must hold
-    plan: PickPlace | PlaceRelative | PlaceAt | None = None
+    plan: PickPlace | PlaceRelative | PlaceAt | StackOn | None = None
     max_steps: int = 450  # 15 s at 30 Hz
     success_hold_steps: int = 5  # goal must hold this many consecutive control steps
     tags: tuple[str, ...] = field(default_factory=tuple)

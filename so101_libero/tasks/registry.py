@@ -8,11 +8,11 @@ from __future__ import annotations
 
 import math
 
-from so101_libero.sim.objects import (BLACK_TRAY, BLUE_CUBE, RED_CUBE, RED_CUBE_VAR, RED_CYLINDER, ROUND_CONTAINER,
-                                      WHITE_TRAY)
+from so101_libero.sim.objects import (BLACK_BOX, BLACK_TRAY, BLUE_CUBE, RED_CUBE, RED_CUBE_VAR, RED_CYLINDER,
+                                      ROUND_CONTAINER, WHITE_TRAY)
 from so101_libero.sim.robot import REST_DEG
 from so101_libero.tasks.base import (GridRegion, InContainer, Layout, OnTableInRegion, PickPlace, PlaceAt, PlaceRelative,
-                                     Region, RelativeTo, Task)
+                                     Region, RelativeRegion, RelativeTo, StackedOn, StackOn, Task)
 
 DEG = math.pi / 180
 
@@ -139,6 +139,52 @@ REAL_WHITE_TRAY_FAR_TABLETOP = Layout(
 register(pick_place("red_cube_far_to_white_tray", "Pick up the red cube and put it in the white tray.", "red_cube",
                     "white_tray", layout=REAL_WHITE_TRAY_FAR_TABLETOP, start_deg=tuple(float(v) for v in REST_DEG),
                     return_to_start=True), suite="so101_real")
+
+
+# The next two tasks keep everything inside the front camera's policy crop (the table up to x ~0.24 m, |y| <~ 0.19 m at
+# x 0.15-0.20; the 6 cm rims reach the image edge sooner) and, like red_cube_far_to_white_tray, start in the folded rest
+# pose and park there again after the task. At rest the jaws lie just above the table, x 0.12-0.20 m: a cube there
+# needs |y| >= 0.06 (>= 3.5 cm clearance, also with the pan +-7 deg off, as the real arm rests at ~-6.6), and a
+# two-cube stack y >= 0.12 or y <= -0.06 (the camera mount and the moving jaw stick out to the left at 3-6 cm height).
+# On the real table, measure x from the shoulder's pan axis (the vertical axis of the base motor, at x = 0.039 m in this
+# frame) and y sideways from the robot's centre line.
+REST_START = tuple(float(v) for v in REST_DEG)
+
+# Red cube into the black box (svla_so100_pickplace style): the 3 cm red cube and the black box (10 x 10 cm outside,
+# 6 cm walls) on the robot's RIGHT, centred at x 0.14, y -0.13 (10 cm ahead of the pan axis, 13 cm right of the centre
+# line; sides along x), +-1 cm and +-5 deg for placing it by hand (< 1 cm further right, its rim leaves the camera
+# image; forward there are ~3 cm). The cube starts on the robot's LEFT, beside the folded arm, in one of 6 cells
+# (2 rows along x x 3 columns along y, cell = seed % 6) of a small area, x 0.16-0.22, y 0.06-0.12 (12-18 cm ahead of the
+# pan axis, 6-12 cm left; the expert's high carry over the 6 cm walls needs x >= ~0.155, as for the white tray), and
+# is carried across to the box.
+REAL_BLACK_BOX_TABLETOP = Layout(
+    name="real_black_box_tabletop_v1",
+    objects=(RED_CUBE,),
+    containers=(BLACK_BOX,),
+    regions={"red_cube": GridRegion(x=(0.16, 0.22), y=(0.06, 0.12), nx=2, ny=3, yaw=(-45 * DEG, 45 * DEG)),
+             "black_box": Region(x=(0.13, 0.15), y=(-0.14, -0.12), yaw=(-5 * DEG, 5 * DEG))},
+    clearance=0.015,
+    tray_rectangles=True,
+)
+register(pick_place("red_cube_to_black_box", "Pick up the red cube and put it in the black box.", "red_cube",
+                    "black_box", layout=REAL_BLACK_BOX_TABLETOP, start_deg=REST_START, return_to_start=True),
+         suite="so101_real")
+
+# Red cube onto the blue cube (svla_so100_stacking style): two 3 cm cubes side by side on the robot's LEFT, the blue
+# one always 10 cm (centre to centre) further left than the red one (+y; the right-hand side of the front image), so
+# the finished stack stands clear of the folded arm. The pair moves as one: the red cube starts in one of 4 cells
+# (2 x 2 grid over x 0.15-0.21, y 0.06-0.09: 11-17 cm ahead of the pan axis, 6-9 cm left; cell = seed % 4), the blue
+# cube at the same x, y 0.16-0.19; each cube's yaw is +-45 deg (any orientation of a cube).
+REAL_STACK_TABLETOP = Layout(
+    name="real_stack_tabletop_v1",
+    objects=(RED_CUBE, BLUE_CUBE),  # red first: the blue cube is placed relative to it
+    containers=(),
+    regions={"red_cube": GridRegion(x=(0.15, 0.21), y=(0.06, 0.09), nx=2, ny=2, yaw=(-45 * DEG, 45 * DEG)),
+             "blue_cube": RelativeRegion("red_cube", dx=0.0, dy=0.10, yaw=(-45 * DEG, 45 * DEG))},
+)
+register(Task(task_id="stack_red_on_blue", language="Put the red cube on top of the blue cube.",
+              layout=REAL_STACK_TABLETOP, goal=(StackedOn("red_cube", "blue_cube"),),
+              plan=StackOn("red_cube", "blue_cube"), start_deg=REST_START, return_to_start=True), suite="so101_real")
 
 
 def get_task(task_id: str) -> Task:

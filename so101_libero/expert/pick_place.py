@@ -22,7 +22,7 @@ import numpy as np
 from so101_libero.env import SO101TabletopEnv
 from so101_libero.expert.ik import IKSolver, grasp_frame, wrap_angle
 from so101_libero.sim.robot import HOME_QPOS, gripper_rad_to_lerobot, lerobot_to_sim
-from so101_libero.tasks.base import SIDES, PickPlace, PlaceAt, PlaceRelative
+from so101_libero.tasks.base import SIDES, PickPlace, PlaceAt, PlaceRelative, StackOn
 
 DEG = math.pi / 180
 
@@ -46,8 +46,9 @@ class ExpertConfig:
     release_depth: float = 0.025
     park_hold_time: float = 2.0  # tasks with return_to_start: final hold at the start pose (the policy learns to stay)
     release_height: tuple[float, float] = (0.036, 0.044)  # TCP height when opening inside the container
-    table_release_gap: tuple[float, float] = (0.003, 0.006)  # object bottom above the table when placing on it
+    table_release_gap: tuple[float, float] = (0.003, 0.006)  # object bottom above the table (or the base) when placing
     place_jitter: float = 0.005  # random offset of table placements (m)
+    stack_jitter: float = 0.003  # random offset (m, per axis) of the held object's centre from the base's when stacking
     retreat_height: float = 0.10
     place_margin: float = 0.012  # release point stays this far inside the inner walls (beyond the object)
     close_time: float = 0.5
@@ -86,7 +87,7 @@ class PlanError(RuntimeError):
 class PickPlaceExpert:
     """Call ``act()`` once per control step; it returns the action or None once ``done``."""
 
-    def __init__(self, env: SO101TabletopEnv, plan: PickPlace | PlaceRelative | PlaceAt, rng: np.random.Generator,
+    def __init__(self, env: SO101TabletopEnv, plan: PickPlace | PlaceRelative | PlaceAt | StackOn, rng: np.random.Generator,
                  cfg: ExpertConfig | None = None):
         self.env, self.plan, self.rng = env, plan, rng
         self.cfg = cfg or ExpertConfig()
@@ -164,6 +165,8 @@ class PickPlaceExpert:
             tgt = self._place_target
             if self.container is not None:
                 z = self._release_z()
+            elif isinstance(self.plan, StackOn):  # the object's bottom just above the base's top
+                z = self._base_top + self._u(c.table_release_gap) + self._held_z
             else:  # on the table: the object's bottom just above the table top
                 z = self._grasp_z + self._u(c.table_release_gap)
             self._cartesian(np.r_[tgt[:2], z], self._yaw_at(tgt), self._closed)
@@ -279,6 +282,8 @@ class PickPlaceExpert:
             return self._plan_transport_relative()
         if isinstance(self.plan, PlaceAt):
             return self._plan_transport_at()
+        if isinstance(self.plan, StackOn):
+            return self._plan_transport_stack()
         c = self.cfg
         center = self.ws.pos(self.plan.target)
         rot = self.ws.rot(self.plan.target)
@@ -343,6 +348,28 @@ class PickPlaceExpert:
             self._arc(tcp, np.r_[tgt[:2], tcp[2]], self._closed)
             return
         raise PlanError("no reachable free spot in the placement region")
+
+    def _plan_transport_stack(self) -> None:
+        """Over the base object, so that the held object's centre lands on the base's centre (+- ``stack_jitter``).
+        Where the object sits in the jaws is measured now (after the lift) in the jaw frame and carried over to the
+        jaw yaw at the release point; so is the TCP height above the object's bottom (any slip included)."""
+        tcp, obj = self.ws.tcp_pos(), self.ws.pos(self.plan.obj)
+        rot = self.ws.d.site_xmat[self.env.h.tcp_site].reshape(3, 3)
+        yaw_now = math.atan2(rot[1, 0], rot[0, 0])
+        c, s = math.cos(-yaw_now), math.sin(-yaw_now)
+        dx, dy = obj[:2] - tcp[:2]
+        held = np.array([c * dx - s * dy, s * dx + c * dy])  # object centre - TCP, jaw frame
+        self._held_z = float(tcp[2] - (obj[2] - self.obj.half_height))
+        base = self.ws.pos(self.plan.base)
+        self._base_top = float(base[2] + self.env.h.objects[self.plan.base].half_height)
+        goal = base[:2] + self.rng.uniform(-self.cfg.stack_jitter, self.cfg.stack_jitter, 2)
+        tgt = np.r_[goal, 0.0]
+        for _ in range(3):  # the jaw yaw follows the target's azimuth
+            yaw = self._yaw_at(tgt)
+            c, s = math.cos(yaw), math.sin(yaw)
+            tgt[:2] = goal - np.array([c * held[0] - s * held[1], s * held[0] + c * held[1]])
+        self._place_target = tgt
+        self._arc(tcp, np.r_[tgt[:2], tcp[2]], self._closed)
 
     def _spot_blocked(self, tgt: np.ndarray, min_gap: float = 0.008) -> bool:
         """Would the object placed at ``tgt`` overlap (within ``min_gap``) another item?"""

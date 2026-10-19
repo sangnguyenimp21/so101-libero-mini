@@ -160,6 +160,10 @@ ROUND_CONTAINER = ContainerSpec(
 # simulated one stays a free body, made heavy so the arm cannot shove it around.
 WHITE_TRAY = ContainerSpec("white_tray", "tray", (0.070, 0.045), (0.93, 0.93, 0.91, 1.0), "white tray",
                            wall_height=0.06, mass=1.0)
+# The real black box of red_cube_to_black_box: 10 x 10 cm outside with 5 mm walls (inner 9 x 9 cm), 6 cm tall, on the
+# robot's right. Heavy like the white tray, so the arm cannot shove it (fix the real one to the table).
+BLACK_BOX = ContainerSpec("black_box", "tray", (0.045, 0.045), (0.06, 0.06, 0.06, 1.0), "black box",
+                          wall_height=0.06, wall_thickness=0.005, mass=1.0)
 
 OBJECTS = {o.name: o for o in (RED_CYLINDER, BLUE_CUBE, RED_CUBE)}
-CONTAINERS = {c.name: c for c in (BLACK_TRAY, ROUND_CONTAINER, WHITE_TRAY)}
+CONTAINERS = {c.name: c for c in (BLACK_TRAY, ROUND_CONTAINER, WHITE_TRAY, BLACK_BOX)}

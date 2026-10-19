@@ -86,7 +86,8 @@ scripts/setup_*.sh                 one-time setup (OSMesa, EGL shim, SmolVLA ext
 pbs/                               Hopper GPU jobs: smoke, generate, train (+eval), eval (+ small diagnostics)
 slurm/                             SLURM H100 jobs, SmolVLA end to end (conda env, data, train, eval): red_cube_to_box,
                                    red_cube_to_white_tray (100 demos, BF16, 40k steps, eval every 10k),
-                                   red_cube_far_to_white_tray (its defaults on top of the white-tray job)
+                                   red_cube_far_to_white_tray, red_cube_to_black_box, stack_red_on_blue (each: its
+                                   defaults on top of the white-tray job; 100 demos, 100k steps, checkpoints every 20k)
 tests/                             pytest (physics-only) + render / EGL diagnostics
 docs/                              DESIGN.md, media/, results/ (stored measurement outputs)
 ```
@@ -151,6 +152,9 @@ qsub -W depend=afterok:<gen_job> -l walltime=06:30:00 -v POLICY=smolvla,REPO_ID=
 # the same red_cube_to_box run on a SLURM H100 node as one job: conda env, generation if the dataset is missing,
 # training, evaluation; resubmitting resumes (variables in the script header)
 WANDB=true WANDB_PROJECT=cs6283 WANDB_ENTITY=tsangb34-national-university-of-singapore-students-union sbatch slurm/smolvla_red_cube_to_box.sbatch
+# the two in-view real-setup tasks (start and park at rest; 100 demos, 100k steps, checkpoints + evaluation every 20k)
+sbatch slurm/smolvla_red_cube_to_black_box.sbatch
+sbatch slurm/smolvla_stack_red_on_blue.sbatch
 qsub pbs/smoke.pbs                       # ~3 min plumbing test of every stage (log ends "SMOKE TEST PASSED")
 
 # 4. evaluation of a checkpoint (videos, results.json, episodes.csv, success rate + Wilson 95% CI)
@@ -225,7 +229,7 @@ Suite `so101_extra` (other goal type, same items; the cube starts right of centr
 |---|---|---|
 | `cylinder_left_of_cube` | Move the red object to the left of the blue object. | LeftOf(red_cylinder, blue_cube) |
 
-Suite `so101_real` (the physical setup of `docs/real_setup/PROMPT.md`: one red cube on an empty table; registry index 4,
+Suite `so101_real` (the physical setup of `docs/real_setup/PROMPT.md`: a red cube, plus a container or a blue cube, on an otherwise empty table; registry index 4,
 training seeds 400000+, evaluation seeds 10,400,000+):
 
 | id | instruction | goal |
@@ -234,8 +238,10 @@ training seeds 400000+, evaluation seeds 10,400,000+):
 | `red_cube_to_box` | Pick up the red cube and put it in the black box. | In(red_cube, black_tray); cube edge 2.7-4.0 cm per episode, tray on the robot's left (index 5: training seeds 500000+, evaluation 10,500,000+) |
 | `red_cube_to_white_tray` | Pick up the red cube and put it in the white tray. | In(red_cube, white_tray); 3 cm cube in one of 10 cells (cell = seed % 10), fixed tray with 6 cm walls on the robot's left; the expert carries and releases higher over tall walls (index 6: training seeds 600000+, evaluation 10,600,000+) |
 | `red_cube_far_to_white_tray` | Pick up the red cube and put it in the white tray. | In(red_cube, white_tray); the cube at one far spot (26 cm ahead of the pan axis), the arm starts in the folded rest pose and the expert parks there again after placing (rest → home → pick, place → home → rest, 2 s hold) (index 7: training seeds 700000+, evaluation 10,700,000+) |
+| `red_cube_to_black_box` | Pick up the red cube and put it in the black box. | In(red_cube, black_box); like `lerobot/svla_so100_pickplace`: the box (10 × 10 cm outside, 6 cm walls) on the robot's right, the cube on its left beside the folded arm (6 cells, cell = seed % 6), all inside the front camera's view; starts and parks at rest (index 8: training seeds 800000+, evaluation 10,800,000+) |
+| `stack_red_on_blue` | Put the red cube on top of the blue cube. | On(red_cube, blue_cube); like `lerobot/svla_so100_stacking`: two 3 cm cubes on the robot's left, the blue one always 10 cm further left, the pair moved as one (4 cells, cell = seed % 4); starts and parks at rest (index 9: training seeds 900000+, evaluation 10,900,000+) |
 
-Items and start regions (world frame, metres; uniform x, y, yaw; collision-free rejection sampling with 2 cm
+Items and start regions (world frame, metres: x forward from the base origin, which lies 3.9 cm behind the shoulder's pan axis, y = the robot's left; uniform x, y, yaw; collision-free rejection sampling with 2 cm
 clearance; the arm starts at a fixed home pose):
 
 | item | size | mass | start region x / y / yaw |
@@ -249,6 +255,9 @@ clearance; the arm starts at a fixed home pose):
 | red cube (`red_cube_to_white_tray`) | 3 cm | 20 g | 2 × 5 grid over 0.16-0.24 / -0.10-0.06 / ±45° (cell = seed % 10; ≥ 1.5 cm from the tray's outer walls) |
 | white tray (`red_cube_to_white_tray`) | inner 14 × 9 cm, walls 6 cm | 1 kg (fixed on the real table) | fixed at 0.15 / 0.15 / 0° (the robot's left, long side along x) |
 | red cube (`red_cube_far_to_white_tray`) | 3 cm | 20 g | 0.289-0.309 / -0.01-0.01 / ±15° (one spot, 26 cm ahead of the pan axis at x = 0.039; outside the front camera's policy crop) |
+| black box (`red_cube_to_black_box`) | 10 × 10 cm outside (5 mm walls, inner 9 × 9 cm), 6 cm tall | 1 kg (fix it on the real table) | 0.13-0.15 / -0.14 to -0.12 / ±5° (the robot's right: centre 10 cm ahead of the pan axis, 13 cm right; < 1 cm further right its rim leaves the camera image) |
+| red cube (`red_cube_to_black_box`) | 3 cm | 20 g | 2 × 3 grid over 0.16-0.22 / 0.06-0.12 / ±45° (cell = seed % 6; the robot's left, ≥ 3.5 cm from the folded arm) |
+| red + blue cube (`stack_red_on_blue`) | 3 cm each | 20 g each | red: 2 × 2 grid over 0.15-0.21 / 0.06-0.09 / ±45° (cell = seed % 4); blue: red + (0, +0.10) exactly, own yaw ±45° (the finished stack stays ≥ 6 cm clear of the folded arm) |
 
 Success predicates (pure functions of the simulator state, `so101_libero/tasks/base.py`):
 - `In(obj, container)`: the container stands upright (< 30° tilt) on the table, untouched and at rest; the object's
@@ -260,6 +269,10 @@ Success predicates (pure functions of the simulator state, `so101_libero/tasks/b
 - `OnTableIn(obj, zone)` (`red_cube_aside`): obj rests directly on the table with its centre inside the zone, upright (< 30°),
   released and at rest, ≥ 4 cm from its start, **and was raised ≥ 2 cm at some point in the episode** (the environment
   tracks the highest point each object reached; pushing the cube into the zone is not "picking it up").
+- `On(obj, base)` (`stack_red_on_blue`): obj's bottom within 4 mm of base's top and its centre ≤ 12 mm (horizontally)
+  from base's centre (over base's top face for 3 cm cubes); base rests directly on the table (it may have been
+  nudged); both upright (< 20°), released and at rest, with the gripper's TCP ≥ 4 cm from obj (it let go and moved
+  off: a stack knocked over while the open jaws are still around it does not count).
 - A goal must hold for 5 consecutive control steps. Episodes end on success, if an object leaves the table, if the
   simulation diverges (MuJoCo's auto-reset would otherwise teleport everything to the origin), or after 450 steps
   (15 s). Initial states in which the goal already holds are resampled. Expert demonstrations continue past success

@@ -38,7 +38,7 @@ def wilson(k: int, n: int, z: float = 1.96) -> tuple[float, float]:
 
 def classify(env, task, lifted: bool) -> str:
     """Where the manipulated object ended up (privileged, for diagnostics only)."""
-    from so101_libero.tasks.base import PickPlace, PlaceAt, inside_any_container
+    from so101_libero.tasks.base import PickPlace, PlaceAt, StackOn, inside_any_container
 
     ws = env.world
     obj = task.plan.obj if task.plan else task.goal[0].obj
@@ -64,6 +64,22 @@ def classify(env, task, lifted: bool) -> str:
         if pred is not None and float(np.linalg.norm(ws.tcp_pos() - p)) < pred.min_tcp_distance:
             return "in_zone_gripper_still_near"
         return "in_zone_not_settled"  # e.g. still moving when the episode ended
+    if isinstance(task.plan, StackOn):
+        from so101_libero.tasks.base import OnTable
+
+        base = task.plan.base
+        if not lifted:
+            return "never_lifted"
+        if ws.touching_robot(obj):
+            return "still_held"
+        if not OnTable(base)(ws) or not ws.upright(base):
+            return "base_tipped_or_off_table"
+        bottom, base_top = ws.pos(obj)[2] - ws.h.objects[obj].half_height, ws.pos(base)[2] + ws.h.objects[base].half_height
+        if bottom > base_top - 0.005:  # resting on the base, but off centre, tilted, moving or the jaws still around it
+            return "on_base_off_centre_or_not_settled"
+        if OnTable(obj)(ws):
+            return "placed_on_table_not_stacked"
+        return "dropped_or_placed_wrong"
     inside = inside_any_container(ws, obj)
     if inside is not None:
         return "in_target_not_settled_or_held" if inside == target else "in_a_container"

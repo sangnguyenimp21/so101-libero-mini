@@ -121,7 +121,8 @@ def test_real_setup_scene_and_registry():
 
     assert FRONT_CAMERA.roll == pytest.approx(2.3) and FRONT_CAMERA.fovy == pytest.approx(45.0)
     assert [t.task_id for t in get_suite("so101_real")] == ["red_cube_aside", "red_cube_to_box", "red_cube_to_white_tray",
-                                                          "red_cube_far_to_white_tray"]
+                                                          "red_cube_far_to_white_tray", "red_cube_to_black_box",
+                                                          "stack_red_on_blue"]
     env = SO101TabletopEnv("red_cube_aside", EnvConfig(render=False))
     m = env.model
     assert np.allclose(m.geom("red_cube_geom").size, [0.015] * 3)
@@ -294,3 +295,116 @@ def test_far_cube_task_starts_and_parks_at_rest():
     assert phases[0] == "unfold" and phases[-2:] == ["return", "hold"]
     assert np.allclose(ep.frames[-1][1], REST_DEG, atol=1e-3)  # last action: the rest pose
     assert ep.success_step < env.task.max_steps
+
+
+def _box_corners(pose, half, height):
+    """Corners (world, m) of a square footprint of half size ``half`` at ``pose`` (x, y, yaw), at z 0 and ``height``."""
+    x, y, yaw = pose
+    c, s = math.cos(yaw), math.sin(yaw)
+    return [(x + c * ux - s * uy, y + s * ux + c * uy, z) for ux in (-half, half) for uy in (-half, half)
+            for z in (0.0, height)]
+
+
+def _front_image_margin(env, points) -> float:
+    """Smallest distance (px) of world points to the border of the front camera's policy image (negative: outside)."""
+    m, d = env.model, env.data
+    cid = m.camera("front").id
+    pos, rot = d.cam_xpos[cid], d.cam_xmat[cid].reshape(3, 3)
+    h, w = env.cfg.image_size
+    f = (h / 2) / math.tan(math.radians(m.cam_fovy[cid]) / 2)
+    best = math.inf
+    for p in points:
+        c = rot.T @ (np.asarray(p) - pos)  # camera frame: x right, y up, looking along -z
+        u, v = w / 2 + f * c[0] / -c[2], h / 2 - f * c[1] / -c[2]
+        best = min(best, u, w - u, v, h - v)
+    return best
+
+
+def test_black_box_task_layout_camera_view_and_rest_clearance():
+    """red_cube_to_black_box: the 10 x 10 cm, 6 cm tall box stays on the robot's right (+-1 cm, +-5 deg), the cube
+    starts on its left in the 6 grid cells in turn, both lie entirely inside the front camera's policy image (box rim
+    included), and the arm starts folded at rest touching neither."""
+    from so101_libero.env import EnvConfig, SO101TabletopEnv
+    from so101_libero.sim.robot import REST_DEG
+    from so101_libero.tasks.base import _gap_to_tray
+
+    task = TASKS["red_cube_to_black_box"]
+    grid, box = task.layout.regions["red_cube"], task.layout.containers[0]
+    assert box.name == "black_box" and 2 * (box.inner_size[0] + box.wall_thickness) == pytest.approx(0.10)
+    assert box.wall_height == pytest.approx(0.06) and np.allclose(task.start_deg, REST_DEG) and task.return_to_start
+    env = SO101TabletopEnv(task, EnvConfig(render=False))
+    for seed in range(12):
+        env.reset(seed=seed)
+        items = env.init_state["items"]
+        x, y, _ = items["red_cube"]
+        cell = grid.cell(seed % 6)
+        assert cell.x[0] <= x <= cell.x[1] and cell.y[0] <= y <= cell.y[1] and y >= 0.06
+        bx, by, byaw = items["black_box"]
+        assert 0.13 <= bx <= 0.15 and -0.14 <= by <= -0.12 and abs(byaw) <= math.radians(5) + 1e-9
+        assert _gap_to_tray(box, items["black_box"], (x, y)) > 0.1
+        assert not env.world.touching_robot("red_cube") and not env.world.touching_robot("black_box")
+        corners = (_box_corners(items["black_box"], box.inner_size[0] + box.wall_thickness, box.wall_height)
+                   + _box_corners(items["red_cube"], 0.015, 0.03))
+        assert _front_image_margin(env, corners) > 2.0
+
+
+def test_stack_task_pair_spacing_goal_and_parked_end():
+    """stack_red_on_blue: the blue cube starts exactly 10 cm left of the red one (the pair moves as one, through the
+    grid cells in turn), both inside the camera view, finished stack included, and clear of the folded arm; On(red,
+    blue) needs the red cube released and resting centred on the blue one; the expert stacks it and parks at rest
+    without touching the stack."""
+    from so101_libero.env import EnvConfig, SO101TabletopEnv
+    from so101_libero.expert.rollout import run_expert_episode
+    from so101_libero.sim.robot import REST_DEG
+    from so101_libero.tasks.base import StackedOn
+
+    task = TASKS["stack_red_on_blue"]
+    grid = task.layout.regions["red_cube"]
+    env = SO101TabletopEnv(task, EnvConfig(render=False, terminate_on_success=False, max_steps=900))
+    ws = env.world
+    for seed in range(8):
+        env.reset(seed=seed)
+        items = env.init_state["items"]
+        (rx, ry, _), (bx, by, _) = items["red_cube"], items["blue_cube"]
+        cell = grid.cell(seed % 4)
+        assert cell.x[0] <= rx <= cell.x[1] and cell.y[0] <= ry <= cell.y[1]
+        assert (bx, by) == pytest.approx((rx, ry + 0.10), abs=1e-12)
+        assert not ws.touching_robot("red_cube") and not ws.touching_robot("blue_cube")
+        corners = _box_corners(items["red_cube"], 0.015, 0.03) + _box_corners(items["blue_cube"], 0.015, 0.06)
+        assert _front_image_margin(env, corners) > 2.0
+
+    pred = task.goal[0]
+    assert isinstance(pred, StackedOn)
+    env.reset(seed=1)
+    assert not pred(ws)
+    b = ws.pos("blue_cube")
+    for xyz, ok in (((b[0] + 0.004, b[1] - 0.003, 0.0451), True),  # resting on top, 5 mm off centre
+                    ((b[0] + 0.014, b[1], 0.0451), False),  # resting on top, but 14 mm off centre
+                    ((b[0], b[1] - 0.05, 0.0151), False)):  # next to it on the table
+        _place(env, "red_cube", xyz)
+        for _ in range(150):
+            mujoco.mj_step(env.model, env.data)
+        assert pred(ws) == ok, xyz
+    _place(env, "red_cube", (b[0], b[1], 0.07))  # held / dropped from above
+    mujoco.mj_forward(env.model, env.data)
+    assert not pred(ws)
+
+    ep = run_expert_episode(env, 900001, record=True)
+    assert ep.success, ep.failure
+    phases = [p for _, p in ep.phases]
+    assert phases[0] == "unfold" and phases[-2:] == ["return", "hold"]
+    assert ep.success_step > next(s for s, p in ep.phases if p == "retreat")  # not while the jaws are around the cube
+    assert np.allclose(ep.frames[-1][1], REST_DEG, atol=1e-3)  # parked at rest
+    assert np.linalg.norm(ws.pos("red_cube")[:2] - ws.pos("blue_cube")[:2]) < 0.008
+    assert not ws.touching_robot("red_cube") and not ws.touching_robot("blue_cube")
+    assert ep.success_step < task.max_steps
+
+
+def test_relative_region_needs_its_reference_first():
+    from so101_libero.sim.objects import BLUE_CUBE, RED_CUBE
+    from so101_libero.tasks.base import Layout, Region, RelativeRegion
+
+    bad = Layout("bad", objects=(BLUE_CUBE, RED_CUBE), containers=(),
+                 regions={"blue_cube": RelativeRegion("red_cube", 0.0, 0.10), "red_cube": Region((0.15, 0.2), (0.0, 0.05))})
+    with pytest.raises(ValueError, match="must be placed before"):
+        bad.sample(np.random.default_rng(0))
