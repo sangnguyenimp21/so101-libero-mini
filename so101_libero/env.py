@@ -7,6 +7,10 @@ Policy-facing interface (identical for data collection, training and evaluation,
   action                                     float32 (6,)  absolute joint position targets, same units
 Privileged simulator state (object poses, contacts) is available only through ``env.world`` and ``info``
 for the scripted expert and success checks; it is never part of the observation.
+
+Layouts with predefined initial placements (``FixedPlacementLayout``) take ``reset(options={"placement_id": k})``;
+without it the placement is drawn from the reset seed. The chosen id is stored in ``init_state["placement_id"]`` and
+reported in ``info["placement_id"]``.
 """
 
 from __future__ import annotations
@@ -96,9 +100,14 @@ class SO101TabletopEnv(gym.Env):
                 q = HOME_QPOS.copy() if self.task.start_deg is None else lerobot_to_sim(np.asarray(self.task.start_deg))
                 q[:5] += rng.uniform(-self.cfg.home_noise, self.cfg.home_noise, 5)
                 sizes = self.task.layout.sample_sizes(rng)  # {} (no draw) unless an object has a scale_range
-                init = {"robot_qpos": q.tolist(), "items": self.task.layout.sample(rng, sizes, seed=seed)}
+                # None (and no draw) for continuous layouts; the requested or a seeded placement for fixed ones
+                pid = self.task.layout.choose_placement(rng, options.get("placement_id"))
+                init = {"robot_qpos": q.tolist(),
+                        "items": self.task.layout.sample(rng, sizes, seed=seed, placement_id=pid)}
                 if sizes:
                     init["sizes"] = sizes
+                if pid is not None:
+                    init["placement_id"] = pid
                 self._apply_init(init)
                 if not self.task.check(self.world):
                     break
@@ -120,6 +129,8 @@ class SO101TabletopEnv(gym.Env):
                            "items": {k: list(map(float, v)) for k, v in init["items"].items()}}
         if init.get("sizes"):
             self.init_state["sizes"] = {k: list(map(float, v)) for k, v in init["sizes"].items()}
+        if init.get("placement_id") is not None:
+            self.init_state["placement_id"] = int(init["placement_id"])
         d, h = self.data, self.h
         h.apply_sizes(self.init_state.get("sizes", {}), d)
         mujoco.mj_resetData(self.model, d)
@@ -137,7 +148,8 @@ class SO101TabletopEnv(gym.Env):
         if self._diverged():
             raise RuntimeError(f"simulation diverged while settling the initial state {self.init_state}")
         self.world.init_pos = {n: self.world.pos(n) for n in self.h.item_body}
-        self.world.max_lift, self.world.held_xy = {}, {}
+        self.world.init_rot = {n: self.world.rot(n) for n in self.h.item_body}
+        self.world.max_lift, self.world.held_xy, self.world.min_up_z = {}, {}, {}
         self.world.track()
 
     def step(self, action):
@@ -190,8 +202,11 @@ class SO101TabletopEnv(gym.Env):
         return obs
 
     def _info(self, success: bool) -> dict:
-        return {"is_success": success, "task_id": self.task.task_id, "task": self.task.language,
+        info = {"is_success": success, "task_id": self.task.task_id, "task": self.task.language,
                 "step": self._step, "success_streak": self._streak}
+        if self.init_state is not None and "placement_id" in self.init_state:
+            info["placement_id"] = self.init_state["placement_id"]
+        return info
 
     def _diverged(self) -> bool:
         """MuJoCo auto-resets the state when it becomes unstable (and counts a warning); catch both cases."""

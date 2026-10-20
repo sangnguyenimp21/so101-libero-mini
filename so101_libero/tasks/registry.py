@@ -200,3 +200,12 @@ def get_suite(name: str) -> list[Task]:
     if name in TASKS:
         return [TASKS[name]]
     raise KeyError(f"unknown suite or task {name!r}; suites: {sorted(SUITES)}, tasks: {sorted(TASKS)}")
+
+
+# Suite so101_tri: one scene (a fixed white box, a red cube, a green half-cylinder, a light gray cylinder), exactly five
+# predefined placements of the three small objects, three tasks (so101_libero/tasks/tri_tasks.py documents the
+# geometry, directions and tolerances). Registry indices 10-12: training seeds 1,000,000+ / 1,100,000+ / 1,200,000+.
+from so101_libero.tasks.tri_tasks import TRI_TASKS  # noqa: E402
+
+for _task in TRI_TASKS:
+    register(_task, suite="so101_tri")

@@ -31,6 +31,7 @@ def main() -> None:
     import so101_libero  # noqa: F401
     from so101_libero.env import EnvConfig, SO101TabletopEnv
     from so101_libero.expert.pick_place import ExpertConfig
+    from so101_libero.cli.generate import episode_limit
     from so101_libero.expert.rollout import run_expert_episode
 
     root = args.root or Path(os.environ.get("HF_LEROBOT_HOME", "data")) / args.repo_id
@@ -46,8 +47,9 @@ def main() -> None:
         e = episodes[i]
         if e["task_id"] not in envs:
             envs[e["task_id"]] = SO101TabletopEnv(e["task_id"], EnvConfig(render=False, terminate_on_success=False,
-                                                                          max_steps=900))
-        ep = run_expert_episode(envs[e["task_id"]], e["seed"], cfg=cfg, record=True)
+                                                                          max_steps=episode_limit(e["task_id"])))
+        ep = run_expert_episode(envs[e["task_id"]], e["seed"], cfg=cfg, record=True,
+                                placement_id=e.get("placement_id"))
         new = np.stack([a for _, a in ep.frames]) if ep.frames else np.zeros((0, 6), np.float32)
         old = np.stack(data[data.episode_index == e["episode_index"]]["action"].values)
         same = new.shape == old.shape and np.array_equal(new, old)

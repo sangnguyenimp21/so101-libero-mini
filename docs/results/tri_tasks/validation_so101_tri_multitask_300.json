@@ -1,0 +1,14 @@
+{
+  "repo_id": "local/so101_tri_multitask_300",
+  "root": "/Users/sangnguyen/.cache/huggingface/lerobot/local/so101_tri_multitask_300",
+  "errors": [],
+  "episodes": 300,
+  "frames": 137440,
+  "mean_action_state_lag_deg": [
+    0.0767454206943512,
+    0.1790834218263626,
+    0.20253142714500427,
+    0.13405422866344452,
+    0.0930447056889534
+  ]
+}

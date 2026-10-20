@@ -34,15 +34,15 @@ set -u
 
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
-RUN="${RUN:-smolvla_real_cube_far_white_tray_100}"
-CKPT="${CKPT:-080000}"
-TASK="${TASK:-red_cube_far_to_white_tray}"
+RUN="${RUN:-smolvla_real_stack_red_blue_100}"
+CKPT="${CKPT:-last}"
+TASK="${TASK:-stack_red_on_blue}"
 
 # LAB Settings
 PORT="${PORT:-/dev/tty.usbmodem5B610366661}"
 ROBOT_ID="${ROBOT_ID:-my_follower_sim}"
-ROBOT_ID="${ROBOT_ID:-my_follower}"
-FRONT_CAM="${FRONT_CAM:-3}"
+# ROBOT_ID="${ROBOT_ID:-my_follower}"
+FRONT_CAM="${FRONT_CAM:-2}"
 WRIST_CAM="${WRIST_CAM:-0}"
 FRONT_W="${FRONT_W:-1280}"
 FRONT_H="${FRONT_H:-720}"
@@ -52,12 +52,12 @@ WRIST_H="${WRIST_H:-240}"
 # HOME Settings
 # PORT="${PORT:-/dev/tty.usbmodem5C821064861}"
 # ROBOT_ID="${ROBOT_ID:-home_follower2}"
-# FRONT_CAM="${FRONT_CAM:-1}"
+# FRONT_CAM="${FRONT_CAM:-2}"
 # WRIST_CAM="${WRIST_CAM:-0}"
-# FRONT_W="${FRONT_W:-640}"
-# FRONT_H="${FRONT_H:-480}"
-# WRIST_W="${WRIST_W:-640}"
-# WRIST_H="${WRIST_H:-480}"
+# FRONT_W="${FRONT_W:-1280}"
+# FRONT_H="${FRONT_H:-720}"
+# WRIST_W="${WRIST_W:-320}"
+# WRIST_H="${WRIST_H:-240}"
 
 FPS="${FPS:-30}"
 DURATION="${DURATION:-60}"

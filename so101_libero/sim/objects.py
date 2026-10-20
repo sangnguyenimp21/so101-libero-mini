@@ -1,7 +1,8 @@
 """Graspable objects and containers: specifications plus MjSpec builders.
 
-Every item is a free rigid body, so the robot interacts with it only through contacts. Objects are single
-primitive geoms; containers are a base plate plus box walls (a rectangular tray or a ring of segments).
+Every object is a free rigid body, so the robot interacts with it only through contacts. Objects are single geoms
+(a primitive, or a convex mesh for the half-cylinder); containers are a base plate plus box walls (a rectangular tray
+or a ring of segments), either free bodies or fixed to the table (``ContainerSpec.fixed_pose``).
 """
 
 from __future__ import annotations
@@ -18,8 +19,11 @@ class ObjectSpec:
     """A graspable object with a free joint, resting on its flat face."""
 
     name: str  # unique id used by tasks, e.g. "red_cylinder"
-    shape: str  # "cylinder" | "box"
-    size: tuple[float, ...]  # cylinder: (radius, half_height); box: (hx, hy, hz)
+    shape: str  # "cylinder" | "box" | "half_cylinder"
+    # cylinder: (radius, half_height); box: (hx, hy, hz); half_cylinder: (radius, half_length) -- a cylinder cut in half
+    # along its axis, extruded along the body x axis, resting on its flat face (body z up = curved side up). Its body
+    # origin is the centre of its bounding box (radius / 2 above the flat face), like the primitives' centres.
+    size: tuple[float, ...]
     rgba: tuple[float, float, float, float]
     description: str  # how instructions refer to it, e.g. "red cylinder"
     mass: float = 0.02
@@ -28,22 +32,40 @@ class ObjectSpec:
     # uniformly from this range at reset (``Layout.sample_sizes``). The model is compiled at ``size``; the episode's
     # size is written into it by ``SceneHandles.apply_sizes`` and recorded in the initial state ("sizes").
     scale_range: tuple[float, float] | None = None
+    # Optional contact softness (MuJoCo solref: time constant, damping ratio) with geom priority 1, so these values
+    # (not the default 0.02 s) govern every contact of this object. Needed for light mesh objects: with the default
+    # softness a spinning 15 g mesh block landing on an edge sinks through the floor instead of rocking flat.
+    solref: tuple[float, float] | None = None
 
     def with_size(self, size: tuple[float, ...]) -> "ObjectSpec":
         return self if tuple(size) == tuple(self.size) else replace(self, size=tuple(float(v) for v in size))
 
     @property
     def half_height(self) -> float:
+        if self.shape == "half_cylinder":
+            return self.size[0] / 2
         return self.size[1] if self.shape == "cylinder" else self.size[2]
+
+    @property
+    def max_half_extent(self) -> float:
+        """Largest distance from the body origin to the surface along a body axis (resting height bound, any face)."""
+        if self.shape == "half_cylinder":
+            return max(self.size[0], self.size[1])
+        return max(self.size)
 
     @property
     def footprint_radius(self) -> float:
         """Radius of a circle containing the object's footprint, for collision-free placement."""
+        if self.shape == "half_cylinder":
+            return math.hypot(self.size[0], self.size[1])
         return self.size[0] if self.shape == "cylinder" else math.hypot(self.size[0], self.size[1])
 
     @property
     def grasp_width(self) -> float:
-        """Width between the jaws for a top-down grasp across the object (box: across x faces)."""
+        """Width between the jaws for a top-down grasp across the object (box: across x faces; half-cylinder: across
+        its two flat semicircular end faces)."""
+        if self.shape == "half_cylinder":
+            return 2 * self.size[1]
         return 2 * self.size[0]
 
     @property
@@ -51,6 +73,8 @@ class ObjectSpec:
         """Rotation (rad) after which a top-down grasp looks the same: 0 = any yaw (cylinder)."""
         if self.shape == "cylinder":
             return 0.0
+        if self.shape == "half_cylinder":
+            return math.pi
         return math.pi / 2 if abs(self.size[0] - self.size[1]) < 1e-6 else math.pi
 
 
@@ -69,6 +93,13 @@ class ContainerSpec:
     mass: float = 0.15
     friction: tuple[float, float, float] = (1.0, 0.005, 0.0001)
     n_segments: int = 24  # round walls
+    # (x, y, yaw) on the table: the container is welded to the world there (no joint, it cannot move or tip) instead of
+    # being a free body placed at reset. Layouts must not give it a start region.
+    fixed_pose: tuple[float, float, float] | None = None
+    # Fixed containers only: the base plate's collision slab extends this far BELOW the table top (hidden inside the
+    # static table, which it cannot touch). The visible floor and its top surface are unchanged; a thin (1 mm) floor
+    # alone lets a dropped object tunnel through it within one physics substep.
+    base_below_table: float = 0.0
 
     @property
     def footprint_radius(self) -> float:
@@ -93,31 +124,56 @@ def _common_geom(geom, rgba, friction, mass=None) -> None:
         geom.mass = mass
 
 
-def add_object(parent: mujoco.MjsBody, spec: ObjectSpec) -> mujoco.MjsBody:
-    """Add ``spec`` as a free body (pose is set later through qpos)."""
+def half_cylinder_vertices(radius: float, half_length: float, segments: int = 32) -> np.ndarray:
+    """Vertices (N, 3) of a half-cylinder extruded along x, flat face down at z = -radius / 2, curved side up to
+    z = +radius / 2 (origin = bounding-box centre). The shape is convex, so MuJoCo's convex hull of these points is
+    exactly the tessellated half-cylinder, for collisions as well as for mass and inertia."""
+    theta = np.linspace(0.0, math.pi, segments + 1)
+    arc = np.stack([radius * np.cos(theta), radius * np.sin(theta) - radius / 2], axis=1)
+    return np.concatenate([np.c_[np.full(len(arc), x), arc] for x in (-half_length, half_length)])
+
+
+def add_object(parent: mujoco.MjsBody, spec: ObjectSpec, mjspec: mujoco.MjSpec | None = None) -> mujoco.MjsBody:
+    """Add ``spec`` as a free body (pose is set later through qpos). Mesh shapes need ``mjspec`` for their mesh asset."""
     body = parent.add_body(name=spec.name, pos=[0.0, 0.0, spec.half_height])
     body.add_freejoint(name=f"{spec.name}_joint")
     if spec.shape == "cylinder":
         geom = body.add_geom(name=f"{spec.name}_geom", type=mujoco.mjtGeom.mjGEOM_CYLINDER, size=[*spec.size, 0])
     elif spec.shape == "box":
         geom = body.add_geom(name=f"{spec.name}_geom", type=mujoco.mjtGeom.mjGEOM_BOX, size=list(spec.size))
+    elif spec.shape == "half_cylinder":
+        if mjspec is None:
+            raise ValueError(f"{spec.name}: a half_cylinder needs the MjSpec to add its mesh")
+        mesh = mjspec.add_mesh(name=f"{spec.name}_mesh")
+        mesh.uservert = half_cylinder_vertices(*spec.size).flatten().tolist()
+        mesh.inertia = mujoco.mjtMeshInertia.mjMESH_INERTIA_CONVEX  # = exact for this convex solid
+        geom = body.add_geom(name=f"{spec.name}_geom", type=mujoco.mjtGeom.mjGEOM_MESH, meshname=mesh.name)
     else:
         raise ValueError(f"unknown object shape {spec.shape!r}")
     _common_geom(geom, spec.rgba, spec.friction, spec.mass)
+    if spec.solref is not None:
+        geom.solref = list(spec.solref)
+        geom.priority = 1
     return body
 
 
 def add_container(parent: mujoco.MjsBody, spec: ContainerSpec) -> mujoco.MjsBody:
-    """Add ``spec`` as a free body whose frame origin is the centre of its bottom face."""
-    body = parent.add_body(name=spec.name, pos=[0.0, 0.0, 0.0])
-    body.add_freejoint(name=f"{spec.name}_joint")
+    """Add ``spec`` as a body whose frame origin is the centre of its bottom face: free, or welded to ``parent`` at
+    ``spec.fixed_pose``."""
+    if spec.fixed_pose is not None:
+        x, y, yaw = spec.fixed_pose
+        body = parent.add_body(name=spec.name, pos=[x, y, 0.0], quat=[math.cos(yaw / 2), 0.0, 0.0, math.sin(yaw / 2)])
+    else:
+        body = parent.add_body(name=spec.name, pos=[0.0, 0.0, 0.0])
+        body.add_freejoint(name=f"{spec.name}_joint")
     t, bt, h = spec.wall_thickness, spec.base_thickness, spec.wall_height
     wall_h = (h - bt) / 2  # half height of the walls standing on the base plate
     parts = []  # (name, geom type, size, pos, quat, volume)
     box, cyl = mujoco.mjtGeom.mjGEOM_BOX, mujoco.mjtGeom.mjGEOM_CYLINDER
+    below = spec.base_below_table if spec.fixed_pose is not None else 0.0
     if spec.shape == "tray":
         hx, hy = spec.inner_size
-        parts.append(("base", box, [hx + t, hy + t, bt / 2], [0, 0, bt / 2], [1, 0, 0, 0]))
+        parts.append(("base", box, [hx + t, hy + t, (bt + below) / 2], [0, 0, (bt - below) / 2], [1, 0, 0, 0]))
         for sx in (-1, 1):
             parts.append((f"wall_x{sx:+d}", box, [t / 2, hy + t, wall_h], [sx * (hx + t / 2), 0, bt + wall_h], [1, 0, 0, 0]))
         for sy in (-1, 1):

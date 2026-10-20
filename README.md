@@ -72,6 +72,9 @@ so101_libero/
   sim/scene.py                     MjSpec scene: robot + table + items + cameras + physics options
   tasks/base.py                    Region, Layout (placement sampling), WorldState, predicates, plans, Task
   tasks/registry.py                the tasks and suites  <- add tasks here
+  tasks/tri_tasks.py               suite so101_tri: scene, directions, 5 placements, tolerances, 3 tasks (docs/TRI_TASKS.md)
+  expert/tri_tasks.py              so101_tri demonstration controllers (move by offset, place in box, flip via station)
+  train/lerobot_train_balanced.py  lerobot-train with task-balanced sampling (multitask datasets)
   env.py                           gymnasium env (the policy-facing observation/action interface)
   expert/                          ik.py, pick_place.py (expert), rollout.py (episode runner + grasp monitor)
   data/writer.py                   LeRobot dataset writer (+ side metadata: seeds, init states, failures)
@@ -84,6 +87,8 @@ scripts/train.sh                   lerobot-train wrapper with project defaults (
 scripts/eval_variants.sh           evaluate one checkpoint with several inference settings
 scripts/setup_*.sh                 one-time setup (OSMesa, EGL shim, SmolVLA extras; conda runtime for SLURM)
 pbs/                               Hopper GPU jobs: smoke, generate, train (+eval), eval (+ small diagnostics)
+slurm/train_smolvla_*.slurm        so101_tri SmolVLA jobs (cube_left, green_into_box, cylinder_flip, multitask; settings in
+                                   slurm/tri_tasks.env), wrappers around the white-tray driver like the stacking job
 slurm/                             SLURM H100 jobs, SmolVLA end to end (conda env, data, train, eval): red_cube_to_box,
                                    red_cube_to_white_tray (100 demos, BF16, 40k steps, eval every 10k),
                                    red_cube_far_to_white_tray, red_cube_to_black_box, stack_red_on_blue (each: its
@@ -240,6 +245,16 @@ training seeds 400000+, evaluation seeds 10,400,000+):
 | `red_cube_far_to_white_tray` | Pick up the red cube and put it in the white tray. | In(red_cube, white_tray); the cube at one far spot (26 cm ahead of the pan axis), the arm starts in the folded rest pose and the expert parks there again after placing (rest → home → pick, place → home → rest, 2 s hold) (index 7: training seeds 700000+, evaluation 10,700,000+) |
 | `red_cube_to_black_box` | Pick up the red cube and put it in the black box. | In(red_cube, black_box); like `lerobot/svla_so100_pickplace`: the box (10 × 10 cm outside, 6 cm walls) on the robot's right, the cube on its left beside the folded arm (6 cells, cell = seed % 6), all inside the front camera's view; starts and parks at rest (index 8: training seeds 800000+, evaluation 10,800,000+) |
 | `stack_red_on_blue` | Put the red cube on top of the blue cube. | On(red_cube, blue_cube); like `lerobot/svla_so100_stacking`: two 3 cm cubes on the robot's left, the blue one always 10 cm further left, the pair moved as one (4 cells, cell = seed % 4); starts and parks at rest (index 9: training seeds 900000+, evaluation 10,900,000+) |
+
+Suite `so101_tri` (one scene: a fixed white box, a red cube, a green half-cylinder and a light gray cylinder; exactly
+five placements of the three small objects; registry indices 10-12; full description, commands and limitations in
+[docs/TRI_TASKS.md](docs/TRI_TASKS.md)):
+
+| id | instruction | goal |
+|---|---|---|
+| `cube_left` | Pick up the red cube and place it 5 cm to the left. | MovedBy(red_cube, 5 cm robot-left, ±1 cm), upright, others undisturbed |
+| `green_into_box` | Pick up the green semicircular block and put it into the white box. | RestingIn(green_block, white_box), others undisturbed |
+| `cylinder_flip` | Pick up the light gray cylinder at its middle, flip it upside down, and place it back in its original position. | FlippedInPlace(gray_cylinder, ±1.5 cm), others undisturbed |
 
 Items and start regions (world frame, metres: x forward from the base origin, which lies 3.9 cm behind the shoulder's pan axis, y = the robot's left; uniform x, y, yaw; collision-free rejection sampling with 2 cm
 clearance; the arm starts at a fixed home pose):

@@ -174,7 +174,7 @@ def build_spec(cfg: SceneConfig) -> mujoco.MjSpec:
     for c in cfg.containers:
         add_container(world, c)
     for o in cfg.objects:
-        add_object(world, o)
+        add_object(world, o, spec)
     return spec
 
 
@@ -246,6 +246,10 @@ class SceneHandles:
     def containers(self) -> dict[str, ContainerSpec]:
         return {c.name: c for c in self.cfg.containers}
 
+    def is_fixed(self, item: str) -> bool:
+        """Is ``item`` welded to the world (a container with a ``fixed_pose``)?"""
+        return item in self.item_body and item not in self.item_qpos_adr
+
 
 def build_scene(cfg: SceneConfig) -> SceneHandles:
     model = build_spec(cfg).compile()
@@ -272,11 +276,13 @@ def build_scene(cfg: SceneConfig) -> SceneHandles:
     )
     for item in (*cfg.objects, *cfg.containers):
         b = model.body(item.name).id
-        j = model.joint(f"{item.name}_joint").id
         h.item_body[item.name] = b
+        h.item_geoms[item.name] = frozenset(g for g in range(model.ngeom) if model.geom_bodyid[g] == b)
+        if getattr(item, "fixed_pose", None) is not None:
+            continue  # welded to the world: no joint, no qpos/qvel (see is_fixed)
+        j = model.joint(f"{item.name}_joint").id
         h.item_qpos_adr[item.name] = int(model.jnt_qposadr[j])
         h.item_dof_adr[item.name] = int(model.jnt_dofadr[j])
-        h.item_geoms[item.name] = frozenset(g for g in range(model.ngeom) if model.geom_bodyid[g] == b)
     for o in cfg.objects:
         h.compiled_inertia[o.name] = model.body_inertia[h.item_body[o.name]].copy()
     return h

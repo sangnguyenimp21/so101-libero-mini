@@ -70,6 +70,7 @@ def main() -> None:
     args = ap.parse_args()
 
     import so101_libero  # noqa: F401
+    from so101_libero.cli.generate import episode_limit
     from so101_libero.env import EnvConfig, SO101TabletopEnv
     from so101_libero.expert.rollout import run_expert_episode
     from so101_libero.tasks.registry import TASKS, get_suite
@@ -80,13 +81,15 @@ def main() -> None:
         if path.exists() and not args.force:
             print(f"{path} exists, skipping (--force to regenerate)")
             continue
-        env = SO101TabletopEnv(task, EnvConfig(render=False, terminate_on_success=False, max_steps=900))
+        env = SO101TabletopEnv(task, EnvConfig(render=False, terminate_on_success=False,
+                                               max_steps=episode_limit(task.task_id)))
         base = EVAL_SEED_BASE + list(TASKS).index(task.task_id) * 100_000
+        n_place = task.layout.num_placements  # predefined placements: state k uses placement k % n (balanced)
         states, rejected = [], []
         for i in range(args.max_candidates):
             if len(states) == args.num:
                 break
-            ep = run_expert_episode(env, base + i)
+            ep = run_expert_episode(env, base + i, placement_id=len(states) % n_place if n_place else None)
             entry = {"seed": base + i, "init_state": ep.init_state,
                      "expert": {"success": ep.success, "failure": ep.failure, "steps": ep.steps}}
             (states if ep.success else rejected).append(entry)

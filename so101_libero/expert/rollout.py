@@ -30,6 +30,7 @@ class ExpertEpisode:
 
     def summary(self) -> dict:
         return {"seed": self.seed, "task_id": self.task_id, "success": self.success, "failure": self.failure,
+                "placement_id": self.init_state.get("placement_id"),
                 "regrasps": sum(1 for _, p in self.phases if p.startswith("regrasp")),
                 "deliberate_miss": self.deliberate_miss,
                 "regrasp_frames": [t for t, p in self.phases if p.startswith("regrasp")],
@@ -38,11 +39,20 @@ class ExpertEpisode:
                 "init_state": self.init_state}
 
 
+def make_expert(env: SO101TabletopEnv, plan, rng: np.random.Generator, cfg: ExpertConfig | None = None):
+    """The scripted expert for a task's plan: the so101_tri experts for their plans, else the pick-and-place expert."""
+    from so101_libero.expert.tri_tasks import make_tri_expert
+
+    return make_tri_expert(env, plan, rng, cfg) or PickPlaceExpert(env, plan, rng, cfg)
+
+
 class GraspMonitor:
-    """While the object is carried (lift/transport/lower): its slip relative to the TCP frame, the deepest
-    object-jaw penetration and the pinch force. Evidence that the grasp is physical and stable."""
+    """While the object is carried (lift/transport/lower, and the side lift/flip/lower of the flip task): its slip
+    relative to the TCP frame, the deepest object-jaw penetration and the pinch force. Evidence that the grasp is
+    physical and stable. With several grasps per episode the slip is measured per grasp (maximum over grasps)."""
 
     CARRY = ("lift", "transport", "lower")
+    CARRY_EXTRA = ("lift2", "transport2", "lower2", "side_lift", "flip", "side_lower")
 
     def __init__(self, env: SO101TabletopEnv, obj: str):
         self.env, self.obj = env, obj
@@ -56,7 +66,9 @@ class GraspMonitor:
         if phase == "regrasp":  # a new grasp follows: measure the carry of the grasp that actually holds the object
             self.ref, self.max_slip, self.max_pen, self.forces = None, 0.0, 0.0, []
             return
-        if phase not in self.CARRY:
+        if phase not in self.CARRY and phase not in self.CARRY_EXTRA:
+            if phase.endswith(("release", "release2")):
+                self.ref = None  # the next carry is a new grasp: new reference
             return
         d, h, ws = self.env.data, self.env.h, self.env.world
         rot = d.site_xmat[h.tcp_site].reshape(3, 3)
@@ -88,8 +100,9 @@ def expert_rng(seed: int) -> np.random.Generator:
 
 
 def run_expert_episode(env: SO101TabletopEnv, seed: int, cfg: ExpertConfig | None = None, record: bool = False,
-                       init_state: dict | None = None) -> ExpertEpisode:
-    """Reset with ``seed`` (or ``init_state``), let the expert act until it finishes, then check the goal.
+                       init_state: dict | None = None, placement_id: int | None = None) -> ExpertEpisode:
+    """Reset with ``seed`` (or ``init_state``; ``placement_id`` selects a predefined placement), let the expert act
+    until it finishes, then check the goal.
 
     ``env`` should have ``terminate_on_success=False`` so the expert completes its retreat. Recorded frames
     pair each observation with the action taken from it (LeRobot convention: obs_t, action_t).
@@ -98,9 +111,12 @@ def run_expert_episode(env: SO101TabletopEnv, seed: int, cfg: ExpertConfig | Non
     task = env.task
     if task.plan is None:
         raise ValueError(f"task {task.task_id} has no expert plan")
-    obs, info = env.reset(seed=seed, options={"init_state": init_state} if init_state else None)
+    options = {"init_state": init_state} if init_state else {}
+    if placement_id is not None:
+        options["placement_id"] = placement_id
+    obs, info = env.reset(seed=seed, options=options or None)
     init = env.init_state
-    expert = PickPlaceExpert(env, task.plan, expert_rng(seed), cfg)
+    expert = make_expert(env, task.plan, expert_rng(seed), cfg)
     monitor = GraspMonitor(env, task.plan.obj)
     frames = []
     success_step = None

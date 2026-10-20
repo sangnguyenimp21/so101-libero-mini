@@ -38,13 +38,23 @@ def wilson(k: int, n: int, z: float = 1.96) -> tuple[float, float]:
 
 def classify(env, task, lifted: bool) -> str:
     """Where the manipulated object ended up (privileged, for diagnostics only)."""
-    from so101_libero.tasks.base import PickPlace, PlaceAt, StackOn, inside_any_container
+    from so101_libero.tasks.base import FlipViaStation, PickPlace, PlaceAt, PlaceInBox, StackOn, inside_any_container
 
     ws = env.world
     obj = task.plan.obj if task.plan else task.goal[0].obj
-    target = task.plan.target if isinstance(task.plan, PickPlace) else None
+    target = task.plan.target if isinstance(task.plan, (PickPlace, PlaceInBox)) else None
     if ws.pos(obj)[2] < -0.05:
         return "fell_off_table"
+    if isinstance(task.plan, FlipViaStation):
+        if not lifted:
+            return "never_lifted"
+        if ws.touching_robot(obj):
+            return "still_held"
+        if ws.min_up_z.get(obj, 1.0) > -0.5:
+            return "never_turned_upside_down"  # tracked body orientation: lifted (and maybe put back) but not flipped
+        if ws.up_z(obj) > -0.9:
+            return "flipped_then_tipped_over"
+        return "flipped_but_not_back_in_place_or_not_settled"
     if isinstance(task.plan, PlaceAt):
         from so101_libero.tasks.base import OnTable, OnTableInRegion
 
@@ -124,8 +134,7 @@ def _episode(job: dict) -> dict:
 
 def _run_episode(job: dict) -> dict:
     from so101_libero.env import EnvConfig, SO101TabletopEnv
-    from so101_libero.expert.pick_place import PickPlaceExpert
-    from so101_libero.expert.rollout import expert_rng
+    from so101_libero.expert.rollout import expert_rng, make_expert
     from so101_libero.tasks.registry import get_task
     from so101_libero.utils.video import label, write_mp4
 
@@ -140,7 +149,7 @@ def _run_episode(job: dict) -> dict:
     obs, info = env.reset(seed=job["seed"], options={"init_state": job["init_state"]})
     expert = None
     if _STATE["policy"] == "expert":
-        expert = PickPlaceExpert(env, task.plan, expert_rng(job["seed"]))
+        expert = make_expert(env, task.plan, expert_rng(job["seed"]))
     else:
         import torch
 

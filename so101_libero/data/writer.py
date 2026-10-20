@@ -21,7 +21,14 @@ from so101_libero.sim.robot import MOTOR_NAMES
 CAMERA_KEYS = ("observation.images.front", "observation.images.wrist")
 
 
-def dataset_features(image_size: tuple[int, int], cameras: tuple[str, ...] = ("front", "wrist")) -> dict:
+# Per-frame episode metadata for datasets of tasks with predefined placements (so101_tri): constant within an episode.
+# Not "observation.*" / "action", so LeRobot never turns them into policy inputs (dataset_to_policy_features skips
+# them) and the policy pre-processor drops them from the batch; they are there for filtering and inspection.
+EPISODE_META_FEATURES = ("placement_id", "collection_seed")
+
+
+def dataset_features(image_size: tuple[int, int], cameras: tuple[str, ...] = ("front", "wrist"),
+                     episode_meta: bool = False) -> dict:
     h, w = image_size
     feats = {
         "observation.state": {"dtype": "float32", "shape": (6,), "names": list(MOTOR_NAMES)},
@@ -30,6 +37,9 @@ def dataset_features(image_size: tuple[int, int], cameras: tuple[str, ...] = ("f
     for cam in cameras:
         feats[f"observation.images.{cam}"] = {"dtype": "video", "shape": (h, w, 3),
                                               "names": ["height", "width", "channels"]}
+    if episode_meta:
+        for key in EPISODE_META_FEATURES:
+            feats[key] = {"dtype": "int64", "shape": (1,), "names": None}
     return feats
 
 
@@ -37,7 +47,8 @@ class DemoWriter:
     """Thin wrapper over ``LeRobotDataset.create`` / ``add_frame`` / ``save_episode`` / ``finalize``."""
 
     def __init__(self, repo_id: str, root: Path, fps: float, image_size: tuple[int, int], overwrite: bool = False,
-                 image_writer_threads: int = 8):
+                 image_writer_threads: int = 8, episode_meta: bool = False, parallel_encoding: bool = True,
+                 vcodec: str = "libsvtav1"):
         from lerobot.datasets.lerobot_dataset import LeRobotDataset
 
         self.root = Path(root)
@@ -45,7 +56,24 @@ class DemoWriter:
             if not overwrite:
                 raise FileExistsError(f"{self.root} exists (pass --overwrite to replace it)")
             shutil.rmtree(self.root)
-        self.ds = LeRobotDataset.create(repo_id, fps=int(round(fps)), features=dataset_features(image_size),
+        self.episode_meta = episode_meta
+        # False: encode each episode's videos in this process instead of LeRobot's per-episode process pool (two new
+        # processes per episode); slower, but no memory spikes on small machines.
+        self.parallel_encoding = parallel_encoding
+        if vcodec != "libsvtav1":
+            # LeRobot 0.4.2 always encodes with its default codec (libsvtav1); SVT-AV1 3.0 crashes now and then on macOS
+            # when an encoder is destroyed (libdispatch semaphore trap). Another LeRobot-supported codec (h264, hevc) is
+            # selected by wrapping its encoder function; spawned encoder processes would not see that, so encode
+            # in this process.
+            import functools
+
+            import lerobot.datasets.lerobot_dataset as lerobot_dataset
+            from lerobot.datasets.video_utils import encode_video_frames
+
+            lerobot_dataset.encode_video_frames = functools.partial(encode_video_frames, vcodec=vcodec)
+            self.parallel_encoding = False
+        self.ds = LeRobotDataset.create(repo_id, fps=int(round(fps)),
+                                        features=dataset_features(image_size, episode_meta=episode_meta),
                                         root=self.root, robot_type="so101_follower", use_videos=True,
                                         image_writer_threads=image_writer_threads, video_backend="pyav")
         self.meta_dir = self.root / "meta"
@@ -55,13 +83,17 @@ class DemoWriter:
 
     def add_episode(self, task: str, states: np.ndarray, actions: np.ndarray, images: dict[str, np.ndarray],
                     record: dict) -> int:
+        meta = {}
+        if self.episode_meta:  # constant per episode (EPISODE_META_FEATURES)
+            meta = {"placement_id": np.array([record["placement_id"]], dtype=np.int64),
+                    "collection_seed": np.array([record["seed"]], dtype=np.int64)}
         for t in range(len(actions)):
             frame = {"observation.state": states[t].astype(np.float32), "action": actions[t].astype(np.float32),
-                     "task": task}
+                     "task": task, **meta}
             for key, arr in images.items():
                 frame[key] = arr[t]
             self.ds.add_frame(frame)
-        self.ds.save_episode()
+        self.ds.save_episode(parallel_encoding=self.parallel_encoding)
         index = self.n_episodes
         self._episodes.write(json.dumps({"episode_index": index, **record}) + "\n")
         self._episodes.flush()

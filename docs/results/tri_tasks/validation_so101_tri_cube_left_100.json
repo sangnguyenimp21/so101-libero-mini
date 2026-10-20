@@ -1,0 +1,14 @@
+{
+  "repo_id": "local/so101_tri_cube_left_100",
+  "root": "/Users/sangnguyen/.cache/huggingface/lerobot/local/so101_tri_cube_left_100",
+  "errors": [],
+  "episodes": 100,
+  "frames": 27179,
+  "mean_action_state_lag_deg": [
+    0.09476341307163239,
+    0.20568205416202545,
+    0.22350284457206726,
+    0.11153548210859299,
+    0.07562126964330673
+  ]
+}

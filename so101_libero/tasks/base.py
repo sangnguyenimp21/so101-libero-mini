@@ -95,6 +95,18 @@ class Layout:
     def scene_config(self, **kw) -> SceneConfig:
         return SceneConfig(objects=self.objects, containers=self.containers, **kw)
 
+    @property
+    def num_placements(self) -> int:
+        """Number of predefined initial placements (0: continuous start regions)."""
+        return 0
+
+    def choose_placement(self, rng: np.random.Generator, placement_id: int | None = None) -> int | None:
+        """The placement of an episode: ``placement_id`` if given, else drawn from ``rng`` (layouts with predefined
+        placements); None for continuous layouts, which draw nothing here."""
+        if placement_id is not None:
+            raise ValueError(f"layout {self.name} has no predefined placements (got placement_id={placement_id})")
+        return None
+
     def sample_sizes(self, rng: np.random.Generator) -> dict[str, list[float]]:
         """Episode size of every object with a ``scale_range`` (no random draw at all for fixed-size layouts)."""
         sizes = {}
@@ -105,9 +117,11 @@ class Layout:
         return sizes
 
     def sample(self, rng: np.random.Generator, sizes: dict[str, list[float]] | None = None,
-               seed: int | None = None) -> dict[str, tuple[float, float, float]]:
+               seed: int | None = None, placement_id: int | None = None) -> dict[str, tuple[float, float, float]]:
         """Sample a collision-free start pose (x, y, yaw) for every item (containers first: they are larger), with
         object footprints at the episode's ``sizes``. ``seed`` (the episode seed) picks the cell of a GridRegion."""
+        if placement_id is not None:
+            raise ValueError(f"layout {self.name} has no predefined placements")
         sizes = sizes or {}
         items = [*self.containers, *(o.with_size(sizes[o.name]) if o.name in sizes else o for o in self.objects)]
         for _ in range(self.max_tries):
@@ -140,6 +154,36 @@ class Layout:
         raise RuntimeError(f"layout {self.name}: no collision-free placement in {self.max_tries} tries")
 
 
+@dataclass(frozen=True)
+class FixedPlacementLayout(Layout):
+    """A layout with a small set of predefined initial placements and nothing random in them: no position noise, no
+    rotation, no per-object offsets. ``placements[k]`` gives the exact start pose (x, y, yaw) of every free item;
+    containers with a ``fixed_pose`` are part of the scene itself and appear in no placement. An episode uses the
+    placement passed to ``reset(options={"placement_id": k})``, else one drawn from the reset seed."""
+
+    placements: tuple[dict[str, tuple[float, float, float]], ...] = ()
+    placement_names: tuple[str, ...] = ()
+
+    @property
+    def num_placements(self) -> int:
+        return len(self.placements)
+
+    def choose_placement(self, rng: np.random.Generator, placement_id: int | None = None) -> int:
+        if placement_id is None:
+            return int(rng.integers(len(self.placements)))
+        if not 0 <= int(placement_id) < len(self.placements):
+            raise ValueError(f"layout {self.name}: placement_id must be in [0, {len(self.placements)}), got {placement_id}")
+        return int(placement_id)
+
+    def sample(self, rng: np.random.Generator, sizes: dict[str, list[float]] | None = None,
+               seed: int | None = None, placement_id: int | None = None) -> dict[str, tuple[float, float, float]]:
+        if sizes:
+            raise ValueError(f"layout {self.name}: objects have fixed sizes")
+        if placement_id is None:
+            raise ValueError(f"layout {self.name}: choose_placement first (the env passes the placement id)")
+        return {name: tuple(float(v) for v in pose) for name, pose in self.placements[placement_id].items()}
+
+
 class WorldState:
     """Read-only view of the privileged simulator state used by predicates and the expert."""
 
@@ -147,6 +191,7 @@ class WorldState:
         self.h = handles
         self.d = data
         self.init_pos: dict[str, np.ndarray] = {}  # settled item positions at reset (set by the env)
+        self.init_rot: dict[str, np.ndarray] = {}  # settled item orientations (3x3) at reset (set by the env)
         # Per-episode history, updated by the environment after every control step (``track``):
         #   max_lift: highest point (m) each object's bottom reached above the table WHILE PINCHED BETWEEN THE JAWS;
         #   held_xy:  the object's last table position while it was pinched (where it was released from).
@@ -154,10 +199,16 @@ class WorldState:
         # into place do not count.
         self.max_lift: dict[str, float] = {}
         self.held_xy: dict[str, np.ndarray] = {}
+        #   min_up_z: lowest world-z component reached by each object's body z axis (+1 upright, -1 upside down), so a
+        #   flip is tracked even for objects that look the same either way up (a uniformly coloured cylinder).
+        self.min_up_z: dict[str, float] = {}
 
     def track(self) -> None:
         """Update the per-episode history (called by the environment after each control step)."""
         for name, spec in self.h.objects.items():
+            up_z = float(self.d.xmat[self.h.item_body[name]][8])
+            if up_z < self.min_up_z.get(name, 2.0):
+                self.min_up_z[name] = up_z
             if not self.grasped(name):
                 continue
             p = self.d.xpos[self.h.item_body[name]]
@@ -186,7 +237,19 @@ class WorldState:
         r = self.rot(item)
         return math.atan2(r[1, 0], r[0, 0])
 
+    def up_z(self, item: str) -> float:
+        """World z component of the item's body z axis: +1 upright, -1 upside down."""
+        return float(self.d.xmat[self.h.item_body[item]][8])
+
+    def tilt_from_start(self, item: str) -> float:
+        """Angle (rad) between the item's body z axis now and at the reset (0 if unknown)."""
+        if item not in self.init_rot:
+            return 0.0
+        return math.acos(float(np.clip(self.rot(item)[:, 2] @ self.init_rot[item][:, 2], -1.0, 1.0)))
+
     def linvel(self, item: str) -> np.ndarray:
+        if self.h.is_fixed(item):
+            return np.zeros(3)
         adr = self.h.item_dof_adr[item]
         return self.d.qvel[adr:adr + 3].copy()
 
@@ -415,6 +478,141 @@ class StackedOn:
         return f"On({self.obj}, {self.base})"
 
 
+def _released(ws: WorldState, obj: str, max_speed: float, min_tcp_distance: float) -> bool:
+    """No robot contact, at rest, and the gripper's TCP at least ``min_tcp_distance`` from the object's centre."""
+    if ws.touching_robot(obj) or not ws.at_rest(obj, max_speed):
+        return False
+    return float(np.linalg.norm(ws.tcp_pos() - ws.pos(obj))) >= min_tcp_distance
+
+
+@dataclass(frozen=True)
+class MovedBy:
+    """``obj`` was picked up (carried in the jaws >= ``min_lift`` above the table) and now rests directly on the table
+    displaced by ``offset`` (world xy, metres) from where it was at the start of the episode: within ``tol`` along the
+    offset and within ``tol`` across it. It keeps its original top face up (body z axis within ``max_tilt_deg`` of its
+    start direction) and its yaw within ``max_yaw_deg`` of the start (modulo the object's rotational symmetry), was
+    released within ``max_release_offset`` of where it rests (carried there, not dropped and shoved), and is released,
+    at rest and clear of the gripper."""
+
+    obj: str
+    offset: tuple[float, float]
+    tol: float = 0.01
+    max_tilt_deg: float = 15.0
+    max_yaw_deg: float = 15.0
+    min_lift: float = 0.02
+    max_speed: float = 0.02
+    max_release_offset: float = 0.03
+    min_tcp_distance: float = 0.04
+
+    def __call__(self, ws: WorldState) -> bool:
+        if self.obj not in ws.init_pos:
+            return False
+        off = np.asarray(self.offset, float)
+        along_dir = off / np.linalg.norm(off)
+        d = ws.pos(self.obj)[:2] - ws.init_pos[self.obj][:2]
+        along = float(d @ along_dir)
+        across = float(d @ np.array([-along_dir[1], along_dir[0]]))
+        if abs(along - float(np.linalg.norm(off))) > self.tol or abs(across) > self.tol:
+            return False
+        if not OnTable(self.obj)(ws) or ws.tilt_from_start(self.obj) > math.radians(self.max_tilt_deg):
+            return False
+        sym = ws.h.objects[self.obj].yaw_symmetry
+        if sym > 0:
+            start_yaw = math.atan2(ws.init_rot[self.obj][1, 0], ws.init_rot[self.obj][0, 0])
+            dyaw = (ws.yaw(self.obj) - start_yaw + sym / 2) % sym - sym / 2
+            if abs(dyaw) > math.radians(self.max_yaw_deg):
+                return False
+        if not _released(ws, self.obj, self.max_speed, self.min_tcp_distance):
+            return False
+        rel = ws.release_offset(self.obj)
+        return rel is not None and rel <= self.max_release_offset and ws.lifted(self.obj, self.min_lift)
+
+    def describe(self) -> str:
+        return f"MovedBy({self.obj}, {tuple(round(v, 3) for v in self.offset)})"
+
+
+@dataclass(frozen=True)
+class RestingInContainer:
+    """``obj`` was picked up and now rests inside ``container`` in any orientation: its centre lies inside the inner
+    area (``margin`` from the inner walls) and between the floor and ``max_half_extent + max_float`` above it (on the
+    floor, not held above it, not on a rim), and it is released, at rest and clear of the gripper. Works for free and
+    fixed containers (a free one must stand upright on the table, untouched)."""
+
+    obj: str
+    container: str
+    margin: float = 0.003
+    max_float: float = 0.005
+    min_lift: float = 0.02
+    max_speed: float = 0.02
+    min_tcp_distance: float = 0.04
+
+    def __call__(self, ws: WorldState) -> bool:
+        c = ws.h.containers[self.container]
+        if not ws.h.is_fixed(self.container) and not ws.resting_on_table(self.container):
+            return False
+        local = ws.rot(self.container).T @ (ws.pos(self.obj) - ws.pos(self.container))
+        if not c.inside_xy(local[:2], self.margin):
+            return False
+        height = local[2] - c.base_thickness
+        if not 0.0 < height <= ws.h.objects[self.obj].max_half_extent + self.max_float:
+            return False
+        return _released(ws, self.obj, self.max_speed, self.min_tcp_distance) and ws.lifted(self.obj, self.min_lift)
+
+    def describe(self) -> str:
+        return f"RestingIn({self.obj}, {self.container})"
+
+
+@dataclass(frozen=True)
+class FlippedInPlace:
+    """``obj`` (an upright cylinder at the start) stands on its OTHER end where it started: its body z axis points down
+    (within ``max_tilt_deg`` of straight down; the environment tracks the body orientation, so this holds only after a
+    real 180 degree turn, whatever the object looks like), its centre is within ``tol`` (horizontal) of its start and
+    at standing height on the table (``height_tol``), it was carried >= ``min_lift`` above the table (clear of it),
+    and it is released, at rest and clear of the gripper."""
+
+    obj: str
+    tol: float = 0.015
+    max_tilt_deg: float = 15.0
+    height_tol: float = 0.004
+    min_lift: float = 0.03
+    max_speed: float = 0.02
+    min_tcp_distance: float = 0.04
+
+    def __call__(self, ws: WorldState) -> bool:
+        if self.obj not in ws.init_pos or ws.up_z(self.obj) > -math.cos(math.radians(self.max_tilt_deg)):
+            return False
+        p = ws.pos(self.obj)
+        if float(np.linalg.norm(p[:2] - ws.init_pos[self.obj][:2])) > self.tol:
+            return False
+        if abs(p[2] - ws.h.objects[self.obj].half_height) > self.height_tol or inside_any_container(ws, self.obj):
+            return False
+        return _released(ws, self.obj, self.max_speed, self.min_tcp_distance) and ws.lifted(self.obj, self.min_lift)
+
+    def describe(self) -> str:
+        return f"FlippedInPlace({self.obj})"
+
+
+@dataclass(frozen=True)
+class Undisturbed:
+    """The listed objects stayed roughly where they started: moved <= ``max_shift`` horizontally, tilted <=
+    ``max_tilt_deg`` from their start orientation, still on the table and untouched by the robot."""
+
+    objs: tuple[str, ...]
+    max_shift: float = 0.02
+    max_tilt_deg: float = 20.0
+
+    def __call__(self, ws: WorldState) -> bool:
+        for o in self.objs:
+            if ws.shift_xy(o) > self.max_shift or ws.tilt_from_start(o) > math.radians(self.max_tilt_deg):
+                return False
+            if inside_any_container(ws, o) is not None or ws.touching_robot(o):
+                return False
+        return True
+
+    def describe(self) -> str:
+        return f"Undisturbed({', '.join(self.objs)})"
+
+
 # ------------------------------------------------------------------------------------------------- tasks
 @dataclass(frozen=True)
 class PickPlace:
@@ -453,12 +651,43 @@ class StackOn:
 
 
 @dataclass(frozen=True)
+class MoveBy:
+    """Expert plan: pick ``obj`` and put it back on the table ``offset`` (world xy, m) from where it started, with the
+    same yaw in the world (+- ``jitter`` m per axis on the target)."""
+
+    obj: str
+    offset: tuple[float, float]
+    jitter: float = 0.002
+
+
+@dataclass(frozen=True)
+class PlaceInBox:
+    """Expert plan: pick ``obj`` and lower it into the open ``target`` container (fixed or free), the jaws closing along
+    the container's long side, and release it a few millimetres above the floor."""
+
+    obj: str
+    target: str
+
+
+@dataclass(frozen=True)
+class FlipViaStation:
+    """Expert plan for flipping an upright cylinder end over end with a 5-DoF arm that cannot reach a horizontal side
+    grasp near its start: (1) pick it top-down at its middle, carry it to ``station`` (world xy, far enough out for a
+    horizontal side grasp) and stand it there; (2) side-grasp it at its middle, lift it clear of the table, roll the
+    wrist 180 degrees about the horizontal approach axis and stand it on its other end; (3) pick it top-down again and
+    put it back where it started."""
+
+    obj: str
+    station: tuple[float, float]
+
+
+@dataclass(frozen=True)
 class Task:
     task_id: str
     language: str
     layout: Layout
     goal: tuple  # predicates; all must hold
-    plan: PickPlace | PlaceRelative | PlaceAt | StackOn | None = None
+    plan: PickPlace | PlaceRelative | PlaceAt | StackOn | MoveBy | PlaceInBox | FlipViaStation | None = None
     max_steps: int = 450  # 15 s at 30 Hz
     success_hold_steps: int = 5  # goal must hold this many consecutive control steps
     tags: tuple[str, ...] = field(default_factory=tuple)
