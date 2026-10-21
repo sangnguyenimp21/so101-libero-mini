@@ -188,7 +188,11 @@ lerobot 0.4.2 cannot train on several repo ids (`make_dataset` raises `NotImplem
 builds one combined dataset with LeRobot's own `aggregate_datasets`:
 - tasks are re-indexed by instruction string, so every frame keeps its own instruction;
 - it first checks that fps, robot type and features (camera keys and order, joint names) are identical;
-- normalization statistics are aggregated by LeRobot.
+- normalization statistics are aggregated by LeRobot;
+- file rotation is switched off (one video file per camera). In lerobot 0.4.2, a rotation points every episode of a
+  multi-file source at the last destination file. This happened with the larger AV1 flip dataset on the cluster: its
+  frames decoded from the wrong file or past its end. After merging, the first and last frame of every episode are
+  decoded from the merged dataset and compared with its source, and any mismatch fails the merge.
 
 A flip demonstration has ~3x the frames of the others, so plain uniform frame sampling would see the flip task ~60 %
 of the time. The multitask job therefore trains with `python -m so101_libero.train.lerobot_train_balanced` instead.

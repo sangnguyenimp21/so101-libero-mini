@@ -4,7 +4,12 @@
         --repo-ids local/so101_tri_cube_left_100 local/so101_tri_green_into_box_100 local/so101_tri_cylinder_flip_100
 
 Uses LeRobot's own ``aggregate_datasets`` (data, videos, per-episode metadata, statistics; tasks are re-indexed by
-their instruction string, so every frame keeps its own natural-language task). The sources must share fps, robot type
+their instruction string, so every frame keeps its own natural-language task), with file rotation switched off: in
+lerobot 0.4.2 a rotation (a destination video file reaching ``video_files_size_in_mb``, 200 MB by default) points every
+episode of a multi-file source at the LAST destination file, so its frames decode from the wrong file or past its end
+(seen with the AV1 flip dataset on the cluster). One file per camera keeps LeRobot's per-file offsets correct. After
+merging, the first and last frame of every episode (both cameras, state, action, task) are decoded from the merged
+dataset and compared with its source; any mismatch fails the merge. The sources must share fps, robot type
 and features (camera keys and order, joint names, action representation): checked before anything is written. The
 project side files are merged too (episode indices shifted), and ``meta/so101_libero.json`` records the sources, the
 per-task episode/frame counts and the sampling rule for training: frames are drawn so that every TASK is sampled
@@ -19,6 +24,31 @@ import os
 import shutil
 import sys
 from pathlib import Path
+
+
+def verify_against_sources(repo_ids: list[str], roots: list[Path], out_repo_id: str, out: Path) -> None:
+    """Decode the first and last frame of every episode from the merged dataset and from its source; they must match
+    (videos are remuxed, not re-encoded, so the decoded images are identical)."""
+    import torch
+    from lerobot.datasets.lerobot_dataset import LeRobotDataset
+
+    merged = LeRobotDataset(out_repo_id, root=out, video_backend="pyav")
+    keys = [*merged.meta.video_keys, "observation.state", "action"]
+    offset, bad = 0, []
+    for repo, root in zip(repo_ids, roots):
+        src = LeRobotDataset(repo, root=root, video_backend="pyav")
+        for e in range(src.meta.total_episodes):
+            first = src.meta.episodes[e]["dataset_from_index"]
+            last = src.meta.episodes[e]["dataset_to_index"] - 1
+            for i in (first, last):
+                a, b = src[i], merged[offset + i]
+                same = a["task"] == b["task"] and all(torch.equal(a[k], b[k]) for k in keys)
+                if not same:
+                    bad.append(f"{repo} episode {e} frame {i}")
+        offset += src.meta.total_frames
+        print(f"verified {repo}: {src.meta.total_episodes} episodes (first and last frames)", flush=True)
+    if bad:
+        sys.exit(f"merged dataset differs from its sources at {len(bad)} frames, e.g. {bad[:5]}")
 
 
 def main() -> None:
@@ -56,7 +86,10 @@ def main() -> None:
             sys.exit(f"{r}: image size {side.get('image_size')} != {sides[0].get('image_size')}")
 
     print(f"aggregating {len(metas)} datasets -> {out}", flush=True)
-    aggregate_datasets(args.repo_ids, args.out_repo_id, roots=roots, aggr_root=out)
+    no_rotation = 1_000_000  # MB: never start a second data/video file (see the module docstring)
+    aggregate_datasets(args.repo_ids, args.out_repo_id, roots=roots, aggr_root=out,
+                       data_files_size_in_mb=no_rotation, video_files_size_in_mb=no_rotation)
+    verify_against_sources(args.repo_ids, roots, args.out_repo_id, out)
 
     # Project side files: episode records with shifted indices, failures, and a summary.
     offset, per_task, episodes, failures = 0, {}, [], []
