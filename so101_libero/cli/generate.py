@@ -13,8 +13,8 @@ Tasks with predefined initial placements (suite so101_tri) take ``--demos-per-pl
 demonstrations (failed attempts are retried with the next seed, up to ``--max-attempts`` per placement). Each
 episode records its task id, placement id and collection seed (side file and per-frame features):
 
-    python -m so101_libero.cli.generate --tasks cube_left --demos-per-placement 20 --workers 6 \
-        --repo-id local/so101_tri_cube_left_100
+    python -m so101_libero.cli.generate --tasks cylinder_aside --demos-per-placement 20 --workers 6 \
+        --repo-id local/so101_tri_cylinder_aside_100
 """
 
 from __future__ import annotations
@@ -31,7 +31,7 @@ from pathlib import Path
 
 import numpy as np
 
-TASK_SEED_STRIDE = 100_000  # task k uses seeds seed_start + k * stride + i; eval init states use >= 10_000_000
+TASK_SEED_STRIDE = 100_000  # task in seed slot k (registry.seed_slot) uses seeds seed_start + k * stride + i; eval >= 10M
 PLACEMENT_SEED_STRIDE = 10_000  # placement p of a task: seeds task_base + p * stride + i (--demos-per-placement)
 
 _ENV = None
@@ -52,7 +52,7 @@ def _worker_init(task_ids, image_size, render, expert_kw, visual_rand=False, hom
 
 def episode_limit(task_id: str) -> int:
     """Steps an expert demonstration may take: 900 (30 s; the limit every existing dataset was generated with), more
-    for tasks whose own horizon is longer (cylinder_flip: 40 s horizon -> 50 s)."""
+    for tasks whose own horizon is longer (1.25 x the horizon)."""
     from so101_libero.tasks.registry import get_task
 
     return max(900, int(1.25 * get_task(task_id).max_steps))
@@ -208,12 +208,11 @@ def main() -> None:
 
     import so101_libero  # noqa: F401
     from so101_libero.data.writer import DemoWriter
-    from so101_libero.tasks.registry import TASKS, get_suite
+    from so101_libero.tasks.registry import TASKS, get_suite, seed_slot
 
     from so101_libero.cli.make_init_states import EVAL_SEED_BASE, rules_hash, scene_hash
 
     task_ids = [t.task_id for name in args.tasks for t in get_suite(name)]
-    all_ids = list(TASKS)
     per_placement = args.demos_per_placement
     if per_placement is not None:
         n_place = {TASKS[t].layout.num_placements for t in task_ids}
@@ -226,10 +225,10 @@ def main() -> None:
         max_attempts = args.max_attempts or 3 * per_placement + 10
         if max_attempts > PLACEMENT_SEED_STRIDE:
             ap.error(f"--max-attempts must stay <= {PLACEMENT_SEED_STRIDE} per placement")
-        top = args.seed_start + max(all_ids.index(t) for t in task_ids) * TASK_SEED_STRIDE + n_place * PLACEMENT_SEED_STRIDE
+        top = args.seed_start + max(seed_slot(t) for t in task_ids) * TASK_SEED_STRIDE + n_place * PLACEMENT_SEED_STRIDE
     else:
         max_attempts = args.max_attempts or 2 * args.num_demos + 10
-        top = args.seed_start + max(all_ids.index(t) for t in task_ids) * TASK_SEED_STRIDE + max_attempts
+        top = args.seed_start + max(seed_slot(t) for t in task_ids) * TASK_SEED_STRIDE + max_attempts
     if args.seed_start < 0 or top > EVAL_SEED_BASE:
         ap.error(f"training seeds must stay in [0, {EVAL_SEED_BASE}) (evaluation states use seeds >= {EVAL_SEED_BASE})")
     sources = source_files()  # read before any episode runs: the archive and hash describe the code that ran
@@ -264,7 +263,7 @@ def main() -> None:
                             _math.radians(args.home_noise_deg))) as pool:
         for task_id in task_ids:
             task = TASKS[task_id]
-            base = args.seed_start + all_ids.index(task_id) * TASK_SEED_STRIDE
+            base = args.seed_start + seed_slot(task_id) * TASK_SEED_STRIDE
             if per_placement is None:
                 schedule = _SeedSchedule([iter([(task_id, base + i) for i in range(max_attempts)])], args.num_demos)
             else:

@@ -1,15 +1,17 @@
 """Render and check the predefined initial placements of a layout (so101_tri: 5 placements).
 
-    python -m so101_libero.cli.render_placements --task cube_left --out docs/media/tri_tasks [--expert-check]
+    python -m so101_libero.cli.render_placements --task cylinder_aside --out docs/media/tri_tasks [--expert-check]
 
-For every placement: front camera (the policy's 256x256 view, upscaled), wrist camera and an overview, in one contact
-sheet (placements.png), plus checks written to placements_check.json:
+For every placement: front camera (the policy's 256x256 view, upscaled), wrist camera and an overview (with the aside
+zone outlined; the zone is only a region of the success check, nothing marks it in the scene), in one contact sheet
+(placements.png), plus checks written to placements_check.json:
   - settled start positions equal the placement's nominal ones (no initial collision pushed anything), orientations
     unchanged, every object resting on the table with contacts only with the table;
-  - spacing in the scene's own directions (green block 6 cm FRONT of the cube, cylinder 6 cm RIGHT of the green block);
-  - every object (and the white box, and the cube's 5 cm-left destination) inside the 256x256 front image with a margin,
-    and visible (segmentation pixels: not hidden behind the robot);
-  - with --expert-check: each so101_tri task solved by the scripted expert from this placement (physics only).
+  - spacing: footprint gaps between the objects and to the tray, distance from the shoulder's pan axis, clearance from
+    the folded arm at rest and along the unfold to the home pose;
+  - every object, the tray and the aside zone inside the 256x256 front image with a margin, and every object visible
+    (segmentation pixels: not hidden behind the robot);
+  - with --expert-check: each task of the layout solved by the scripted expert from this placement (physics only).
 """
 
 from __future__ import annotations
@@ -53,9 +55,85 @@ def object_corners(env, name: str) -> np.ndarray:
     return box_corners(env.world.pos(name), env.world.rot(name), half)
 
 
+def layout_report(env, tri) -> tuple[dict, bool]:
+    """Spacing of the current (reset) state in cm, and whether it meets the layout's requirements: footprint gaps
+    between objects >= 5 cm and to the tray >= 3.5 cm, centres >= 17 cm from the pan axis, robot clearance >= 1.5 cm at
+    rest and >= 1 cm along the unfold to the home pose (clearances are measured up to 5 cm)."""
+    from so101_libero.sim.robot import HOME_QPOS
+    from so101_libero.tasks.base import _gap_to_tray
+
+    m, d, h, ws = env.model, env.data, env.h, env.world
+    names = list(h.objects)
+    out = {"object_gaps": {}, "tray_gaps": {}, "pan_axis_distance": {}}
+    for a, b in itertools.combinations(names, 2):
+        gap = float(np.linalg.norm(ws.pos(a)[:2] - ws.pos(b)[:2])) - h.objects[a].footprint_radius - h.objects[b].footprint_radius
+        out["object_gaps"][f"{a}/{b}"] = round(100 * gap, 2)
+    pan = h.model.body("shoulder").id
+    mujoco.mj_kinematics(m, d)
+    pan_xy = d.xpos[pan][:2].copy()
+    for n in names:
+        for c, spec in h.containers.items():
+            gap = _gap_to_tray(spec, (*ws.pos(c)[:2], ws.yaw(c)), tuple(ws.pos(n)[:2])) - h.objects[n].footprint_radius
+            out["tray_gaps"][n] = round(100 * gap, 2)
+        out["pan_axis_distance"][n] = round(100 * float(np.linalg.norm(ws.pos(n)[:2] - pan_xy)), 2)
+    # Clearance = MuJoCo's distance between robot and object geoms, searched up to 5 cm only: with a larger distmax,
+    # mj_geomDistance (MuJoCo 3.3.7) returns spurious zeros for some distant mesh pairs (the green block).
+    obj_geoms = [g for n in names for g in h.item_geoms[n] if m.geom_contype[g] or m.geom_conaffinity[g]]
+    robot_geoms = [g for g in range(m.ngeom)
+                   if m.geom_bodyid[g] in h.robot_bodies and (m.geom_contype[g] or m.geom_conaffinity[g])]
+    scratch = mujoco.MjData(m)
+    scratch.qpos[:] = d.qpos
+
+    def clearance(q, cap: float = 0.05):
+        """Smallest distance (m) from any robot geom to any object geom in arm configuration ``q``, at most ``cap``."""
+        scratch.qpos[h.joint_qpos_adr] = q
+        mujoco.mj_kinematics(m, scratch)
+        return min(cap, *(mujoco.mj_geomDistance(m, scratch, og, rg, cap, None) for og in obj_geoms for rg in robot_geoms))
+
+    q0 = d.qpos[h.joint_qpos_adr].copy()
+    q1 = np.r_[HOME_QPOS[:5], q0[5]]
+    out["rest_clearance"] = round(100 * clearance(q0), 2)
+    out["unfold_clearance"] = round(100 * min(clearance(q0 + s * (q1 - q0)) for s in np.linspace(0, 1, 13)), 2)
+    ok = (min(out["object_gaps"].values()) >= 5.0 and min(out["tray_gaps"].values(), default=99) >= 3.5
+          and min(out["pan_axis_distance"].values()) >= 17.0 and out["rest_clearance"] >= 1.5
+          and out["unfold_clearance"] >= 1.0)
+    return out, ok
+
+
+def draw_zone(img: np.ndarray, model, cam: mujoco.MjvCamera, zone) -> np.ndarray:
+    """Outline a table region (dashed) in an image of the free camera ``cam``."""
+    if zone is None:
+        return img
+    from PIL import ImageDraw
+
+    az, el = math.radians(cam.azimuth), math.radians(cam.elevation)
+    fwd = np.array([math.cos(el) * math.cos(az), math.cos(el) * math.sin(az), math.sin(el)])
+    pos = np.asarray(cam.lookat) - cam.distance * fwd
+    right = np.cross(fwd, [0.0, 0.0, 1.0])
+    right /= np.linalg.norm(right)
+    up = np.cross(right, fwd)
+    size = img.shape[0]
+    f = (size / 2) / math.tan(math.radians(model.vis.global_.fovy) / 2)
+
+    def px(p):
+        v = np.asarray(p) - pos
+        return (size / 2 + f * (v @ right) / (v @ fwd), size / 2 - f * (v @ up) / (v @ fwd))
+
+    corners = [(zone.x[0], zone.y[0], 0.0), (zone.x[1], zone.y[0], 0.0), (zone.x[1], zone.y[1], 0.0), (zone.x[0], zone.y[1], 0.0)]
+    im = Image.fromarray(img)
+    dr = ImageDraw.Draw(im)
+    for a, b in zip(corners, corners[1:] + corners[:1]):
+        pa, pb = np.array(px(a)), np.array(px(b))
+        for t in np.linspace(0, 1, 13)[::2]:  # dashes
+            dr.line([tuple(pa + (pb - pa) * t), tuple(pa + (pb - pa) * min(t + 1 / 12, 1))], fill=(0, 120, 255), width=3)
+    lx, ly = px((zone.x[0], zone.y[1], 0.0))
+    dr.text((lx + 4, ly + 4), "aside zone", fill=(0, 90, 220))
+    return np.asarray(im)
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--task", default="cube_left", help="any task of the layout (the scene is shared)")
+    ap.add_argument("--task", default="cylinder_aside", help="any task of the layout (the scene is shared)")
     ap.add_argument("--out", type=Path, default=Path("outputs/placements"))
     ap.add_argument("--size", type=int, default=256, help="policy image size (checks)")
     ap.add_argument("--sheet-size", type=int, default=384, help="tile size in the contact sheet")
@@ -75,8 +153,8 @@ def main() -> None:
     seg = mujoco.Renderer(env.model, args.size, args.size)
     seg.enable_segmentation_rendering()
     overview = mujoco.MjvCamera()
-    overview.lookat[:] = (0.17, 0.06, 0.0)
-    overview.distance, overview.azimuth, overview.elevation = 0.62, 205.0, -58.0
+    overview.lookat[:] = (0.13, 0.0, 0.0)
+    overview.distance, overview.azimuth, overview.elevation = 0.70, 200.0, -60.0
     m, d, h = env.model, env.data, env.h
 
     tri = None
@@ -115,21 +193,13 @@ def main() -> None:
             ok &= o["ok"]
             r["objects"][name] = o
         if tri is not None:
-            dirs = tri.directions
-            pc, pg, py = (ws.pos(n)[:2] for n in ("red_cube", "green_block", "gray_cylinder"))
-            r["spacing_mm"] = {"green_front_of_cube": round(float((pg - pc) @ dirs.vec("front")) * 1e3, 2),
-                               "green_lateral_to_cube": round(float((pg - pc) @ dirs.vec("left")) * 1e3, 2),
-                               "cylinder_right_of_green": round(float((py - pg) @ dirs.vec("right")) * 1e3, 2),
-                               "cylinder_front_of_green": round(float((py - pg) @ dirs.vec("front")) * 1e3, 2)}
-            sp = r["spacing_mm"]
-            ok &= (abs(sp["green_front_of_cube"] - 60) < 0.5 and abs(sp["green_lateral_to_cube"]) < 0.5
-                   and abs(sp["cylinder_right_of_green"] - 60) < 0.5 and abs(sp["cylinder_front_of_green"]) < 0.5)
-            # the cube's destination (5 cm LEFT) must be in view as well
-            dest = np.r_[pc + tri.cube_move * dirs.vec("left"), h.objects["red_cube"].half_height]
-            uv = project(m, d, "front", box_corners(dest, ws.rot("red_cube"), np.asarray(h.objects["red_cube"].size)),
-                         args.size)
-            r["cube_destination_in_front_image"] = bool(np.all(uv >= args.margin_px) and np.all(uv <= args.size - args.margin_px))
-            ok &= r["cube_destination_in_front_image"]
+            r["layout_cm"], layout_ok = layout_report(env, tri)
+            ok &= layout_ok
+            zone = tri.aside_zone()
+            zc = np.array([(x, y, z) for x in zone.x for y in zone.y for z in (0.0, 0.06)])
+            uv = project(m, d, "front", zc, args.size)
+            r["aside_zone_in_front_image"] = bool(np.all(uv >= args.margin_px) and np.all(uv <= args.size - args.margin_px))
+            ok &= r["aside_zone_in_front_image"]
         for c in h.containers:
             spec = h.containers[c]
             half = np.array([spec.inner_size[0] + spec.wall_thickness, spec.inner_size[1] + spec.wall_thickness,
@@ -150,7 +220,7 @@ def main() -> None:
                 ok &= ep.success
         r["ok"] = bool(ok)
         report["placements"].append(r)
-        print(json.dumps({"placement": k, "name": r["name"], "ok": r["ok"], "spacing_mm": r.get("spacing_mm"),
+        print(json.dumps({"placement": k, "name": r["name"], "ok": r["ok"], "layout_cm": r.get("layout_cm"),
                           "expert": r.get("expert")}), flush=True)
 
         tiles = []
@@ -158,7 +228,7 @@ def main() -> None:
             big.update_scene(d, camera=cam)
             tiles.append(big.render().copy())
         big.update_scene(d, camera=overview)
-        tiles.append(big.render().copy())
+        tiles.append(draw_zone(big.render().copy(), m, overview, tri.aside_zone() if tri is not None else None))
         tiles[0] = label(tiles[0], f"placement {k}: {r['name']} | front camera")
         tiles[1] = label(tiles[1], "wrist camera")
         tiles[2] = label(tiles[2], "overview (not a policy input)")

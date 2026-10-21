@@ -8,8 +8,8 @@
 #SBATCH --output=liberomini-%x-%j.out
 #SBATCH --error=liberomini-%x-%j.out
 # SmolVLA on red_cube_to_black_box ("Pick up the red cube and put it in the black box.") on one H100, end to end:
-# the red_cube_to_white_tray job (slurm/smolvla_red_cube_to_white_tray.sbatch, run unchanged; its header lists every
-# stage and variable) with this task's defaults:
+# the shared SmolVLA job (slurm/smolvla_job.sbatch, run unchanged; its header lists every stage and variable) with
+# this task's defaults:
 #   black box 10 x 10 cm outside, 6 cm walls, on the robot's right (centre 10 cm ahead of the shoulder's pan axis and
 #   13 cm right of the centre line, +-1 cm, +-5 deg); 3 cm red cube on the robot's left, beside the folded arm (6 cells,
 #   12-18 cm ahead of the pan axis, 6-12 cm left, any yaw); everything inside the front camera's view;
@@ -27,11 +27,11 @@
 #   RUN=smolvla_real_cube_black_box_100 CKPT=100000 TASK=red_cube_to_black_box bash scripts/real_smolvla.sh
 set -euo pipefail
 cd "${SLURM_SUBMIT_DIR:-$PWD}"
-[ -f slurm/smolvla_red_cube_to_white_tray.sbatch ] || { echo "submit from the project root" >&2; exit 1; }
+[ -f slurm/smolvla_job.sbatch ] || { echo "submit from the project root" >&2; exit 1; }
 export TASKS="${TASKS:-red_cube_to_black_box}"
 export NUM_DEMOS="${NUM_DEMOS:-100}"
 export REPO_ID="${REPO_ID:-local/so101_real_cube_black_box_100}"
 export OUT="${OUT:-outputs/train/smolvla_real_cube_black_box_100}"
 export GEN_ARGS="${GEN_ARGS:---max-grasp-retries 2 --miss-prob 0.3 --miss-offset 0.018 0.026 --home-noise-deg 2}"
 export STEPS="${STEPS:-100000}" SAVE_FREQ="${SAVE_FREQ:-20000}" PRECISION="${PRECISION:-bf16}"
-exec bash slurm/smolvla_red_cube_to_white_tray.sbatch
+exec bash slurm/smolvla_job.sbatch

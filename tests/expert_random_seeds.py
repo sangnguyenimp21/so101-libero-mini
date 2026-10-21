@@ -28,9 +28,9 @@ if __name__ == "__main__":
     ap.add_argument("--seeds", type=int, default=100)
     ap.add_argument("--out", type=Path, required=True)
     a = ap.parse_args()
-    from so101_libero.tasks.registry import TASKS
+    from so101_libero.tasks.registry import TASKS, seed_slot
 
-    jobs = [(t, list(range(k * 100_000 + 5_000, k * 100_000 + 5_000 + a.seeds))) for k, t in enumerate(TASKS)]
+    jobs = [(t, list(range(k * 100_000 + 5_000, k * 100_000 + 5_000 + a.seeds))) for t in TASKS for k in [seed_slot(t)]]
     with mp.get_context("spawn").Pool(len(jobs)) as pool:
         res = dict(pool.map(run, jobs))
     a.out.parent.mkdir(parents=True, exist_ok=True)

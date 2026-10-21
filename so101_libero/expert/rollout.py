@@ -47,12 +47,12 @@ def make_expert(env: SO101TabletopEnv, plan, rng: np.random.Generator, cfg: Expe
 
 
 class GraspMonitor:
-    """While the object is carried (lift/transport/lower, and the side lift/flip/lower of the flip task): its slip
-    relative to the TCP frame, the deepest object-jaw penetration and the pinch force. Evidence that the grasp is
-    physical and stable. With several grasps per episode the slip is measured per grasp (maximum over grasps)."""
+    """While the object is carried (lift/transport/lower, and the wrist roll of cube_flip): its slip relative to the
+    TCP frame, the deepest object-jaw penetration and the pinch force. Evidence that the grasp is physical and stable.
+    With several grasps per episode the slip is measured per grasp (maximum over grasps)."""
 
     CARRY = ("lift", "transport", "lower")
-    CARRY_EXTRA = ("lift2", "transport2", "lower2", "side_lift", "flip", "side_lower")
+    CARRY_EXTRA = ("roll",)  # so101_tri cube_flip: the 180 degree wrist roll while holding the cube
 
     def __init__(self, env: SO101TabletopEnv, obj: str):
         self.env, self.obj = env, obj
@@ -67,8 +67,8 @@ class GraspMonitor:
             self.ref, self.max_slip, self.max_pen, self.forces = None, 0.0, 0.0, []
             return
         if phase not in self.CARRY and phase not in self.CARRY_EXTRA:
-            if phase.endswith(("release", "release2")):
-                self.ref = None  # the next carry is a new grasp: new reference
+            if phase == "release":
+                self.ref = None  # a later carry would be a new grasp: new reference
             return
         d, h, ws = self.env.data, self.env.h, self.env.world
         rot = d.site_xmat[h.tcp_site].reshape(3, 3)

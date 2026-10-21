@@ -6,11 +6,9 @@
 #   RUN=smolvla_real_cube_300 CKPT=last TASK=red_cube_aside bash scripts/real_smolvla.sh
 #   TASK="Pick up the red cylinder and place it inside the circular container." bash scripts/real_smolvla.sh
 #
-# TASK is a task id (red_cube_aside, red_cube_to_box [default], red_cube_to_white_tray, red_cube_to_black_box,
-# stack_red_on_blue, cylinder_to_tray, cylinder_to_container, cube_to_tray) or a full instruction; it must be the
-# training instruction of RUN.
-#   RUN=smolvla_real_cube_white_tray_100 CKPT=040000 TASK=red_cube_to_white_tray ROBOT_ID=my_follower_sim \
-#       bash scripts/real_smolvla.sh
+# TASK is a task id (red_cube_aside, red_cube_to_box [default], red_cube_to_black_box, stack_red_on_blue,
+# cylinder_to_tray, cylinder_to_container, cube_to_tray, cylinder_aside, cube_flip, green_into_tray) or a full
+# instruction; it must be the training instruction of RUN.
 #   RUN=smolvla_real_cube_black_box_100 CKPT=100000 TASK=red_cube_to_black_box bash scripts/real_smolvla.sh
 #   RUN=smolvla_real_stack_red_blue_100 CKPT=100000 TASK=stack_red_on_blue bash scripts/real_smolvla.sh
 # Environment overrides (defaults in brackets):
@@ -35,7 +33,7 @@ set -u
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 RUN="${RUN:-smolvla_real_stack_red_blue_100}"
-CKPT="${CKPT:-last}"
+CKPT="${CKPT:-080000}"
 TASK="${TASK:-stack_red_on_blue}"
 
 # LAB Settings
@@ -74,11 +72,13 @@ DEBUG_EVERY="${DEBUG_EVERY:-10}"
 case "$TASK" in
     red_cube_aside) TASK="Pick up the red cube and place it aside." ;;
     red_cube_to_box | red_cube_to_black_box) TASK="Pick up the red cube and put it in the black box." ;;
-    red_cube_to_white_tray | red_cube_far_to_white_tray) TASK="Pick up the red cube and put it in the white tray." ;;
     stack_red_on_blue) TASK="Put the red cube on top of the blue cube." ;;
     cylinder_to_tray) TASK="Pick up the red cylinder and place it inside the black tray." ;;
     cylinder_to_container) TASK="Pick up the red cylinder and place it inside the circular container." ;;
     cube_to_tray) TASK="Pick up the blue object and place it inside the black tray." ;;
+    cylinder_aside) TASK="Pick up the light gray cylinder and put it aside." ;;
+    cube_flip) TASK="Pick up the red cube and flip it onto its side." ;;
+    green_into_tray) TASK="Pick up the green semicircular block and put it into the white tray." ;;
 esac
 
 POLICY_PATH="$PROJECT_ROOT/outputs/train/$RUN/checkpoints/$CKPT/pretrained_model"

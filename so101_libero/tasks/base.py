@@ -199,16 +199,10 @@ class WorldState:
         # into place do not count.
         self.max_lift: dict[str, float] = {}
         self.held_xy: dict[str, np.ndarray] = {}
-        #   min_up_z: lowest world-z component reached by each object's body z axis (+1 upright, -1 upside down), so a
-        #   flip is tracked even for objects that look the same either way up (a uniformly coloured cylinder).
-        self.min_up_z: dict[str, float] = {}
 
     def track(self) -> None:
         """Update the per-episode history (called by the environment after each control step)."""
         for name, spec in self.h.objects.items():
-            up_z = float(self.d.xmat[self.h.item_body[name]][8])
-            if up_z < self.min_up_z.get(name, 2.0):
-                self.min_up_z[name] = up_z
             if not self.grasped(name):
                 continue
             p = self.d.xpos[self.h.item_body[name]]
@@ -486,52 +480,6 @@ def _released(ws: WorldState, obj: str, max_speed: float, min_tcp_distance: floa
 
 
 @dataclass(frozen=True)
-class MovedBy:
-    """``obj`` was picked up (carried in the jaws >= ``min_lift`` above the table) and now rests directly on the table
-    displaced by ``offset`` (world xy, metres) from where it was at the start of the episode: within ``tol`` along the
-    offset and within ``tol`` across it. It keeps its original top face up (body z axis within ``max_tilt_deg`` of its
-    start direction) and its yaw within ``max_yaw_deg`` of the start (modulo the object's rotational symmetry), was
-    released within ``max_release_offset`` of where it rests (carried there, not dropped and shoved), and is released,
-    at rest and clear of the gripper."""
-
-    obj: str
-    offset: tuple[float, float]
-    tol: float = 0.01
-    max_tilt_deg: float = 15.0
-    max_yaw_deg: float = 15.0
-    min_lift: float = 0.02
-    max_speed: float = 0.02
-    max_release_offset: float = 0.03
-    min_tcp_distance: float = 0.04
-
-    def __call__(self, ws: WorldState) -> bool:
-        if self.obj not in ws.init_pos:
-            return False
-        off = np.asarray(self.offset, float)
-        along_dir = off / np.linalg.norm(off)
-        d = ws.pos(self.obj)[:2] - ws.init_pos[self.obj][:2]
-        along = float(d @ along_dir)
-        across = float(d @ np.array([-along_dir[1], along_dir[0]]))
-        if abs(along - float(np.linalg.norm(off))) > self.tol or abs(across) > self.tol:
-            return False
-        if not OnTable(self.obj)(ws) or ws.tilt_from_start(self.obj) > math.radians(self.max_tilt_deg):
-            return False
-        sym = ws.h.objects[self.obj].yaw_symmetry
-        if sym > 0:
-            start_yaw = math.atan2(ws.init_rot[self.obj][1, 0], ws.init_rot[self.obj][0, 0])
-            dyaw = (ws.yaw(self.obj) - start_yaw + sym / 2) % sym - sym / 2
-            if abs(dyaw) > math.radians(self.max_yaw_deg):
-                return False
-        if not _released(ws, self.obj, self.max_speed, self.min_tcp_distance):
-            return False
-        rel = ws.release_offset(self.obj)
-        return rel is not None and rel <= self.max_release_offset and ws.lifted(self.obj, self.min_lift)
-
-    def describe(self) -> str:
-        return f"MovedBy({self.obj}, {tuple(round(v, 3) for v in self.offset)})"
-
-
-@dataclass(frozen=True)
 class RestingInContainer:
     """``obj`` was picked up and now rests inside ``container`` in any orientation: its centre lies inside the inner
     area (``margin`` from the inner walls) and between the floor and ``max_half_extent + max_float`` above it (on the
@@ -563,33 +511,35 @@ class RestingInContainer:
 
 
 @dataclass(frozen=True)
-class FlippedInPlace:
-    """``obj`` (an upright cylinder at the start) stands on its OTHER end where it started: its body z axis points down
-    (within ``max_tilt_deg`` of straight down; the environment tracks the body orientation, so this holds only after a
-    real 180 degree turn, whatever the object looks like), its centre is within ``tol`` (horizontal) of its start and
-    at standing height on the table (``height_tol``), it was carried >= ``min_lift`` above the table (clear of it),
-    and it is released, at rest and clear of the gripper."""
+class TurnedOnSide:
+    """``obj`` (a box whose body z face starts on top, e.g. the marked face of the red cube) was picked up and now lies
+    on one of its side faces: that face's normal is horizontal (within ``max_tilt_deg``), the box rests flat (one of its
+    faces within ``max_tilt_deg`` of straight down) directly on the table within ``tol`` (horizontal) of where it
+    started, and it is released, at rest and clear of the gripper. The environment tracks the body orientation, so this
+    holds only after a real 90 degree turn."""
 
     obj: str
-    tol: float = 0.015
+    tol: float = 0.02
     max_tilt_deg: float = 15.0
-    height_tol: float = 0.004
-    min_lift: float = 0.03
+    min_lift: float = 0.02
     max_speed: float = 0.02
     min_tcp_distance: float = 0.04
 
     def __call__(self, ws: WorldState) -> bool:
-        if self.obj not in ws.init_pos or ws.up_z(self.obj) > -math.cos(math.radians(self.max_tilt_deg)):
+        if self.obj not in ws.init_pos:
+            return False
+        rot = ws.rot(self.obj)
+        if abs(rot[2, 2]) > math.sin(math.radians(self.max_tilt_deg)):  # the start-up face must now face sideways
+            return False
+        if float(np.max(np.abs(rot[2, :]))) < math.cos(math.radians(self.max_tilt_deg)):  # resting flat on a face
             return False
         p = ws.pos(self.obj)
-        if float(np.linalg.norm(p[:2] - ws.init_pos[self.obj][:2])) > self.tol:
-            return False
-        if abs(p[2] - ws.h.objects[self.obj].half_height) > self.height_tol or inside_any_container(ws, self.obj):
+        if float(np.linalg.norm(p[:2] - ws.init_pos[self.obj][:2])) > self.tol or not OnTable(self.obj)(ws):
             return False
         return _released(ws, self.obj, self.max_speed, self.min_tcp_distance) and ws.lifted(self.obj, self.min_lift)
 
     def describe(self) -> str:
-        return f"FlippedInPlace({self.obj})"
+        return f"TurnedOnSide({self.obj})"
 
 
 @dataclass(frozen=True)
@@ -651,16 +601,6 @@ class StackOn:
 
 
 @dataclass(frozen=True)
-class MoveBy:
-    """Expert plan: pick ``obj`` and put it back on the table ``offset`` (world xy, m) from where it started, with the
-    same yaw in the world (+- ``jitter`` m per axis on the target)."""
-
-    obj: str
-    offset: tuple[float, float]
-    jitter: float = 0.002
-
-
-@dataclass(frozen=True)
 class PlaceInBox:
     """Expert plan: pick ``obj`` and lower it into the open ``target`` container (fixed or free), the jaws closing along
     the container's long side, and release it a few millimetres above the floor."""
@@ -670,15 +610,24 @@ class PlaceInBox:
 
 
 @dataclass(frozen=True)
-class FlipViaStation:
-    """Expert plan for flipping an upright cylinder end over end with a 5-DoF arm that cannot reach a horizontal side
-    grasp near its start: (1) pick it top-down at its middle, carry it to ``station`` (world xy, far enough out for a
-    horizontal side grasp) and stand it there; (2) side-grasp it at its middle, lift it clear of the table, roll the
-    wrist 180 degrees about the horizontal approach axis and stand it on its other end; (3) pick it top-down again and
-    put it back where it started."""
+class PlaceUprightAt:
+    """Expert plan for a tall object (the 6 cm cylinder): pick it at its middle and stand it at a free reachable spot
+    inside ``region`` (shrunk by ``margin``), the gripper keeping one orientation while it holds the object, so the
+    object stays upright."""
 
     obj: str
-    station: tuple[float, float]
+    region: Region
+    margin: float = 0.02
+
+
+@dataclass(frozen=True)
+class TipOver:
+    """Expert plan: turn a box onto a neighbouring face in place. Grasp it across two vertical faces with the approach
+    tilted ``tilt_deg`` (45) outward, lift, roll the wrist 180 degrees about the approach axis (the box turns 90 degrees:
+    its top face ends up facing the robot) and set it back down where it was."""
+
+    obj: str
+    tilt_deg: float = 45.0
 
 
 @dataclass(frozen=True)
@@ -687,7 +636,7 @@ class Task:
     language: str
     layout: Layout
     goal: tuple  # predicates; all must hold
-    plan: PickPlace | PlaceRelative | PlaceAt | StackOn | MoveBy | PlaceInBox | FlipViaStation | None = None
+    plan: PickPlace | PlaceRelative | PlaceAt | StackOn | PlaceInBox | PlaceUprightAt | TipOver | None = None
     max_steps: int = 450  # 15 s at 30 Hz
     success_hold_steps: int = 5  # goal must hold this many consecutive control steps
     tags: tuple[str, ...] = field(default_factory=tuple)

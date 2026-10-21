@@ -38,24 +38,26 @@ def wilson(k: int, n: int, z: float = 1.96) -> tuple[float, float]:
 
 def classify(env, task, lifted: bool) -> str:
     """Where the manipulated object ended up (privileged, for diagnostics only)."""
-    from so101_libero.tasks.base import FlipViaStation, PickPlace, PlaceAt, PlaceInBox, StackOn, inside_any_container
+    from so101_libero.tasks.base import (PickPlace, PlaceAt, PlaceInBox, PlaceUprightAt, StackOn, TipOver,
+                                         inside_any_container)
 
     ws = env.world
     obj = task.plan.obj if task.plan else task.goal[0].obj
     target = task.plan.target if isinstance(task.plan, (PickPlace, PlaceInBox)) else None
     if ws.pos(obj)[2] < -0.05:
         return "fell_off_table"
-    if isinstance(task.plan, FlipViaStation):
+    if isinstance(task.plan, TipOver):
         if not lifted:
             return "never_lifted"
         if ws.touching_robot(obj):
             return "still_held"
-        if ws.min_up_z.get(obj, 1.0) > -0.5:
-            return "never_turned_upside_down"  # tracked body orientation: lifted (and maybe put back) but not flipped
-        if ws.up_z(obj) > -0.9:
-            return "flipped_then_tipped_over"
-        return "flipped_but_not_back_in_place_or_not_settled"
-    if isinstance(task.plan, PlaceAt):
+        up = abs(ws.up_z(obj))  # tracked body orientation of the start-up (white) face
+        if up > 0.9:
+            return "not_turned"  # lifted (and maybe put back) without turning it
+        if up > 0.26:
+            return "turned_but_not_flat"
+        return "turned_but_not_in_place_or_not_settled"
+    if isinstance(task.plan, (PlaceAt, PlaceUprightAt)):  # put it in a zone (red_cube_aside, cylinder_aside)
         from so101_libero.tasks.base import OnTable, OnTableInRegion
 
         pred = next((g for g in task.goal if isinstance(g, OnTableInRegion)), None)

@@ -39,7 +39,7 @@ class ExpertConfig:
     release_deg: float = 20.0  # opened only this far inside containers (jaw gap ~4.2 cm)
     carry_height: tuple[float, float] = (0.075, 0.09)
     # The held object's bottom stays this far above the target container's walls while carried: carry_height is
-    # raised by whatever it lacks (nothing for walls up to ~3 cm; the 6 cm white tray lifts it by ~2.5 cm).
+    # raised by whatever it lacks (nothing for walls up to ~3 cm; 6 cm walls lift it by ~2.5 cm).
     wall_clearance: float = 0.02
     # Inside tall containers the object is released with its bottom at most this far below the rim: release_height is
     # raised by whatever it lacks (nothing for walls up to ~4 cm), so the jaws stay clear of the walls.

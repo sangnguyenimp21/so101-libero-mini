@@ -9,7 +9,7 @@ from __future__ import annotations
 import math
 
 from so101_libero.sim.objects import (BLACK_BOX, BLACK_TRAY, BLUE_CUBE, RED_CUBE, RED_CUBE_VAR, RED_CYLINDER,
-                                      ROUND_CONTAINER, WHITE_TRAY)
+                                      ROUND_CONTAINER)
 from so101_libero.sim.robot import REST_DEG
 from so101_libero.tasks.base import (GridRegion, InContainer, Layout, OnTableInRegion, PickPlace, PlaceAt, PlaceRelative,
                                      Region, RelativeRegion, RelativeTo, StackedOn, StackOn, Task)
@@ -32,15 +32,32 @@ TABLETOP = Layout(
 
 TASKS: dict[str, Task] = {}
 SUITES: dict[str, list[str]] = {}
+# Seed slots: the task registered k-th (retired tasks included) draws its training seeds from k * 100,000 and its
+# evaluation seeds from 10,000,000 + k * 100,000. A removed task keeps its slot (``retire``), so the seed ranges of the
+# tasks after it, and the datasets and evaluation states made from them, never move.
+SEED_SLOTS: list[str] = []
 
 
 def register(task: Task, suite: str | None = None) -> Task:
-    if task.task_id in TASKS:
+    if task.task_id in TASKS or task.task_id in SEED_SLOTS:
         raise ValueError(f"duplicate task id {task.task_id}")
     TASKS[task.task_id] = task
+    SEED_SLOTS.append(task.task_id)
     if suite:
         SUITES.setdefault(suite, []).append(task.task_id)
     return task
+
+
+def retire(task_id: str) -> None:
+    """Keep the seed slot of a task that was removed from the registry at this point."""
+    SEED_SLOTS.append(task_id)
+
+
+def seed_slot(task_id: str) -> int:
+    """Seed slot of a registered task (see SEED_SLOTS)."""
+    if task_id not in TASKS:
+        raise KeyError(f"unknown task {task_id!r}")
+    return SEED_SLOTS.index(task_id)
 
 
 def pick_place(task_id: str, language: str, obj: str, container: str, layout: Layout = TABLETOP, **kw) -> Task:
@@ -102,48 +119,15 @@ register(pick_place("red_cube_to_box", "Pick up the red cube and put it in the b
                     layout=REAL_BOX_TABLETOP), suite="so101_real")
 
 
-# Red cube into the white tray: the 3 cm red cube and a FIXED white tray (inner 14 x 9 cm, 6 cm walls) centred 15 cm in
-# front of the base and 15 cm to its left, long side along x. The cube starts in one of 10 cells (2 rows along x x
-# 5 columns along y, cell = seed % 10, so demonstrations and evaluation states cover the cells equally) of
-# x 0.16-0.24, y -0.10..+0.06: the cube area of the other real tasks moved 2 cm to the right, as the tray's near wall
-# (y = 0.099) would cut through its left edge at y = 0.08, and starting 2 cm further out, as the expert's higher carry
-# over the 6 cm walls (TCP ~10-11.5 cm) is out of reach straight above cubes closer than ~15.5 cm. The tray counts by
-# its outer rectangle, so cubes may start 1.5 cm from its wall.
-REAL_WHITE_TRAY_TABLETOP = Layout(
-    name="real_white_tray_tabletop_v1",
-    objects=(RED_CUBE,),
-    containers=(WHITE_TRAY,),
-    regions={"red_cube": GridRegion(x=(0.16, 0.24), y=(-0.10, 0.06), nx=2, ny=5, yaw=(-45 * DEG, 45 * DEG)),
-             "white_tray": Region(x=(0.15, 0.15), y=(0.15, 0.15), yaw=(0.0, 0.0))},
-    clearance=0.015,
-    tray_rectangles=True,
-)
-register(pick_place("red_cube_to_white_tray", "Pick up the red cube and put it in the white tray.", "red_cube",
-                    "white_tray", layout=REAL_WHITE_TRAY_TABLETOP), suite="so101_real")
-
-
-# The same white tray, the cube at ONE far spot: 26 cm straight ahead of the shoulder's pan axis (x = 0.039 + 0.26),
-# +-1 cm and +-15 deg for placing it by hand (set FAR_CUBE_SPOT to a zero-width region for an exactly fixed cube).
-# Beyond ~23 cm from the pan axis the front camera's policy crop no longer shows the table, so the policy finds the
-# cube by its fixed place and the wrist camera. Episodes start in the folded rest pose (as real rollouts do) and the
-# demonstrations end by parking there again (via home) and holding, so the policy stops after the task.
-FAR_CUBE_SPOT = Region(x=(0.289, 0.309), y=(-0.01, 0.01), yaw=(-15 * DEG, 15 * DEG))
-REAL_WHITE_TRAY_FAR_TABLETOP = Layout(
-    name="real_white_tray_far_cube_v1",
-    objects=(RED_CUBE,),
-    containers=(WHITE_TRAY,),
-    regions={"red_cube": FAR_CUBE_SPOT, "white_tray": REAL_WHITE_TRAY_TABLETOP.regions["white_tray"]},
-    clearance=0.015,
-    tray_rectangles=True,
-)
-register(pick_place("red_cube_far_to_white_tray", "Pick up the red cube and put it in the white tray.", "red_cube",
-                    "white_tray", layout=REAL_WHITE_TRAY_FAR_TABLETOP, start_deg=tuple(float(v) for v in REST_DEG),
-                    return_to_start=True), suite="so101_real")
+# Retired: red_cube_to_white_tray and red_cube_far_to_white_tray (a fixed white tray on the robot's left), removed
+# 2026-10-21. Their seed slots (6, 7) stay reserved.
+retire("red_cube_to_white_tray")
+retire("red_cube_far_to_white_tray")
 
 
 # The next two tasks keep everything inside the front camera's policy crop (the table up to x ~0.24 m, |y| <~ 0.19 m at
-# x 0.15-0.20; the 6 cm rims reach the image edge sooner) and, like red_cube_far_to_white_tray, start in the folded rest
-# pose and park there again after the task. At rest the jaws lie just above the table, x 0.12-0.20 m: a cube there
+# x 0.15-0.20; the 6 cm rims reach the image edge sooner) and start in the folded rest pose (as real rollouts do) and
+# park there again after the task (via home, then a 2 s hold), so the policy stops after the task. At rest the jaws lie just above the table, x 0.12-0.20 m: a cube there
 # needs |y| >= 0.06 (>= 3.5 cm clearance, also with the pan +-7 deg off, as the real arm rests at ~-6.6), and a
 # two-cube stack y >= 0.12 or y <= -0.06 (the camera mount and the moving jaw stick out to the left at 3-6 cm height).
 # On the real table, measure x from the shoulder's pan axis (the vertical axis of the base motor, at x = 0.039 m in this
@@ -155,7 +139,7 @@ REST_START = tuple(float(v) for v in REST_DEG)
 # line; sides along x), +-1 cm and +-5 deg for placing it by hand (< 1 cm further right, its rim leaves the camera
 # image; forward there are ~3 cm). The cube starts on the robot's LEFT, beside the folded arm, in one of 6 cells
 # (2 rows along x x 3 columns along y, cell = seed % 6) of a small area, x 0.16-0.22, y 0.06-0.12 (12-18 cm ahead of the
-# pan axis, 6-12 cm left; the expert's high carry over the 6 cm walls needs x >= ~0.155, as for the white tray), and
+# pan axis, 6-12 cm left; the expert's high carry over the 6 cm walls needs x >= ~0.155), and
 # is carried across to the box.
 REAL_BLACK_BOX_TABLETOP = Layout(
     name="real_black_box_tabletop_v1",
@@ -202,10 +186,14 @@ def get_suite(name: str) -> list[Task]:
     raise KeyError(f"unknown suite or task {name!r}; suites: {sorted(SUITES)}, tasks: {sorted(TASKS)}")
 
 
-# Suite so101_tri: one scene (a fixed white box, a red cube, a green half-cylinder, a light gray cylinder), exactly five
-# predefined placements of the three small objects, three tasks (so101_libero/tasks/tri_tasks.py documents the
-# geometry, directions and tolerances). Registry indices 10-12: training seeds 1,000,000+ / 1,100,000+ / 1,200,000+.
+# Suite so101_tri: one scene (a fixed white tray on the robot's right, a red cube with a white top face, a green
+# half-cylinder, a light gray cylinder), exactly five predefined placements of the three small objects, three tasks
+# (so101_libero/tasks/tri_tasks.py documents the geometry, directions and tolerances). The first version of this suite
+# (cube_left, green_into_box, cylinder_flip: white box on the robot's left) was retired on 2026-10-21; its seed slots
+# 10-12 stay reserved. Slots 13-15: training seeds 1,300,000+ / 1,400,000+ / 1,500,000+.
 from so101_libero.tasks.tri_tasks import TRI_TASKS  # noqa: E402
 
+for _retired in ("cube_left", "green_into_box", "cylinder_flip"):
+    retire(_retired)
 for _task in TRI_TASKS:
     register(_task, suite="so101_tri")

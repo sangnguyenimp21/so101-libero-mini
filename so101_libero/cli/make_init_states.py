@@ -73,7 +73,7 @@ def main() -> None:
     from so101_libero.cli.generate import episode_limit
     from so101_libero.env import EnvConfig, SO101TabletopEnv
     from so101_libero.expert.rollout import run_expert_episode
-    from so101_libero.tasks.registry import TASKS, get_suite
+    from so101_libero.tasks.registry import get_suite, seed_slot
 
     INIT_DIR.mkdir(exist_ok=True)
     for task in [t for name in args.tasks for t in get_suite(name)]:
@@ -83,7 +83,7 @@ def main() -> None:
             continue
         env = SO101TabletopEnv(task, EnvConfig(render=False, terminate_on_success=False,
                                                max_steps=episode_limit(task.task_id)))
-        base = EVAL_SEED_BASE + list(TASKS).index(task.task_id) * 100_000
+        base = EVAL_SEED_BASE + seed_slot(task.task_id) * 100_000
         n_place = task.layout.num_placements  # predefined placements: state k uses placement k % n (balanced)
         states, rejected = [], []
         for i in range(args.max_candidates):

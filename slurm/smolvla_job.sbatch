@@ -1,46 +1,41 @@
 #!/bin/bash
-#SBATCH --job-name=so101lm-smolvla-wtray
+#SBATCH --job-name=so101lm-smolvla
 #SBATCH --partition=gpu
 #SBATCH --gres=gpu:h100-96:1
 #SBATCH --cpus-per-task=16
 #SBATCH --mem=96G
-#SBATCH --time=08:00:00
+#SBATCH --time=12:00:00
 #SBATCH --output=liberomini-%x-%j.out
 #SBATCH --error=liberomini-%x-%j.out
-# SmolVLA on red_cube_to_white_tray ("Pick up the red cube and put it in the white tray.") on one H100, end to end.
-# The recipe of slurm/smolvla_red_cube_to_box.sbatch (that run made real progress) with this plan:
-#   robot SO-101 | object 3 cm red cube | target fixed white tray (inner 14 x 9 cm, 6 cm walls, centre 15 cm ahead and
-#   15 cm to the robot's left) | 100 successful demonstrations | cube start: 10 cells (2 x 5 grid over x 0.16-0.24,
-#   y -0.10..+0.06 m; cell = seed % 10, uniform inside) | cameras front + wrist | lerobot/smolvla_base | 1 x H100 96 GB
-#   | BF16 | batch 32, no gradient accumulation (lerobot-train 0.4.2 has none: one optimizer step per batch) | 40k steps
-#   | checkpoints and evaluation at 10k, 20k, 30k, 40k | extend from physical results (below)
-#   sbatch slurm/smolvla_red_cube_to_white_tray.sbatch                                # from the project root
-#   WANDB=true WANDB_PROJECT=cs6283 WANDB_ENTITY=tsangb34-national-university-of-singapore-students-union \
-#       sbatch slurm/smolvla_red_cube_to_white_tray.sbatch
-#   STEPS=60000 sbatch slurm/smolvla_red_cube_to_white_tray.sbatch      # extend: resumes from 40k, LR re-decays to 60k
+# The shared SmolVLA job (one H100, end to end), run by the per-task wrappers (slurm/smolvla_red_cube_to_black_box.sbatch,
+# slurm/smolvla_stack_red_on_blue.sbatch, slurm/train_smolvla_*.slurm), which set TASKS, REPO_ID, OUT and their own
+# defaults and exec this script. The recipe of slurm/smolvla_red_cube_to_box.sbatch (that run made real progress):
+# cameras front + wrist | lerobot/smolvla_base | 1 x H100 96 GB | BF16 | batch 32, no gradient accumulation
+# (lerobot-train 0.4.2 has none: one optimizer step per batch).
+#   sbatch slurm/smolvla_stack_red_on_blue.sbatch                       # a wrapper, from the project root
+#   STEPS=140000 sbatch slurm/smolvla_stack_red_on_blue.sbatch          # extend: resumes, LR re-decays to 140k
 # Every stage skips what is already done, so resubmitting the same command after a timeout carries on:
 #  1. runtime: scripts/setup_conda_env.sh under a lock (conda env so101lm, OSMesa, SmolVLA weights; first run ~15 min)
 #  2. evaluation states init_states/<task>.json: made here if missing (50 expert-verified states, ~5 min). They must be
 #     made with the cluster's MuJoCo 3.3.7 (the scene hash depends on it): commit the new file from here
 #  3. dataset $SCRATCH/datasets/lerobot/$REPO_ID: used as is if complete, else generated (EGL if a multi-worker
-#     self-test passes, else OSMesa; 100 demos ~10 / ~30 min; the expert solves ~95 % of starts, failures are
-#     discarded); refused if it missed its demo target or is an interrupted leftover (delete it); validated (10
-#     episodes replayed) unless a matching PASS is cached
+#     self-test passes, else OSMesa; one job at a time per dataset) or merged (MERGE_FROM); refused if it missed its
+#     demo target or is an interrupted leftover (delete it); validated (10 episodes replayed) unless a matching PASS is
+#     cached
 #  4. training with scripts/train.sh's smolvla preset, scheduler_decay_steps = STEPS (smolvla_base decays over 30k
 #     steps whatever --steps says) and BF16 autocast (lerobot-train 0.4.2 runs under Accelerate, which takes the
 #     precision from ACCELERATE_MIXED_PRECISION; printed before training). Resumes from $OUT/checkpoints/last; a
 #     resume with DECAY_STEPS different from the checkpoint's schedule (e.g. STEPS=60000) re-stretches the cosine
 #     decay to DECAY_STEPS, so the extra steps do not all run at the 2.5e-6 floor
 #  5. evaluation of EVAL_CKPTS on the frozen states, OSMesa rendering + policy on the GPU (~15 min per checkpoint)
-# Variables [defaults]: ENV_NAME [so101lm] SCRATCH_ROOT [~/so101lm: datasets, HF cache, OSMesa] CONDA_ROOT [~/miniconda3]
-#   TASKS [red_cube_to_white_tray] NUM_DEMOS [100] REPO_ID [local/so101_real_cube_white_tray_100] GEN_WORKERS [10]
-#   GEN_RENDER [auto | egl | osmesa] GEN_ARGS [--max-grasp-retries 2 --miss-prob 0.3 --miss-offset 0.018 0.026
-#   --home-noise-deg 3: recovery demonstrations, as in the box run] OUT [outputs/train/smolvla_real_cube_white_tray_100]
-#   STEPS [40000] DECAY_STEPS [= STEPS] BATCH_SIZE [32] SAVE_FREQ [10000] PRECISION [bf16 | fp16 | no] NUM_WORKERS [10]
-#   SEED [1000] TRAIN_ARGS [extra lerobot-train flags] EVAL_TASKS [= TASKS] EVAL_EPISODES [50] EVAL_VIDEOS [10]
-#   EVAL_CKPTS [all | last | none] EVAL_WORKERS [4] EVAL_EGL [0] EVAL_ARGS [extra evaluate flags] WANDB [false]
-#   WANDB_PROJECT [so101-libero-mini] WANDB_ENTITY WANDB_MODE [online if credentials exist and api.wandb.ai is
-#   reachable, else offline]
+# Variables [defaults]: TASKS, REPO_ID, OUT [required: set by the wrapper] ENV_NAME [so101lm] SCRATCH_ROOT [~/so101lm:
+#   datasets, HF cache, OSMesa] CONDA_ROOT [~/miniconda3] NUM_DEMOS [100] GEN_WORKERS [10] GEN_RENDER [auto | egl |
+#   osmesa] GEN_ARGS [--max-grasp-retries 2 --miss-prob 0.3 --miss-offset 0.018 0.026 --home-noise-deg 3: recovery
+#   demonstrations, as in the box run] STEPS [40000] DECAY_STEPS [= STEPS] BATCH_SIZE [32] SAVE_FREQ [10000]
+#   PRECISION [bf16 | fp16 | no] NUM_WORKERS [10] SEED [1000] TRAIN_ARGS [extra lerobot-train flags] EVAL_TASKS
+#   [= TASKS] EVAL_EPISODES [50] EVAL_VIDEOS [10] EVAL_CKPTS [all | last | none] EVAL_WORKERS [4] EVAL_EGL [0]
+#   EVAL_ARGS [extra evaluate flags] WANDB [false] WANDB_PROJECT [so101-libero-mini] WANDB_ENTITY WANDB_MODE [online if
+#   credentials exist and api.wandb.ai is reachable, else offline]
 #   PRETRAINED [lerobot/smolvla_base: hub id (cached by setup_conda_env.sh; jobs run offline) or a local
 #   pretrained_model dir] DATASET_ROOT [$SCRATCH_ROOT/datasets/lerobot/$REPO_ID] TRAIN_LAUNCHER [lerobot-train;
 #   multitask: python -m so101_libero.train.lerobot_train_balanced] MERGE_FROM ["task=repo_id ...": build the dataset
@@ -48,9 +43,8 @@
 #   ENV_ACTIVATE [unset: conda env ENV_NAME via scripts/setup_conda_env.sh; set: a shell command that activates an
 #   existing environment instead, e.g. "source /path/to/venv/bin/activate"; no setup is run then]
 # Log: ./liberomini-<job-name>-<jobid>.out. Checkpoints: $OUT/checkpoints/<step>/pretrained_model (copy $OUT to the Mac's
-# outputs/train/ for scripts/real_smolvla.sh: RUN=smolvla_real_cube_white_tray_100 CKPT=040000
-# TASK=red_cube_to_white_tray ROBOT_ID=my_follower_sim). Results: $OUT/eval/<ckpt>/results.json. Exits non-zero if any
-# stage failed.
+# outputs/train/ for scripts/real_smolvla.sh). Results: $OUT/eval/<ckpt>/results.json. Exits non-zero if any stage
+# failed.
 set -euo pipefail
 cd "${SLURM_SUBMIT_DIR:-$PWD}"
 [ -f so101_libero/__init__.py ] || { echo "submit from the project root: sbatch slurm/$(basename "$0")" >&2; exit 1; }
@@ -58,13 +52,14 @@ PROJECT_ROOT="$PWD"
 ENV_NAME="${ENV_NAME:-so101lm}"
 SCRATCH="${SCRATCH_ROOT:-$HOME/so101lm}"  # must be shared by all nodes (not /tmp): later jobs reuse it
 OSMESA_PREFIX="${OSMESA_PREFIX:-$SCRATCH/opt/osmesa}"
-TASKS="${TASKS:-red_cube_to_white_tray}"
+: "${TASKS:?set TASKS (submit a wrapper, e.g. sbatch slurm/smolvla_stack_red_on_blue.sbatch)}"
+: "${REPO_ID:?set REPO_ID (submit a wrapper)}"
+: "${OUT:?set OUT (submit a wrapper)}"
 NUM_DEMOS="${NUM_DEMOS:-100}"
-REPO_ID="${REPO_ID:-local/so101_real_cube_white_tray_100}"
 GEN_WORKERS="${GEN_WORKERS:-10}"
 GEN_RENDER="${GEN_RENDER:-auto}"
 GEN_ARGS="${GEN_ARGS:---max-grasp-retries 2 --miss-prob 0.3 --miss-offset 0.018 0.026 --home-noise-deg 3}"
-OUT="$(realpath -m "${OUT:-outputs/train/smolvla_real_cube_white_tray_100}")"
+OUT="$(realpath -m "$OUT")"
 STEPS="${STEPS:-40000}"
 DECAY_STEPS="${DECAY_STEPS:-$STEPS}"
 BATCH_SIZE="${BATCH_SIZE:-32}"
@@ -260,6 +255,13 @@ if [ -f "$CONFIG" ]; then
         TRAIN+=(--scheduler.num_decay_steps="$DECAY_STEPS")
     fi
 else
+    # A run that stopped before its first checkpoint left only logs (task_balancing.json, wandb/), and lerobot-train
+    # refuses an existing output dir: set it aside and start over. A dir with checkpoints/ is left for a human.
+    if [ -e "$OUT" ] && [ ! -e "$OUT/checkpoints" ]; then
+        STALE="$OUT.no_checkpoint_$(date +%Y%m%d_%H%M%S)"
+        echo "$OUT has no checkpoint (an earlier run stopped before its first save): moved to $STALE"
+        mv "$OUT" "$STALE"
+    fi
     [ -e "$OUT" ] && { echo "$OUT exists but has no checkpoint to resume: remove it" >&2; exit 1; }
     mkdir -p "$(dirname "$OUT")"
     echo "==== train SmolVLA ($PRETRAINED) on $REPO_ID -> $OUT ($STEPS steps, LR decay over $DECAY_STEPS," \

@@ -149,7 +149,7 @@ class SO101TabletopEnv(gym.Env):
             raise RuntimeError(f"simulation diverged while settling the initial state {self.init_state}")
         self.world.init_pos = {n: self.world.pos(n) for n in self.h.item_body}
         self.world.init_rot = {n: self.world.rot(n) for n in self.h.item_body}
-        self.world.max_lift, self.world.held_xy, self.world.min_up_z = {}, {}, {}
+        self.world.max_lift, self.world.held_xy = {}, {}
         self.world.track()
 
     def step(self, action):

@@ -8,8 +8,8 @@
 #SBATCH --output=liberomini-%x-%j.out
 #SBATCH --error=liberomini-%x-%j.out
 # SmolVLA on stack_red_on_blue ("Put the red cube on top of the blue cube.") on one H100, end to end: the
-# red_cube_to_white_tray job (slurm/smolvla_red_cube_to_white_tray.sbatch, run unchanged; its header lists every stage
-# and variable) with this task's defaults:
+# shared SmolVLA job (slurm/smolvla_job.sbatch, run unchanged; its header lists every stage and variable) with this
+# task's defaults:
 #   two 3 cm cubes on the robot's left, the blue one always 10 cm (centre to centre) further left than the red one;
 #   the pair moves as one (4 cells: 11-17 cm ahead of the shoulder's pan axis, red 6-9 cm left of the centre line, so
 #   blue 16-19 cm left; each cube any yaw);
@@ -28,11 +28,11 @@
 #   RUN=smolvla_real_stack_red_blue_100 CKPT=100000 TASK=stack_red_on_blue bash scripts/real_smolvla.sh
 set -euo pipefail
 cd "${SLURM_SUBMIT_DIR:-$PWD}"
-[ -f slurm/smolvla_red_cube_to_white_tray.sbatch ] || { echo "submit from the project root" >&2; exit 1; }
+[ -f slurm/smolvla_job.sbatch ] || { echo "submit from the project root" >&2; exit 1; }
 export TASKS="${TASKS:-stack_red_on_blue}"
 export NUM_DEMOS="${NUM_DEMOS:-100}"
 export REPO_ID="${REPO_ID:-local/so101_real_stack_red_blue_100}"
 export OUT="${OUT:-outputs/train/smolvla_real_stack_red_blue_100}"
 export GEN_ARGS="${GEN_ARGS:---max-grasp-retries 2 --miss-prob 0.3 --miss-offset 0.018 0.026 --home-noise-deg 2}"
 export STEPS="${STEPS:-100000}" SAVE_FREQ="${SAVE_FREQ:-20000}" PRECISION="${PRECISION:-bf16}"
-exec bash slurm/smolvla_red_cube_to_white_tray.sbatch
+exec bash slurm/smolvla_job.sbatch

@@ -4,10 +4,10 @@
 
 Everything is LeRobot's own training (policy, processors, optimizer, scheduler, checkpoints, ``--resume``); only the
 dataset handed to its DataLoader is wrapped. lerobot-train shuffles frames uniformly, so a task with longer episodes
-(cylinder_flip: ~790 frames per demo vs ~200-240 for the other two) would be sampled ~3.5x as often. The wrapper exposes
-a virtual index space in which every task owns the same number of slots (the frame count of the largest task) and maps
-slot j of task t onto that task's frames, spread evenly (each frame of a smaller task appears once or twice per
-epoch). With LeRobot's uniform shuffle over those slots, every epoch draws each task exactly equally often. Each sample
+would be sampled more often than one with shorter ones. The wrapper exposes a virtual index space in which every task
+owns the same number of slots (the frame count of the largest task) and maps slot j of task t onto that task's frames,
+spread evenly (each frame of a smaller task appears once or twice per epoch). With LeRobot's uniform shuffle over
+those slots, every epoch draws each task exactly equally often. Each sample
 is still the real frame with its own natural-language ``task`` string, so language conditioning is unchanged. Logged
 epochs count virtual samples; ``dataset.num_frames`` / ``num_episodes`` (forwarded) stay the real counts. The mapping is
 written to <output_dir>/task_balancing.json.

@@ -1,7 +1,7 @@
 """Render scripted-expert episodes to MP4 (front | wrist side by side) plus a key-frame contact sheet.
 
     bash scripts/env.sh python -m so101_libero.cli.render_video --task cylinder_to_tray --seeds 0 1 2 --out docs/media
-    python -m so101_libero.cli.render_video --task cylinder_flip --seeds 1200000 --placement 0 --out docs/media/tri_tasks
+    python -m so101_libero.cli.render_video --task cube_flip --seeds 1400000 --placement 0 --out docs/media/tri_tasks
 """
 
 from __future__ import annotations

@@ -73,7 +73,7 @@ so101_libero/
   tasks/base.py                    Region, Layout (placement sampling), WorldState, predicates, plans, Task
   tasks/registry.py                the tasks and suites  <- add tasks here
   tasks/tri_tasks.py               suite so101_tri: scene, directions, 5 placements, tolerances, 3 tasks (docs/TRI_TASKS.md)
-  expert/tri_tasks.py              so101_tri demonstration controllers (move by offset, place in box, flip via station)
+  expert/tri_tasks.py              so101_tri demonstration controllers (carry upright aside, tip the cube over, tray)
   train/lerobot_train_balanced.py  lerobot-train with task-balanced sampling (multitask datasets)
   env.py                           gymnasium env (the policy-facing observation/action interface)
   expert/                          ik.py, pick_place.py (expert), rollout.py (episode runner + grasp monitor)
@@ -87,12 +87,11 @@ scripts/train.sh                   lerobot-train wrapper with project defaults (
 scripts/eval_variants.sh           evaluate one checkpoint with several inference settings
 scripts/setup_*.sh                 one-time setup (OSMesa, EGL shim, SmolVLA extras; conda runtime for SLURM)
 pbs/                               Hopper GPU jobs: smoke, generate, train (+eval), eval (+ small diagnostics)
-slurm/train_smolvla_*.slurm        so101_tri SmolVLA jobs (cube_left, green_into_box, cylinder_flip, multitask; settings in
-                                   slurm/tri_tasks.env), wrappers around the white-tray driver like the stacking job
+slurm/train_smolvla_*.slurm        so101_tri SmolVLA jobs (cylinder_aside, cube_flip, green_into_tray, multitask; settings
+                                   in slurm/tri_tasks.env; every checkpoint evaluated), wrappers like the stacking job
 slurm/                             SLURM H100 jobs, SmolVLA end to end (conda env, data, train, eval): red_cube_to_box,
-                                   red_cube_to_white_tray (100 demos, BF16, 40k steps, eval every 10k),
-                                   red_cube_far_to_white_tray, red_cube_to_black_box, stack_red_on_blue (each: its
-                                   defaults on top of the white-tray job; 100 demos, 100k steps, checkpoints every 20k)
+                                   red_cube_to_black_box, stack_red_on_blue (each: its defaults on top of the shared
+                                   driver smolvla_job.sbatch; 100 demos, 100k steps, checkpoints and evaluation every 20k)
 tests/                             pytest (physics-only) + render / EGL diagnostics
 docs/                              DESIGN.md, media/, results/ (stored measurement outputs)
 ```
@@ -241,20 +240,18 @@ training seeds 400000+, evaluation seeds 10,400,000+):
 |---|---|---|
 | `red_cube_aside` | Pick up the red cube and place it aside. | OnTableIn(red_cube, aside_zone): zone x 0.08-0.18, y 0.13-0.20 m (the robot's left = the lower right of the front image) |
 | `red_cube_to_box` | Pick up the red cube and put it in the black box. | In(red_cube, black_tray); cube edge 2.7-4.0 cm per episode, tray on the robot's left (index 5: training seeds 500000+, evaluation 10,500,000+) |
-| `red_cube_to_white_tray` | Pick up the red cube and put it in the white tray. | In(red_cube, white_tray); 3 cm cube in one of 10 cells (cell = seed % 10), fixed tray with 6 cm walls on the robot's left; the expert carries and releases higher over tall walls (index 6: training seeds 600000+, evaluation 10,600,000+) |
-| `red_cube_far_to_white_tray` | Pick up the red cube and put it in the white tray. | In(red_cube, white_tray); the cube at one far spot (26 cm ahead of the pan axis), the arm starts in the folded rest pose and the expert parks there again after placing (rest → home → pick, place → home → rest, 2 s hold) (index 7: training seeds 700000+, evaluation 10,700,000+) |
 | `red_cube_to_black_box` | Pick up the red cube and put it in the black box. | In(red_cube, black_box); like `lerobot/svla_so100_pickplace`: the box (10 × 10 cm outside, 6 cm walls) on the robot's right, the cube on its left beside the folded arm (6 cells, cell = seed % 6), all inside the front camera's view; starts and parks at rest (index 8: training seeds 800000+, evaluation 10,800,000+) |
 | `stack_red_on_blue` | Put the red cube on top of the blue cube. | On(red_cube, blue_cube); like `lerobot/svla_so100_stacking`: two 3 cm cubes on the robot's left, the blue one always 10 cm further left, the pair moved as one (4 cells, cell = seed % 4); starts and parks at rest (index 9: training seeds 900000+, evaluation 10,900,000+) |
 
-Suite `so101_tri` (one scene: a fixed white box, a red cube, a green half-cylinder and a light gray cylinder; exactly
-five placements of the three small objects; registry indices 10-12; full description, commands and limitations in
-[docs/TRI_TASKS.md](docs/TRI_TASKS.md)):
+Suite `so101_tri` (one scene: a fixed white tray on the robot's right, a red cube with a white top face, a green
+half-cylinder and a light gray cylinder; exactly five placements of the three small objects; registry indices 13-15;
+full description, commands and limitations in [docs/TRI_TASKS.md](docs/TRI_TASKS.md)):
 
 | id | instruction | goal |
 |---|---|---|
-| `cube_left` | Pick up the red cube and place it 5 cm to the left. | MovedBy(red_cube, 5 cm robot-left, ±1 cm), upright, others undisturbed |
-| `green_into_box` | Pick up the green semicircular block and put it into the white box. | RestingIn(green_block, white_box), others undisturbed |
-| `cylinder_flip` | Pick up the light gray cylinder at its middle, flip it upside down, and place it back in its original position. | FlippedInPlace(gray_cylinder, ±1.5 cm), others undisturbed |
+| `cylinder_aside` | Pick up the light gray cylinder and put it aside. | OnTableIn(gray_cylinder, aside_zone: the robot's left-back corner), upright, carried ≥ 2 cm high, others undisturbed |
+| `cube_flip` | Pick up the red cube and flip it onto its side. | TurnedOnSide(red_cube): the white top face sideways, resting flat ≤ 2 cm from its start, lifted, others undisturbed |
+| `green_into_tray` | Pick up the green semicircular block and put it into the white tray. | RestingIn(green_block, white_tray), others undisturbed |
 
 Items and start regions (world frame, metres: x forward from the base origin, which lies 3.9 cm behind the shoulder's pan axis, y = the robot's left; uniform x, y, yaw; collision-free rejection sampling with 2 cm
 clearance; the arm starts at a fixed home pose):
@@ -267,9 +264,6 @@ clearance; the arm starts at a fixed home pose):
 | circular container | inner Ø9 cm, walls 3 cm | 150 g | 0.15-0.21 / 0.13-0.19 / any |
 | red cube (`so101_real` only) | 3 cm (`red_cube_to_box`: 2.7-4.0 cm, uniform per episode) | 20 g | 0.14-0.24 / -0.08-0.08 / ±45° |
 | black tray (`red_cube_to_box`) | as above | 200 g | 0.13-0.17 / 0.13-0.17 / ±10° (the robot's left) |
-| red cube (`red_cube_to_white_tray`) | 3 cm | 20 g | 2 × 5 grid over 0.16-0.24 / -0.10-0.06 / ±45° (cell = seed % 10; ≥ 1.5 cm from the tray's outer walls) |
-| white tray (`red_cube_to_white_tray`) | inner 14 × 9 cm, walls 6 cm | 1 kg (fixed on the real table) | fixed at 0.15 / 0.15 / 0° (the robot's left, long side along x) |
-| red cube (`red_cube_far_to_white_tray`) | 3 cm | 20 g | 0.289-0.309 / -0.01-0.01 / ±15° (one spot, 26 cm ahead of the pan axis at x = 0.039; outside the front camera's policy crop) |
 | black box (`red_cube_to_black_box`) | 10 × 10 cm outside (5 mm walls, inner 9 × 9 cm), 6 cm tall | 1 kg (fix it on the real table) | 0.13-0.15 / -0.14 to -0.12 / ±5° (the robot's right: centre 10 cm ahead of the pan axis, 13 cm right; < 1 cm further right its rim leaves the camera image) |
 | red cube (`red_cube_to_black_box`) | 3 cm | 20 g | 2 × 3 grid over 0.16-0.22 / 0.06-0.12 / ±45° (cell = seed % 6; the robot's left, ≥ 3.5 cm from the folded arm) |
 | red + blue cube (`stack_red_on_blue`) | 3 cm each | 20 g each | red: 2 × 2 grid over 0.15-0.21 / 0.06-0.09 / ±45° (cell = seed % 4); blue: red + (0, +0.10) exactly, own yaw ±45° (the finished stack stays ≥ 6 cm clear of the folded arm) |
@@ -298,7 +292,7 @@ disjoint from training (`generate` refuses seeds ≥ 10,000,000), each verified 
 scene hash and a rules hash.
 
 **Adding a task:** append it in `so101_libero/tasks/registry.py` (tasks are only appended: the registry index sets
-each task's seed range). A pick-and-place goal is one line (`pick_place(...)`); a new goal type needs a predicate
+each task's seed range; a removed task is `retire`d so its slot stays reserved). A pick-and-place goal is one line (`pick_place(...)`); a new goal type needs a predicate
 (`WorldState -> bool`) and, for demonstrations, an expert plan (see `PlaceRelative`). New items go in
 `sim/objects.py` and a `Layout`; changing the scene changes its hash, so rebuild the evaluation states with
 `bash scripts/env.sh python -m so101_libero.cli.make_init_states --tasks <suite or id> --force`.
