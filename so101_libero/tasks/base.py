@@ -512,7 +512,7 @@ class RestingInContainer:
 
 @dataclass(frozen=True)
 class TurnedOnSide:
-    """``obj`` (a box whose body z face starts on top, e.g. the marked face of the red cube) was picked up and now lies
+    """``obj`` (a box; its body z face starts on top) was picked up and now lies
     on one of its side faces: that face's normal is horizontal (within ``max_tilt_deg``), the box rests flat (one of its
     faces within ``max_tilt_deg`` of straight down) directly on the table within ``tol`` (horizontal) of where it
     started, and it is released, at rest and clear of the gripper. The environment tracks the body orientation, so this

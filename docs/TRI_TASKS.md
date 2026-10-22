@@ -1,6 +1,6 @@
 # so101_tri: three language-conditioned tasks in one scene
 
-One tabletop scene (a white tray fixed on the robot's right, a red cube with one white face, a green half-cylinder, a
+One tabletop scene (a white tray fixed on the robot's right, an all-red cube, a green half-cylinder, a
 light gray cylinder), exactly five initial placements, three tasks, 100 physically executed demonstrations per task,
 and four SmolVLA fine-tuning jobs that evaluate every saved checkpoint in the simulator. The environment is built like
 `stack_red_on_blue`: a layout and tasks in the task registry, the scripted IK expert, the `generate` CLI and the shared
@@ -45,7 +45,7 @@ Mirroring the whole scene and its goals is one setting: `Directions(left=(0.0, -
 | white tray | 15 cm long (FRONT-BACK) x 9 cm wide x 5 cm tall outside; 1 mm walls and bottom, inside 14.8 x 8.8 x 4.9 cm; open top | centre (0.075, -0.125), fixed to the table beside the robot base on its RIGHT | welded (n/a) | 4 wall boxes + bottom box; the bottom's collision slab also reaches 1 cm into the table (invisible) |
 | gray cylinder | 3 cm diameter x 6 cm tall, upright | (0.20, 0.13): left-front | 30 g | cylinder |
 | green block | half-cylinder, 3.5 cm diameter x 3 cm long, 1.75 cm tall, flat face down, extrusion axis along FRONT | (0.225, 0.03): centre-front, in front of the folded arm | 15 g | exact convex mesh (32 arc segments), stiffer contacts (solref 0.005 s, priority 1) |
-| red cube | 3 cm; its top face white | (0.232, -0.072): right-front, yaw -20.4° (turned to face the pan axis) | 20 g | box (the white face is a visual-only patch: no collision, no mass) |
+| red cube | 3 x 3 x 3 cm, all red | (0.232, -0.072): right-front, yaw -20.4° (turned to face the pan axis) | 20 g | box |
 | aside zone | 7 x 7 cm, not drawn in the policy's views | x 0.05-0.12, y 0.12-0.19: the robot's left, beside the base, opposite the tray | n/a | none (part of the goal) |
 
 Spacing, measured by `render_placements` over all five placements:
@@ -88,7 +88,7 @@ goal predicate holds for 10 consecutive control steps (0.33 s, settled). Toleran
 | task id | instruction | goal (privileged state, `tasks/base.py`) | horizon |
 |---|---|---|---|
 | `cylinder_aside` | Pick up the light gray cylinder and put it aside. | `OnTableInRegion(aside_zone)`: centre inside the zone, standing upright (≤ 15°) directly on the table, ≥ 6 cm from its start; carried ≥ 2 cm high and released within 3 cm of where it rests (carried there, not shoved); no robot contact, < 2 cm/s, TCP ≥ 4 cm away. `Undisturbed(cube, green)`: each ≤ 2 cm moved, ≤ 20° tilted, untouched, not in the tray | 450 steps (15 s) |
-| `cube_flip` | Pick up the red cube and flip it onto its side. | `TurnedOnSide`: the white (start-top) face within 15° of vertical, i.e. facing sideways (upside down does not count), and the cube lying flat on a face (≤ 15°) directly on the table, ≤ 2 cm (horizontal) from its start; carried ≥ 2 cm high; released, < 2 cm/s, TCP ≥ 4 cm away. `Undisturbed(cylinder, green)` | 450 steps |
+| `cube_flip` | Pick up the red cube and flip it onto its side. | `TurnedOnSide`: the face that started on top within 15° of vertical, i.e. facing sideways (upside down does not count), and the cube lying flat on a face (≤ 15°) directly on the table, ≤ 2 cm (horizontal) from its start; carried ≥ 2 cm high; released, < 2 cm/s, TCP ≥ 4 cm away. `Undisturbed(cylinder, green)` | 450 steps |
 | `green_into_tray` | Pick up the green semicircular block and put it into the white tray. | `RestingInContainer`: centre ≥ 3 mm inside the inner walls, resting on the tray floor in any orientation (centre ≤ max half-extent + 5 mm above it); carried ≥ 2 cm high; released, < 2 cm/s, TCP ≥ 4 cm away. `Undisturbed(cylinder, cube)` | 450 steps |
 
 The environment tracks each object's orientation from the start of the episode, so the cube's turn is measured on
@@ -109,8 +109,8 @@ learns to stop.
   reachable). Lower until it is 2-4 mm above the table, release, retreat, park.
 - **cube_flip (one grasp):** the cube faces the pan axis, so a gripper whose approach is tilted 45° outward (in the
   vertical plane through the pan axis, the only plane the 5-DoF arm can aim in) closes across its two side faces. Lift
-  to a TCP height of 9-10 cm, then roll the wrist 180° about the tilted approach axis: the cube turns 90° (its white top
-  face ends up facing the robot, its outer face ends up down). Lower over its start spot and release. After the roll,
+  to a TCP height of 9-10 cm, then roll the wrist 180° about the tilted approach axis: the cube turns 90° (its top face
+  ends up facing the robot, its outer face ends up down). Lower over its start spot and release. After the roll,
   the wrist-camera mount hangs below the TCP on the robot side, so the release happens at the lowest collision-free
   height, a ~2 cm drop onto the new face. Retreat, park. The roll direction that stays collision-free (and the release
   height) is checked before the grasp.
@@ -175,7 +175,11 @@ green_into_tray 1,500,000+). Each placement keeps its first 20 successes in seed
 count. Evaluation states: `init_states/<task>.json`, 50 per task (10 per placement, seeds 11,300,000+ / 11,400,000+ /
 11,500,000+), all solved by the expert (0 candidates rejected).
 
-TBD_DATASETS
+The SLURM jobs generate the training datasets. A local run on the Mac (H.264) collected 100 demonstrations per task
+with no rejected attempt: cylinder_aside 34,016 frames (328-352 per episode), cube_flip 37,081 (352-386),
+green_into_tray 31,254 (297-330). `validate_dataset` passed for cube_flip and green_into_tray: 10 replayed episodes each
+reproduce the recorded joint states exactly and end with the goal holding. That run still showed the cube's old white
+top face (a visual-only patch, since removed; the motions are unchanged), so those local copies are stale.
 
 ## Multitask data and sampling
 
@@ -263,7 +267,6 @@ rm -rf ~/so101lm/datasets/lerobot/local/so101_tri_{cube_left,green_into_box,cyli
        outputs/train/smolvla_real_cube{,_far}_white_tray_100
 ```
 
-TBD_TRAINCHECK
 
 ## Running a trained policy on the real SO-101
 
@@ -283,7 +286,7 @@ sideways from the robot's centre line:
   pointing forward;
 - gray cylinder standing 16.1 cm in front, 13 cm left;
 - green block 18.6 cm in front, 3 cm left, flat face down, its long axis pointing forward;
-- red cube 19.3 cm in front, 7.2 cm right, white face up, turned 20° so one face points at the pan axis;
+- red cube (3 cm, all red) 19.3 cm in front, 7.2 cm right, turned 20° so one face points at the pan axis;
 - or that group of three shifted by 1 cm;
 - keep the aside zone clear: 1-8 cm in front of the pan axis, 12-19 cm left.
 
@@ -305,8 +308,7 @@ Suite files:
 
 Shared code extended for it (the remaining tasks are unchanged: their scene and rules hashes still match
 `init_states/`):
-- `sim/objects.py`: half-cylinder mesh shape, containers fixed to the table, per-object contact softness, an optional
-  visual-only top-face colour.
+- `sim/objects.py`: half-cylinder mesh shape, containers fixed to the table, per-object contact softness.
 - `sim/scene.py`: mesh assets and fixed containers.
 - `tasks/base.py`: `FixedPlacementLayout`; predicates `RestingInContainer`, `TurnedOnSide` and `Undisturbed`; plans
   `PlaceInBox`, `PlaceUprightAt` and `TipOver`; start-orientation tracking.
@@ -332,10 +334,13 @@ Removed in this version: the tasks `cube_left`, `green_into_box`, `cylinder_flip
   hangs below the TCP on the robot side, so the gripper cannot lower the cube to the table from its middle. It
   releases at the lowest collision-free height and the cube falls ~2 cm onto its new face. All 50 test attempts land
   flat within 2 cm, but a real cube may bounce differently.
-- **Only one flip direction is demonstrated.** The single tilted grasp always tips the cube towards the robot (white
-  face ends facing the robot). The goal accepts any side, but the data shows one.
-- **The cube's white face is visual only.** It has no thickness or mass. Mark the real cube's top face the same way;
-  without the mark, "on its side" and "upright" look alike to the cameras.
+- **Only one flip direction is demonstrated.** The single tilted grasp always tips the cube towards the robot (its
+  top face ends facing the robot). The goal accepts any side, but the data shows one.
+- **A flipped all-red cube looks the same as an unflipped one.** Success is judged from the simulator's tracked body
+  orientation, not the image. The final parked frame of a demonstration looks like its first frame, so the policy
+  (which has no memory) cannot see that the flip is done and may start another one. A simulator evaluation stops at
+  success, so the success rates are unaffected. On the real robot, stop the run after the first flip (`DURATION` or
+  Ctrl+C).
 - **The cube must face the pan axis.** It is turned -20.4° so that the 45° tilted grasp closes across two faces. A
   real cube placed square to the table edges is not the trained start state.
 - Object masses and friction, the contact softness and the green block's stiffer contacts are not identified from

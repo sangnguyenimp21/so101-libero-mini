@@ -1,5 +1,5 @@
 """Suite ``so101_tri``: three language-conditioned tasks in ONE tabletop scene (a fixed white tray on the robot's right,
-a red cube with one white face, a green half-cylinder, a light gray cylinder) with exactly five predefined initial
+an all-red cube, a green half-cylinder, a light gray cylinder) with exactly five predefined initial
 placements.
 
 Directions. Every placement and goal below is built from ``Directions`` (robot frame, never from the table edges):
@@ -30,7 +30,7 @@ Physical assumptions (not measured on the real objects): masses 20 g (cube, ~0.7
 ~1.04 g/cm^3, a printed part), 30 g (cylinder, ~0.71 g/cm^3); sliding friction 1.0 with torsional/rolling friction
 0.005/0.0001 like every other item in this project (the jaw pads' friction is the robot model's); the tray is welded to
 the table (fix the real one), so its mass does not matter. Collision geometry: the cube and cylinder are MuJoCo
-primitives (the cube's white face is a visual-only patch: no collision, no mass); the green block is a convex mesh of
+primitives; the green block is a convex mesh of
 the exact half-cylinder (32 segments on the arc) with stiffer contacts (solref 0.005 s, priority 1: the default 0.02 s
 lets the light spinning block sink through a floor when it lands on an edge); the tray is five boxes (1 mm walls and
 bottom, open top) whose bottom slab also reaches 1 cm into the table (invisible, keeps a dropped object from tunnelling
@@ -90,7 +90,7 @@ class TriTolerances:
     aside_min_shift: float = 0.06  # ... at least 6 cm from where it started
     aside_max_release_offset: float = 0.03  # ... released within 3 cm of where it rests (carried there, not shoved)
     flip_tol: float = 0.02  # cube back within 2 cm (horizontal) of its start
-    flip_max_tilt_deg: float = 15.0  # white face within 15 deg of sideways; resting flat within 15 deg
+    flip_max_tilt_deg: float = 15.0  # start-top face within 15 deg of sideways; resting flat within 15 deg
     tray_margin: float = 0.003  # block centre this far inside the inner walls
     tray_max_float: float = 0.005  # block centre at most max half extent + this above the tray floor (resting on it)
     others_max_shift: float = 0.02  # the other objects stay within 2 cm of their start ...
@@ -173,8 +173,7 @@ WHITE_TRAY = ContainerSpec(
     rgba=(0.95, 0.95, 0.93, 1.0), description="white tray", wall_height=_c.tray_height, wall_thickness=_c.tray_wall,
     base_thickness=_c.tray_bottom, mass=0.2, base_below_table=0.01,
     fixed_pose=(float(_c.tray_center()[0]), float(_c.tray_center()[1]), _c.directions.yaw))
-TRI_RED_CUBE = ObjectSpec("red_cube", "box", (_c.cube_size / 2,) * 3, (0.85, 0.12, 0.10, 1.0), "red cube", mass=0.02,
-                          top_face_rgba=(0.96, 0.96, 0.94, 1.0))
+TRI_RED_CUBE = ObjectSpec("red_cube", "box", (_c.cube_size / 2,) * 3, (0.85, 0.12, 0.10, 1.0), "red cube", mass=0.02)
 GREEN_BLOCK = ObjectSpec("green_block", "half_cylinder", (_c.green_diameter / 2, _c.green_length / 2),
                          (0.20, 0.88, 0.18, 1.0), "green semicircular block", mass=0.015, solref=(0.005, 1.0))
 GRAY_CYLINDER = ObjectSpec("gray_cylinder", "cylinder", (_c.cylinder_diameter / 2, _c.cylinder_height / 2),

@@ -13,8 +13,8 @@
 # settings of slurm/tri_tasks.env (scratch dir, environment, pretrained checkpoint, dataset ids, batch size,
 # evaluation, account/partition):
 #   scene so101_tri (docs/TRI_TASKS.md): white tray fixed on the robot's right; gray cylinder, green half-cylinder and
-#   red cube ~10 cm apart in front of the arm, in 5 fixed placements; the cube (white top face) is grasped from 45 deg,
-#   lifted, rolled 180 deg about the approach and set down where it started with the white face sideways; episodes
+#   red cube ~10 cm apart in front of the arm, in 5 fixed placements; the all-red cube is grasped from 45 deg,
+#   lifted, rolled 180 deg about the approach and set down where it started with its top face sideways; episodes
 #   start in the folded rest pose and every demonstration ends parked there again (2 s hold)
 #   100 demos (20 per placement) | BF16 | batch 32 | 100k steps, LR decay over 100k | checkpoints 20k, 40k, 60k, 80k,
 #   100k (all kept), EACH evaluated in the simulator on 50 frozen starts (10 per placement), results in

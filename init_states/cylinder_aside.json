@@ -2,7 +2,7 @@
  "task_id": "cylinder_aside",
  "language": "Pick up the light gray cylinder and put it aside.",
  "layout": "tri_tabletop_v2",
- "scene_hash": "f43f031559c302e3",
+ "scene_hash": "ed247767175798ad",
  "rules_hash": "f182fa8e31bb9084",
  "seed_base": 11300000,
  "num": 50,

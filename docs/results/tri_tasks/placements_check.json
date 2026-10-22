@@ -1,0 +1,603 @@
+{
+ "task": "cylinder_aside",
+ "layout": "tri_tabletop_v2",
+ "image_size": 256,
+ "placements": [
+  {
+   "placement_id": 0,
+   "name": "default",
+   "objects": {
+    "gray_cylinder": {
+     "pos": [
+      0.2,
+      0.13,
+      0.0299
+     ],
+     "settle_shift_mm": 0.0,
+     "yaw_change_deg": 0.0,
+     "up_z": 1.0,
+     "height_mm": 29.91,
+     "nominal_height_mm": 30.0,
+     "contacts": [
+      "table"
+     ],
+     "in_front_image": true,
+     "image_bbox_px": [
+      184.0,
+      201.2,
+      209.8,
+      230.3
+     ],
+     "visible_pixels": 472,
+     "ok": true
+    },
+    "green_block": {
+     "pos": [
+      0.225,
+      0.03,
+      0.0087
+     ],
+     "settle_shift_mm": 0.0,
+     "yaw_change_deg": 0.0,
+     "up_z": 1.0,
+     "height_mm": 8.74,
+     "nominal_height_mm": 8.75,
+     "contacts": [
+      "table"
+     ],
+     "in_front_image": true,
+     "image_bbox_px": [
+      126.7,
+      220.3,
+      147.8,
+      241.7
+     ],
+     "visible_pixels": 391,
+     "ok": true
+    },
+    "red_cube": {
+     "pos": [
+      0.232,
+      -0.072,
+      0.0148
+     ],
+     "settle_shift_mm": 0.0,
+     "yaw_change_deg": 0.0,
+     "up_z": 1.0,
+     "height_mm": 14.76,
+     "nominal_height_mm": 15.0,
+     "contacts": [
+      "table"
+     ],
+     "in_front_image": true,
+     "image_bbox_px": [
+      64.7,
+      216.7,
+      90.5,
+      244.9
+     ],
+     "visible_pixels": 443,
+     "ok": true
+    }
+   },
+   "layout_cm": {
+    "object_gaps": {
+     "gray_cylinder/red_cube": 16.83,
+     "gray_cylinder/green_block": 6.5,
+     "red_cube/green_block": 5.8
+    },
+    "tray_gaps": {
+     "gray_cylinder": 20.09,
+     "red_cube": 6.12,
+     "green_block": 11.01
+    },
+    "pan_axis_distance": {
+     "gray_cylinder": 20.71,
+     "red_cube": 20.61,
+     "green_block": 18.86
+    },
+    "rest_clearance": 4.09,
+    "unfold_clearance": 4.09
+   },
+   "aside_zone_in_front_image": true,
+   "containers_in_front_image": {
+    "white_tray": true
+   },
+   "expert": {
+    "cylinder_aside": {
+     "success": true,
+     "failure": null,
+     "steps": 328
+    },
+    "cube_flip": {
+     "success": true,
+     "failure": null,
+     "steps": 364
+    },
+    "green_into_tray": {
+     "success": true,
+     "failure": null,
+     "steps": 315
+    }
+   },
+   "ok": true
+  },
+  {
+   "placement_id": 1,
+   "name": "left",
+   "objects": {
+    "gray_cylinder": {
+     "pos": [
+      0.2,
+      0.14,
+      0.0299
+     ],
+     "settle_shift_mm": 0.0,
+     "yaw_change_deg": 0.0,
+     "up_z": 1.0,
+     "height_mm": 29.91,
+     "nominal_height_mm": 30.0,
+     "contacts": [
+      "table"
+     ],
+     "in_front_image": true,
+     "image_bbox_px": [
+      189.4,
+      201.6,
+      216.0,
+      230.6
+     ],
+     "visible_pixels": 480,
+     "ok": true
+    },
+    "green_block": {
+     "pos": [
+      0.225,
+      0.04,
+      0.0087
+     ],
+     "settle_shift_mm": 0.0,
+     "yaw_change_deg": 0.0,
+     "up_z": 1.0,
+     "height_mm": 8.74,
+     "nominal_height_mm": 8.75,
+     "contacts": [
+      "table"
+     ],
+     "in_front_image": true,
+     "image_bbox_px": [
+      132.5,
+      220.7,
+      153.5,
+      242.0
+     ],
+     "visible_pixels": 395,
+     "ok": true
+    },
+    "red_cube": {
+     "pos": [
+      0.232,
+      -0.062,
+      0.0148
+     ],
+     "settle_shift_mm": 0.0,
+     "yaw_change_deg": 0.0,
+     "up_z": 1.0,
+     "height_mm": 14.76,
+     "nominal_height_mm": 15.0,
+     "contacts": [
+      "table"
+     ],
+     "in_front_image": true,
+     "image_bbox_px": [
+      70.7,
+      217.0,
+      96.2,
+      245.2
+     ],
+     "visible_pixels": 440,
+     "ok": true
+    }
+   },
+   "layout_cm": {
+    "object_gaps": {
+     "gray_cylinder/red_cube": 16.83,
+     "gray_cylinder/green_block": 6.5,
+     "red_cube/green_block": 5.8
+    },
+    "tray_gaps": {
+     "gray_cylinder": 21.06,
+     "red_cube": 6.27,
+     "green_block": 11.85
+    },
+    "pan_axis_distance": {
+     "gray_cylinder": 21.35,
+     "red_cube": 20.29,
+     "green_block": 19.04
+    },
+    "rest_clearance": 4.6,
+    "unfold_clearance": 4.6
+   },
+   "aside_zone_in_front_image": true,
+   "containers_in_front_image": {
+    "white_tray": true
+   },
+   "expert": {
+    "cylinder_aside": {
+     "success": true,
+     "failure": null,
+     "steps": 350
+    },
+    "cube_flip": {
+     "success": true,
+     "failure": null,
+     "steps": 368
+    },
+    "green_into_tray": {
+     "success": true,
+     "failure": null,
+     "steps": 313
+    }
+   },
+   "ok": true
+  },
+  {
+   "placement_id": 2,
+   "name": "right",
+   "objects": {
+    "gray_cylinder": {
+     "pos": [
+      0.2,
+      0.12,
+      0.0299
+     ],
+     "settle_shift_mm": 0.0,
+     "yaw_change_deg": 0.0,
+     "up_z": 1.0,
+     "height_mm": 29.91,
+     "nominal_height_mm": 30.0,
+     "contacts": [
+      "table"
+     ],
+     "in_front_image": true,
+     "image_bbox_px": [
+      178.6,
+      200.9,
+      203.7,
+      230.0
+     ],
+     "visible_pixels": 464,
+     "ok": true
+    },
+    "green_block": {
+     "pos": [
+      0.225,
+      0.02,
+      0.0087
+     ],
+     "settle_shift_mm": 0.0,
+     "yaw_change_deg": 0.0,
+     "up_z": 1.0,
+     "height_mm": 8.74,
+     "nominal_height_mm": 8.75,
+     "contacts": [
+      "table"
+     ],
+     "in_front_image": true,
+     "image_bbox_px": [
+      121.0,
+      220.0,
+      142.1,
+      241.4
+     ],
+     "visible_pixels": 379,
+     "ok": true
+    },
+    "red_cube": {
+     "pos": [
+      0.232,
+      -0.082,
+      0.0148
+     ],
+     "settle_shift_mm": 0.0,
+     "yaw_change_deg": 0.0,
+     "up_z": 1.0,
+     "height_mm": 14.76,
+     "nominal_height_mm": 15.0,
+     "contacts": [
+      "table"
+     ],
+     "in_front_image": true,
+     "image_bbox_px": [
+      58.8,
+      216.4,
+      84.9,
+      244.5
+     ],
+     "visible_pixels": 444,
+     "ok": true
+    }
+   },
+   "layout_cm": {
+    "object_gaps": {
+     "gray_cylinder/red_cube": 16.83,
+     "gray_cylinder/green_block": 6.5,
+     "red_cube/green_block": 5.8
+    },
+    "tray_gaps": {
+     "gray_cylinder": 19.12,
+     "red_cube": 6.08,
+     "green_block": 10.2
+    },
+    "pan_axis_distance": {
+     "gray_cylinder": 20.09,
+     "red_cube": 20.98,
+     "green_block": 18.72
+    },
+    "rest_clearance": 3.73,
+    "unfold_clearance": 3.73
+   },
+   "aside_zone_in_front_image": true,
+   "containers_in_front_image": {
+    "white_tray": true
+   },
+   "expert": {
+    "cylinder_aside": {
+     "success": true,
+     "failure": null,
+     "steps": 340
+    },
+    "cube_flip": {
+     "success": true,
+     "failure": null,
+     "steps": 379
+    },
+    "green_into_tray": {
+     "success": true,
+     "failure": null,
+     "steps": 319
+    }
+   },
+   "ok": true
+  },
+  {
+   "placement_id": 3,
+   "name": "forward",
+   "objects": {
+    "gray_cylinder": {
+     "pos": [
+      0.21,
+      0.13,
+      0.0299
+     ],
+     "settle_shift_mm": 0.0,
+     "yaw_change_deg": 0.0,
+     "up_z": 1.0,
+     "height_mm": 29.91,
+     "nominal_height_mm": 30.0,
+     "contacts": [
+      "table"
+     ],
+     "in_front_image": true,
+     "image_bbox_px": [
+      184.3,
+      207.1,
+      210.4,
+      236.1
+     ],
+     "visible_pixels": 474,
+     "ok": true
+    },
+    "green_block": {
+     "pos": [
+      0.235,
+      0.03,
+      0.0087
+     ],
+     "settle_shift_mm": 0.0,
+     "yaw_change_deg": 0.0,
+     "up_z": 1.0,
+     "height_mm": 8.74,
+     "nominal_height_mm": 8.75,
+     "contacts": [
+      "table"
+     ],
+     "in_front_image": true,
+     "image_bbox_px": [
+      126.4,
+      226.1,
+      147.7,
+      247.7
+     ],
+     "visible_pixels": 399,
+     "ok": true
+    },
+    "red_cube": {
+     "pos": [
+      0.242,
+      -0.072,
+      0.0148
+     ],
+     "settle_shift_mm": 0.0,
+     "yaw_change_deg": 0.0,
+     "up_z": 1.0,
+     "height_mm": 14.76,
+     "nominal_height_mm": 15.0,
+     "contacts": [
+      "table"
+     ],
+     "in_front_image": true,
+     "image_bbox_px": [
+      63.8,
+      222.5,
+      89.9,
+      251.0
+     ],
+     "visible_pixels": 449,
+     "ok": true
+    }
+   },
+   "layout_cm": {
+    "object_gaps": {
+     "gray_cylinder/red_cube": 16.83,
+     "gray_cylinder/green_block": 6.5,
+     "red_cube/green_block": 5.8
+    },
+    "tray_gaps": {
+     "gray_cylinder": 20.34,
+     "red_cube": 7.11,
+     "green_block": 11.6
+    },
+    "pan_axis_distance": {
+     "gray_cylinder": 21.49,
+     "red_cube": 21.55,
+     "green_block": 19.84
+    },
+    "rest_clearance": 4.86,
+    "unfold_clearance": 4.86
+   },
+   "aside_zone_in_front_image": true,
+   "containers_in_front_image": {
+    "white_tray": true
+   },
+   "expert": {
+    "cylinder_aside": {
+     "success": true,
+     "failure": null,
+     "steps": 341
+    },
+    "cube_flip": {
+     "success": true,
+     "failure": null,
+     "steps": 375
+    },
+    "green_into_tray": {
+     "success": true,
+     "failure": null,
+     "steps": 322
+    }
+   },
+   "ok": true
+  },
+  {
+   "placement_id": 4,
+   "name": "backward",
+   "objects": {
+    "gray_cylinder": {
+     "pos": [
+      0.19,
+      0.13,
+      0.0299
+     ],
+     "settle_shift_mm": 0.0,
+     "yaw_change_deg": 0.0,
+     "up_z": 1.0,
+     "height_mm": 29.91,
+     "nominal_height_mm": 30.0,
+     "contacts": [
+      "table"
+     ],
+     "in_front_image": true,
+     "image_bbox_px": [
+      183.7,
+      195.6,
+      209.3,
+      224.7
+     ],
+     "visible_pixels": 469,
+     "ok": true
+    },
+    "green_block": {
+     "pos": [
+      0.215,
+      0.03,
+      0.0087
+     ],
+     "settle_shift_mm": 0.0,
+     "yaw_change_deg": 0.0,
+     "up_z": 1.0,
+     "height_mm": 8.74,
+     "nominal_height_mm": 8.75,
+     "contacts": [
+      "table"
+     ],
+     "in_front_image": true,
+     "image_bbox_px": [
+      127.0,
+      214.7,
+      147.9,
+      235.8
+     ],
+     "visible_pixels": 382,
+     "ok": true
+    },
+    "red_cube": {
+     "pos": [
+      0.222,
+      -0.072,
+      0.0148
+     ],
+     "settle_shift_mm": 0.0,
+     "yaw_change_deg": 0.0,
+     "up_z": 1.0,
+     "height_mm": 14.76,
+     "nominal_height_mm": 15.0,
+     "contacts": [
+      "table"
+     ],
+     "in_front_image": true,
+     "image_bbox_px": [
+      65.7,
+      211.0,
+      91.2,
+      238.9
+     ],
+     "visible_pixels": 434,
+     "ok": true
+    }
+   },
+   "layout_cm": {
+    "object_gaps": {
+     "gray_cylinder/red_cube": 16.83,
+     "gray_cylinder/green_block": 6.5,
+     "red_cube/green_block": 5.8
+    },
+    "tray_gaps": {
+     "gray_cylinder": 19.88,
+     "red_cube": 5.12,
+     "green_block": 10.47
+    },
+    "pan_axis_distance": {
+     "gray_cylinder": 19.94,
+     "red_cube": 19.68,
+     "green_block": 17.87
+    },
+    "rest_clearance": 3.43,
+    "unfold_clearance": 3.43
+   },
+   "aside_zone_in_front_image": true,
+   "containers_in_front_image": {
+    "white_tray": true
+   },
+   "expert": {
+    "cylinder_aside": {
+     "success": true,
+     "failure": null,
+     "steps": 347
+    },
+    "cube_flip": {
+     "success": true,
+     "failure": null,
+     "steps": 375
+    },
+    "green_into_tray": {
+     "success": true,
+     "failure": null,
+     "steps": 312
+    }
+   },
+   "ok": true
+  }
+ ],
+ "all_ok": true
+}

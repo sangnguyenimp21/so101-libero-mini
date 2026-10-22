@@ -11,7 +11,7 @@ objects) and the demonstration parks there again and holds 2 s, as in stack_red_
                                        the cylinder (any tilt change would tilt the 6 cm cylinder and topple it).
   CubeFlipExpert      (TipOver)        grasp the cube across two vertical faces with the approach tilted 45 degrees
                                        outward, lift, roll the wrist 180 degrees about the approach axis (the cube turns
-                                       90 degrees: its white top face ends up facing the robot) and release it over its
+                                       90 degrees: its top face ends up facing the robot) and release it over its
                                        start, ~2 cm above the table (after the roll the wrist-camera mount hangs below
                                        the TCP's height, so the arm cannot go lower).
   BoxPlaceExpert      (PlaceInBox)     top-down grasp across the green block's flat end faces, carry over the 5 cm walls,

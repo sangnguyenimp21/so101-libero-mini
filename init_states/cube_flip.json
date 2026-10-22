@@ -2,7 +2,7 @@
  "task_id": "cube_flip",
  "language": "Pick up the red cube and flip it onto its side.",
  "layout": "tri_tabletop_v2",
- "scene_hash": "f43f031559c302e3",
+ "scene_hash": "ed247767175798ad",
  "rules_hash": "77d46ce94323e9a5",
  "seed_base": 11400000,
  "num": 50,

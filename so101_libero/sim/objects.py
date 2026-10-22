@@ -36,9 +36,6 @@ class ObjectSpec:
     # (not the default 0.02 s) govern every contact of this object. Needed for light mesh objects: with the default
     # softness a spinning 15 g mesh block landing on an edge sinks through the floor instead of rocking flat.
     solref: tuple[float, float] | None = None
-    # Boxes only: colour of the body's +z (top) face, drawn as a thin visual-only patch (no collision, no mass), so
-    # turning the object over is visible in the cameras.
-    top_face_rgba: tuple[float, float, float, float] | None = None
 
     def with_size(self, size: tuple[float, ...]) -> "ObjectSpec":
         return self if tuple(size) == tuple(self.size) else replace(self, size=tuple(float(v) for v in size))
@@ -157,14 +154,6 @@ def add_object(parent: mujoco.MjsBody, spec: ObjectSpec, mjspec: mujoco.MjSpec |
     if spec.solref is not None:
         geom.solref = list(spec.solref)
         geom.priority = 1
-    if spec.top_face_rgba is not None:
-        if spec.shape != "box":
-            raise ValueError(f"{spec.name}: top_face_rgba needs a box")
-        hx, hy, hz = spec.size
-        # 0.2 mm proud of the top face (no z-fighting), 0.1 mm inside its edges; collision off, zero density.
-        body.add_geom(name=f"{spec.name}_top_face", type=mujoco.mjtGeom.mjGEOM_BOX, size=[hx - 1e-4, hy - 1e-4, 1e-4],
-                      pos=[0.0, 0.0, hz + 1e-4], rgba=list(spec.top_face_rgba), contype=0, conaffinity=0, density=0,
-                      group=2)
     return body
 
 

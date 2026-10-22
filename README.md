@@ -243,14 +243,14 @@ training seeds 400000+, evaluation seeds 10,400,000+):
 | `red_cube_to_black_box` | Pick up the red cube and put it in the black box. | In(red_cube, black_box); like `lerobot/svla_so100_pickplace`: the box (10 × 10 cm outside, 6 cm walls) on the robot's right, the cube on its left beside the folded arm (6 cells, cell = seed % 6), all inside the front camera's view; starts and parks at rest (index 8: training seeds 800000+, evaluation 10,800,000+) |
 | `stack_red_on_blue` | Put the red cube on top of the blue cube. | On(red_cube, blue_cube); like `lerobot/svla_so100_stacking`: two 3 cm cubes on the robot's left, the blue one always 10 cm further left, the pair moved as one (4 cells, cell = seed % 4); starts and parks at rest (index 9: training seeds 900000+, evaluation 10,900,000+) |
 
-Suite `so101_tri` (one scene: a fixed white tray on the robot's right, a red cube with a white top face, a green
+Suite `so101_tri` (one scene: a fixed white tray on the robot's right, an all-red cube, a green
 half-cylinder and a light gray cylinder; exactly five placements of the three small objects; registry indices 13-15;
 full description, commands and limitations in [docs/TRI_TASKS.md](docs/TRI_TASKS.md)):
 
 | id | instruction | goal |
 |---|---|---|
 | `cylinder_aside` | Pick up the light gray cylinder and put it aside. | OnTableIn(gray_cylinder, aside_zone: the robot's left-back corner), upright, carried ≥ 2 cm high, others undisturbed |
-| `cube_flip` | Pick up the red cube and flip it onto its side. | TurnedOnSide(red_cube): the white top face sideways, resting flat ≤ 2 cm from its start, lifted, others undisturbed |
+| `cube_flip` | Pick up the red cube and flip it onto its side. | TurnedOnSide(red_cube): its top face turned sideways (tracked body orientation), resting flat ≤ 2 cm from its start, lifted, others undisturbed |
 | `green_into_tray` | Pick up the green semicircular block and put it into the white tray. | RestingIn(green_block, white_tray), others undisturbed |
 
 Items and start regions (world frame, metres: x forward from the base origin, which lies 3.9 cm behind the shoulder's pan axis, y = the robot's left; uniform x, y, yaw; collision-free rejection sampling with 2 cm

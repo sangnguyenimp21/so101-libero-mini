@@ -186,7 +186,7 @@ def get_suite(name: str) -> list[Task]:
     raise KeyError(f"unknown suite or task {name!r}; suites: {sorted(SUITES)}, tasks: {sorted(TASKS)}")
 
 
-# Suite so101_tri: one scene (a fixed white tray on the robot's right, a red cube with a white top face, a green
+# Suite so101_tri: one scene (a fixed white tray on the robot's right, an all-red cube, a green
 # half-cylinder, a light gray cylinder), exactly five predefined placements of the three small objects, three tasks
 # (so101_libero/tasks/tri_tasks.py documents the geometry, directions and tolerances). The first version of this suite
 # (cube_left, green_into_box, cylinder_flip: white box on the robot's left) was retired on 2026-10-21; its seed slots

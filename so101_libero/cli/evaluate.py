@@ -51,7 +51,7 @@ def classify(env, task, lifted: bool) -> str:
             return "never_lifted"
         if ws.touching_robot(obj):
             return "still_held"
-        up = abs(ws.up_z(obj))  # tracked body orientation of the start-up (white) face
+        up = abs(ws.up_z(obj))  # tracked body orientation of the face that started on top
         if up > 0.9:
             return "not_turned"  # lifted (and maybe put back) without turning it
         if up > 0.26:
