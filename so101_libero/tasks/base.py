@@ -621,8 +621,9 @@ class PlaceUprightAt:
 
 @dataclass(frozen=True)
 class PushBy:
-    """Expert plan: push ``obj`` by ``offset`` (world xy, m) along the table with the closed gripper pointing down, the
-    fixed jaw's flat outer face against the object's face that looks away from the push."""
+    """Expert plan: push ``obj`` by ``offset`` (world xy, m) along the table with the closed gripper pointing down, both
+    closed fingers side by side across the push direction, their edges against the object's face that looks away from
+    the push."""
 
     obj: str
     offset: tuple[float, float]

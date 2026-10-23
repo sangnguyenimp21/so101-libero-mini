@@ -16,9 +16,10 @@ objects) and the demonstration parks there again and holds 2 s, as in stack_red_
                                        90 degrees: its top face ends up facing the robot) and release it over its
                                        start, ~2 cm above the table (after the roll the wrist-camera mount hangs below
                                        the TCP's height, so the arm cannot go lower).
-  PushExpert          (PushBy)         push the object along the table with the closed gripper pointing down: the fixed
-                                       jaw's flat outer face against the object's back face, a straight push at constant
-                                       height, then back off, lift and park.
+  PushExpert          (PushBy)         push the object along the table with the closed gripper pointing down: both
+                                       closed fingers side by side across the push (their edges a flat face centred on
+                                       the object, the wrist camera in front), a straight push at constant height, then
+                                       back off, lift and park.
 """
 
 from __future__ import annotations
@@ -556,7 +557,7 @@ class PushExpert(_TriExpert):
     """Push an object along the table with the closed gripper pointing straight down: lowered behind the object (its
     side away from the push), a straight push at constant height, then back off, lift and park."""
 
-    push_z: tuple[float, float] = (0.0175, 0.0195)  # TCP height while pushing: the jaw tips ~3-5 mm above the table
+    push_z: tuple[float, float] = (0.0195, 0.0215)  # TCP height while pushing: the gripper's lowest point 3.7-5.7 mm up
     pre_z: tuple[float, float] = (0.06, 0.07)  # TCP height above the push start
     gap: tuple[float, float] = (0.004, 0.008)  # the gripper's front behind the object's back before the push
     travel_jitter: tuple[float, float] = (-0.002, 0.002)  # m added to the push length

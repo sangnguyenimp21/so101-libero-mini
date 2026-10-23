@@ -94,7 +94,7 @@ goal predicate holds for 10 consecutive control steps (0.33 s, settled). Toleran
 |---|---|---|---|
 | `cylinder_aside` | Pick up the light gray cylinder and put it aside. | `OnTableInRegion(aside_zone)`: centre inside the zone, standing upright (≤ 15°) directly on the table, ≥ 6 cm from its start; carried ≥ 2 cm high and released within 3 cm of where it rests (carried there, not shoved); no robot contact, < 2 cm/s, TCP ≥ 4 cm away. `Undisturbed(cube, green)`: each ≤ 2 cm moved, ≤ 20° tilted, untouched, not in the tray | 450 steps (15 s) |
 | `cube_flip` | Pick up the red cube and flip it onto its side. | `TurnedOnSide`: the face that started on top within 15° of vertical, i.e. facing sideways (upside down does not count), and the cube lying flat on a face (≤ 15°) directly on the table, ≤ 2 cm (horizontal) from its start; carried ≥ 2 cm high; released, < 2 cm/s, TCP ≥ 4 cm away. `Undisturbed(cylinder, green)` | 450 steps |
-| `green_push_forward` | Push the green semicircular block forward 5 cm. | `PushedBy`: displaced 5 cm FRONT ± 1 cm and ≤ 1.5 cm sideways from its start; still lying on its flat face (≤ 20°) directly on the table; never carried in the jaws higher than 1 cm (pushed, not picked up); no robot contact, < 2 cm/s, TCP ≥ 4 cm away. `Undisturbed(cylinder, cube)` | 450 steps |
+| `green_push_forward` | Push the green semicircular block forward 5 cm. | `PushedBy`: displaced 5 cm FRONT ± 1 cm and ≤ 1.5 cm sideways from its start; still lying on its flat face (≤ 20°) directly on the table; never carried in the jaws higher than 1 cm (pushed, not picked up); no robot contact, < 5 cm/s (the light mesh block can rock in place at up to ~2 cm/s in the simulator), TCP ≥ 4 cm away. `Undisturbed(cylinder, cube)` | 450 steps |
 
 The environment tracks each object's orientation from the start of the episode, so the cube's turn is measured on
 the body, not guessed from the image.
@@ -126,7 +126,7 @@ learns to stop.
   side across the push direction. Their outer edges form a flat ~2.4 cm face, centred on the block's centre line,
   with the wrist camera in front watching the block. (With the moving jaw leading, its slanted face turned the block
   by up to 25°; the wrist roll cannot reach the fixed jaw leading.) Lower behind the block, 4-8 mm from its back face,
-  with the finger tips 3-5 mm above the table. Push forward in a straight line at 4 cm/s by 5 cm plus that gap
+  with the gripper's lowest point 3.7-5.7 mm above the table. Push forward in a straight line at 4 cm/s by 5 cm plus that gap
   (± 2 mm), back off 1.5 cm, lift, park.
 
 Expert success from the start states (physics only, 10 seeds x 5 placements): cylinder_aside 50/50 (side grasp, 330-355

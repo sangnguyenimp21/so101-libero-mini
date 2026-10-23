@@ -98,6 +98,10 @@ class TriTolerances:
     push_lateral_tol: float = 0.015  # ... at most 1.5 cm sideways ...
     push_max_tilt_deg: float = 20.0  # ... still lying on its flat face ...
     push_max_lift: float = 0.01  # ... and never carried in the jaws higher than 1 cm (pushed, not picked up)
+    # "At rest" for the pushed block: the light mesh block can come to rest on 2 contact points and rock in place in
+    # the simulator (0.01 mm, position fixed) with instantaneous speeds up to ~2 cm/s, so 2 cm/s would fail a finished
+    # push now and then. It is checked only after the gripper has backed off and lifted.
+    push_max_speed: float = 0.05
     others_max_shift: float = 0.02  # the other objects stay within 2 cm of their start ...
     others_max_tilt_deg: float = 20.0  # ... and within 20 deg of their start orientation
 
@@ -243,7 +247,7 @@ GREEN_PUSH_FORWARD = Task(
     language="Push the green semicircular block forward 5 cm.",
     layout=TRI_LAYOUT,
     goal=(PushedBy("green_block", PUSH_OFFSET, along_tol=_tol.push_along_tol, lateral_tol=_tol.push_lateral_tol,
-                   max_tilt_deg=_tol.push_max_tilt_deg, max_lift=_tol.push_max_lift, max_speed=_tol.max_speed,
+                   max_tilt_deg=_tol.push_max_tilt_deg, max_lift=_tol.push_max_lift, max_speed=_tol.push_max_speed,
                    min_tcp_distance=_tol.min_tcp_distance),
           _undisturbed("green_block")),
     plan=PushBy("green_block", PUSH_OFFSET),

@@ -28,7 +28,7 @@
 set -euo pipefail
 cd "${SLURM_SUBMIT_DIR:-$PWD}"
 [ -f slurm/smolvla_job.sbatch ] || { echo "submit from the project root" >&2; exit 1; }
-export STEPS="${STEPS:-80000}"  # before tri_tasks.env, whose default is cube_flip's 100k
+export STEPS="${STEPS:-80000}"
 # shellcheck disable=SC1091
 source slurm/tri_tasks.env
 export TASKS="${TASKS:-green_push_forward}"

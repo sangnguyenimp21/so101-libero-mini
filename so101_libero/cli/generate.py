@@ -14,7 +14,7 @@ demonstrations (failed attempts are retried with the next seed, up to ``--max-at
 episode records its task id, placement id and collection seed (side file and per-frame features):
 
     python -m so101_libero.cli.generate --tasks cylinder_aside --demos-per-placement 20 --workers 6 \
-        --repo-id local/so101_tri_cylinder_aside_100
+        --repo-id local/so101_tri_cylinder_side_100
 """
 
 from __future__ import annotations

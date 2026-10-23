@@ -1,7 +1,7 @@
 """Combine per-task datasets into ONE multitask LeRobot dataset (lerobot 0.4.2 cannot train on several repo ids).
 
-    python -m so101_libero.cli.merge_datasets --out-repo-id local/so101_tri_v2_multitask_300 \
-        --repo-ids local/so101_tri_cylinder_aside_100 local/so101_tri_cube_flip_100 local/so101_tri_green_into_tray_100
+    python -m so101_libero.cli.merge_datasets --out-repo-id local/so101_tri_v3_multitask_300 \
+        --repo-ids local/so101_tri_cylinder_side_100 local/so101_tri_cube_flip_100 local/so101_tri_green_push_100
 
 Uses LeRobot's own ``aggregate_datasets`` (data, videos, per-episode metadata, statistics; tasks are re-indexed by
 their instruction string, so every frame keeps its own natural-language task), with file rotation switched off: in

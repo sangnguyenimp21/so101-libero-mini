@@ -3,7 +3,7 @@
  "language": "Push the green semicircular block forward 5 cm.",
  "layout": "tri_tabletop_v2",
  "scene_hash": "ed247767175798ad",
- "rules_hash": "130de7958d668f52",
+ "rules_hash": "1cd0ab603ceae70d",
  "seed_base": 11600000,
  "num": 50,
  "rejected_candidates": [],
@@ -41,7 +41,7 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 286
+    "steps": 285
    },
    "index": 0
   },
@@ -78,7 +78,7 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 284
+    "steps": 283
    },
    "index": 1
   },
@@ -115,7 +115,7 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 279
+    "steps": 277
    },
    "index": 2
   },
@@ -152,7 +152,7 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 275
+    "steps": 274
    },
    "index": 3
   },
@@ -189,7 +189,7 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 283
+    "steps": 282
    },
    "index": 4
   },
@@ -226,7 +226,7 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 284
+    "steps": 283
    },
    "index": 5
   },
@@ -263,7 +263,7 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 281
+    "steps": 280
    },
    "index": 6
   },
@@ -300,7 +300,7 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 278
+    "steps": 276
    },
    "index": 7
   },
@@ -337,7 +337,7 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 282
+    "steps": 281
    },
    "index": 8
   },
@@ -374,7 +374,7 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 280
+    "steps": 278
    },
    "index": 9
   },
@@ -485,7 +485,7 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 277
+    "steps": 276
    },
    "index": 12
   },
@@ -522,7 +522,7 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 297
+    "steps": 295
    },
    "index": 13
   },
@@ -596,7 +596,7 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 289
+    "steps": 287
    },
    "index": 15
   },
@@ -633,7 +633,7 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 286
+    "steps": 284
    },
    "index": 16
   },
@@ -670,7 +670,7 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 279
+    "steps": 277
    },
    "index": 17
   },
@@ -707,7 +707,7 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 288
+    "steps": 286
    },
    "index": 18
   },
@@ -744,7 +744,7 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 276
+    "steps": 275
    },
    "index": 19
   },
@@ -781,7 +781,7 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 278
+    "steps": 276
    },
    "index": 20
   },
@@ -818,7 +818,7 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 293
+    "steps": 292
    },
    "index": 21
   },
@@ -892,7 +892,7 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 282
+    "steps": 281
    },
    "index": 23
   },
@@ -966,7 +966,7 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 286
+    "steps": 285
    },
    "index": 25
   },
@@ -1077,7 +1077,7 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 278
+    "steps": 277
    },
    "index": 28
   },
@@ -1114,7 +1114,7 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 283
+    "steps": 282
    },
    "index": 29
   },
@@ -1151,7 +1151,7 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 289
+    "steps": 288
    },
    "index": 30
   },
@@ -1188,7 +1188,7 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 284
+    "steps": 283
    },
    "index": 31
   },
@@ -1225,7 +1225,7 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 279
+    "steps": 278
    },
    "index": 32
   },
@@ -1262,7 +1262,7 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 281
+    "steps": 279
    },
    "index": 33
   },
@@ -1336,7 +1336,7 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 283
+    "steps": 282
    },
    "index": 35
   },
@@ -1373,7 +1373,7 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 290
+    "steps": 289
    },
    "index": 36
   },
@@ -1410,7 +1410,7 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 276
+    "steps": 274
    },
    "index": 37
   },
@@ -1447,7 +1447,7 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 285
+    "steps": 284
    },
    "index": 38
   },
@@ -1484,7 +1484,7 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 279
+    "steps": 278
    },
    "index": 39
   },
@@ -1521,7 +1521,7 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 283
+    "steps": 281
    },
    "index": 40
   },
@@ -1558,7 +1558,7 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 289
+    "steps": 288
    },
    "index": 41
   },
@@ -1595,7 +1595,7 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 282
+    "steps": 280
    },
    "index": 42
   },
@@ -1632,7 +1632,7 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 286
+    "steps": 285
    },
    "index": 43
   },
@@ -1669,7 +1669,7 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 284
+    "steps": 283
    },
    "index": 44
   },
@@ -1706,7 +1706,7 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 285
+    "steps": 284
    },
    "index": 45
   },
@@ -1743,7 +1743,7 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 282
+    "steps": 281
    },
    "index": 46
   },
@@ -1780,7 +1780,7 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 285
+    "steps": 284
    },
    "index": 47
   },
@@ -1817,7 +1817,7 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 274
+    "steps": 273
    },
    "index": 48
   },
@@ -1854,7 +1854,7 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 291
+    "steps": 289
    },
    "index": 49
   }

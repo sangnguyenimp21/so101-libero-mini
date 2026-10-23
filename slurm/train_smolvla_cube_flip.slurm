@@ -28,6 +28,7 @@
 set -euo pipefail
 cd "${SLURM_SUBMIT_DIR:-$PWD}"
 [ -f slurm/smolvla_job.sbatch ] || { echo "submit from the project root" >&2; exit 1; }
+export STEPS="${STEPS:-100000}"
 # shellcheck disable=SC1091
 source slurm/tri_tasks.env
 export TASKS="${TASKS:-cube_flip}"
