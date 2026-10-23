@@ -131,8 +131,8 @@ learns to stop.
 
 Expert success from the start states (physics only, 10 seeds x 5 placements): cylinder_aside 50/50 (side grasp, 330-355
 steps, goal first holding at step 217-244, in-hand slip ≤ 1.4 mm), cube_flip 50/50 (358-382 steps, step 238-261,
-slip ≤ 1.3 mm), green_push_forward 50/50 (274-291 steps, step 142-162; pushed 4.9-5.2 cm, ≤ 0.5 cm sideways, turned
-≤ 7°). Each count includes the park and the 2 s hold. Failed attempts are discarded and retried with the next seed.
+slip ≤ 1.3 mm), green_push_forward 50/50 (273-291 steps, step 141-162; pushed 4.85-5.2 cm, ≤ 0.5 cm sideways,
+turned 5.5° on average, at most 20°). Each count includes the park and the 2 s hold. Failed attempts are discarded and retried with the next seed.
 
 ## Demonstration collection
 
@@ -189,7 +189,7 @@ placement, seeds 11,300,000+ / 11,400,000+ / 11,600,000+), all solved by the exp
 
 The SLURM jobs generate the training datasets. A local run on the Mac (H.264, 2026-10-23) collected 100
 demonstrations per task with no rejected attempt (20 per placement in 20 attempts): cylinder_aside with side grasps
-34,174 frames (326-355 per episode, 91 MB) and green_push_forward 28,346 frames (272-295, 76 MB); cube_flip 37,081
+34,174 frames (326-355 per episode, 91 MB) and green_push_forward 28,248 frames (271-293, 76 MB); cube_flip 37,081
 frames (352-386) on 2026-10-21. `validate_dataset` passed for all three: 10 replayed episodes each reproduce the
 recorded joint states exactly and end with the goal holding. Merging the three passes the merge's frame check, and
 the balanced sampler then gives each task 37,081 slots per epoch. The local cube_flip copy still shows the cube's old
