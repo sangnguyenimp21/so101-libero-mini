@@ -1,15 +1,15 @@
 {
- "task_id": "green_into_tray",
- "language": "Pick up the green semicircular block and put it into the white tray.",
+ "task_id": "green_push_forward",
+ "language": "Push the green semicircular block forward 5 cm.",
  "layout": "tri_tabletop_v2",
  "scene_hash": "ed247767175798ad",
- "rules_hash": "fb691f7eed18a05d",
- "seed_base": 11500000,
+ "rules_hash": "130de7958d668f52",
+ "seed_base": 11600000,
  "num": 50,
  "rejected_candidates": [],
  "states": [
   {
-   "seed": 11500000,
+   "seed": 11600000,
    "init_state": {
     "robot_qpos": [
      0.0,
@@ -41,12 +41,12 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 308
+    "steps": 286
    },
    "index": 0
   },
   {
-   "seed": 11500001,
+   "seed": 11600001,
    "init_state": {
     "robot_qpos": [
      0.0,
@@ -78,12 +78,12 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 326
+    "steps": 284
    },
    "index": 1
   },
   {
-   "seed": 11500002,
+   "seed": 11600002,
    "init_state": {
     "robot_qpos": [
      0.0,
@@ -115,12 +115,12 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 314
+    "steps": 279
    },
    "index": 2
   },
   {
-   "seed": 11500003,
+   "seed": 11600003,
    "init_state": {
     "robot_qpos": [
      0.0,
@@ -152,12 +152,12 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 321
+    "steps": 275
    },
    "index": 3
   },
   {
-   "seed": 11500004,
+   "seed": 11600004,
    "init_state": {
     "robot_qpos": [
      0.0,
@@ -189,12 +189,12 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 308
+    "steps": 283
    },
    "index": 4
   },
   {
-   "seed": 11500005,
+   "seed": 11600005,
    "init_state": {
     "robot_qpos": [
      0.0,
@@ -226,12 +226,12 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 319
+    "steps": 284
    },
    "index": 5
   },
   {
-   "seed": 11500006,
+   "seed": 11600006,
    "init_state": {
     "robot_qpos": [
      0.0,
@@ -263,12 +263,12 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 306
+    "steps": 281
    },
    "index": 6
   },
   {
-   "seed": 11500007,
+   "seed": 11600007,
    "init_state": {
     "robot_qpos": [
      0.0,
@@ -300,12 +300,12 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 317
+    "steps": 278
    },
    "index": 7
   },
   {
-   "seed": 11500008,
+   "seed": 11600008,
    "init_state": {
     "robot_qpos": [
      0.0,
@@ -337,12 +337,12 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 312
+    "steps": 282
    },
    "index": 8
   },
   {
-   "seed": 11500009,
+   "seed": 11600009,
    "init_state": {
     "robot_qpos": [
      0.0,
@@ -374,12 +374,12 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 308
+    "steps": 280
    },
    "index": 9
   },
   {
-   "seed": 11500010,
+   "seed": 11600010,
    "init_state": {
     "robot_qpos": [
      0.0,
@@ -411,12 +411,12 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 316
+    "steps": 288
    },
    "index": 10
   },
   {
-   "seed": 11500011,
+   "seed": 11600011,
    "init_state": {
     "robot_qpos": [
      0.0,
@@ -448,12 +448,12 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 323
+    "steps": 279
    },
    "index": 11
   },
   {
-   "seed": 11500012,
+   "seed": 11600012,
    "init_state": {
     "robot_qpos": [
      0.0,
@@ -485,12 +485,12 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 299
+    "steps": 277
    },
    "index": 12
   },
   {
-   "seed": 11500013,
+   "seed": 11600013,
    "init_state": {
     "robot_qpos": [
      0.0,
@@ -522,12 +522,12 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 303
+    "steps": 297
    },
    "index": 13
   },
   {
-   "seed": 11500014,
+   "seed": 11600014,
    "init_state": {
     "robot_qpos": [
      0.0,
@@ -559,12 +559,12 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 309
+    "steps": 282
    },
    "index": 14
   },
   {
-   "seed": 11500015,
+   "seed": 11600015,
    "init_state": {
     "robot_qpos": [
      0.0,
@@ -596,12 +596,12 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 324
+    "steps": 289
    },
    "index": 15
   },
   {
-   "seed": 11500016,
+   "seed": 11600016,
    "init_state": {
     "robot_qpos": [
      0.0,
@@ -633,12 +633,12 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 319
+    "steps": 286
    },
    "index": 16
   },
   {
-   "seed": 11500017,
+   "seed": 11600017,
    "init_state": {
     "robot_qpos": [
      0.0,
@@ -670,12 +670,12 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 319
+    "steps": 279
    },
    "index": 17
   },
   {
-   "seed": 11500018,
+   "seed": 11600018,
    "init_state": {
     "robot_qpos": [
      0.0,
@@ -707,12 +707,12 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 320
+    "steps": 288
    },
    "index": 18
   },
   {
-   "seed": 11500019,
+   "seed": 11600019,
    "init_state": {
     "robot_qpos": [
      0.0,
@@ -744,12 +744,12 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 318
+    "steps": 276
    },
    "index": 19
   },
   {
-   "seed": 11500020,
+   "seed": 11600020,
    "init_state": {
     "robot_qpos": [
      0.0,
@@ -781,12 +781,12 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 317
+    "steps": 278
    },
    "index": 20
   },
   {
-   "seed": 11500021,
+   "seed": 11600021,
    "init_state": {
     "robot_qpos": [
      0.0,
@@ -818,12 +818,12 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 321
+    "steps": 293
    },
    "index": 21
   },
   {
-   "seed": 11500022,
+   "seed": 11600022,
    "init_state": {
     "robot_qpos": [
      0.0,
@@ -855,12 +855,12 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 320
+    "steps": 277
    },
    "index": 22
   },
   {
-   "seed": 11500023,
+   "seed": 11600023,
    "init_state": {
     "robot_qpos": [
      0.0,
@@ -892,12 +892,12 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 313
+    "steps": 282
    },
    "index": 23
   },
   {
-   "seed": 11500024,
+   "seed": 11600024,
    "init_state": {
     "robot_qpos": [
      0.0,
@@ -929,12 +929,12 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 313
+    "steps": 285
    },
    "index": 24
   },
   {
-   "seed": 11500025,
+   "seed": 11600025,
    "init_state": {
     "robot_qpos": [
      0.0,
@@ -966,12 +966,12 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 314
+    "steps": 286
    },
    "index": 25
   },
   {
-   "seed": 11500026,
+   "seed": 11600026,
    "init_state": {
     "robot_qpos": [
      0.0,
@@ -1003,12 +1003,12 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 320
+    "steps": 289
    },
    "index": 26
   },
   {
-   "seed": 11500027,
+   "seed": 11600027,
    "init_state": {
     "robot_qpos": [
      0.0,
@@ -1040,12 +1040,12 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 317
+    "steps": 285
    },
    "index": 27
   },
   {
-   "seed": 11500028,
+   "seed": 11600028,
    "init_state": {
     "robot_qpos": [
      0.0,
@@ -1077,12 +1077,12 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 314
+    "steps": 278
    },
    "index": 28
   },
   {
-   "seed": 11500029,
+   "seed": 11600029,
    "init_state": {
     "robot_qpos": [
      0.0,
@@ -1114,12 +1114,12 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 312
+    "steps": 283
    },
    "index": 29
   },
   {
-   "seed": 11500030,
+   "seed": 11600030,
    "init_state": {
     "robot_qpos": [
      0.0,
@@ -1151,12 +1151,12 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 307
+    "steps": 289
    },
    "index": 30
   },
   {
-   "seed": 11500031,
+   "seed": 11600031,
    "init_state": {
     "robot_qpos": [
      0.0,
@@ -1188,12 +1188,12 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 317
+    "steps": 284
    },
    "index": 31
   },
   {
-   "seed": 11500032,
+   "seed": 11600032,
    "init_state": {
     "robot_qpos": [
      0.0,
@@ -1225,12 +1225,12 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 305
+    "steps": 279
    },
    "index": 32
   },
   {
-   "seed": 11500033,
+   "seed": 11600033,
    "init_state": {
     "robot_qpos": [
      0.0,
@@ -1262,12 +1262,12 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 319
+    "steps": 281
    },
    "index": 33
   },
   {
-   "seed": 11500034,
+   "seed": 11600034,
    "init_state": {
     "robot_qpos": [
      0.0,
@@ -1299,12 +1299,12 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 301
+    "steps": 281
    },
    "index": 34
   },
   {
-   "seed": 11500035,
+   "seed": 11600035,
    "init_state": {
     "robot_qpos": [
      0.0,
@@ -1336,12 +1336,12 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 303
+    "steps": 283
    },
    "index": 35
   },
   {
-   "seed": 11500036,
+   "seed": 11600036,
    "init_state": {
     "robot_qpos": [
      0.0,
@@ -1373,12 +1373,12 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 319
+    "steps": 290
    },
    "index": 36
   },
   {
-   "seed": 11500037,
+   "seed": 11600037,
    "init_state": {
     "robot_qpos": [
      0.0,
@@ -1410,12 +1410,12 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 294
+    "steps": 276
    },
    "index": 37
   },
   {
-   "seed": 11500038,
+   "seed": 11600038,
    "init_state": {
     "robot_qpos": [
      0.0,
@@ -1447,12 +1447,12 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 314
+    "steps": 285
    },
    "index": 38
   },
   {
-   "seed": 11500039,
+   "seed": 11600039,
    "init_state": {
     "robot_qpos": [
      0.0,
@@ -1484,12 +1484,12 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 316
+    "steps": 279
    },
    "index": 39
   },
   {
-   "seed": 11500040,
+   "seed": 11600040,
    "init_state": {
     "robot_qpos": [
      0.0,
@@ -1521,12 +1521,12 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 319
+    "steps": 283
    },
    "index": 40
   },
   {
-   "seed": 11500041,
+   "seed": 11600041,
    "init_state": {
     "robot_qpos": [
      0.0,
@@ -1558,12 +1558,12 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 324
+    "steps": 289
    },
    "index": 41
   },
   {
-   "seed": 11500042,
+   "seed": 11600042,
    "init_state": {
     "robot_qpos": [
      0.0,
@@ -1595,12 +1595,12 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 303
+    "steps": 282
    },
    "index": 42
   },
   {
-   "seed": 11500043,
+   "seed": 11600043,
    "init_state": {
     "robot_qpos": [
      0.0,
@@ -1632,12 +1632,12 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 315
+    "steps": 286
    },
    "index": 43
   },
   {
-   "seed": 11500044,
+   "seed": 11600044,
    "init_state": {
     "robot_qpos": [
      0.0,
@@ -1669,12 +1669,12 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 312
+    "steps": 284
    },
    "index": 44
   },
   {
-   "seed": 11500045,
+   "seed": 11600045,
    "init_state": {
     "robot_qpos": [
      0.0,
@@ -1706,12 +1706,12 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 320
+    "steps": 285
    },
    "index": 45
   },
   {
-   "seed": 11500046,
+   "seed": 11600046,
    "init_state": {
     "robot_qpos": [
      0.0,
@@ -1743,12 +1743,12 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 313
+    "steps": 282
    },
    "index": 46
   },
   {
-   "seed": 11500047,
+   "seed": 11600047,
    "init_state": {
     "robot_qpos": [
      0.0,
@@ -1780,12 +1780,12 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 314
+    "steps": 285
    },
    "index": 47
   },
   {
-   "seed": 11500048,
+   "seed": 11600048,
    "init_state": {
     "robot_qpos": [
      0.0,
@@ -1817,12 +1817,12 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 312
+    "steps": 274
    },
    "index": 48
   },
   {
-   "seed": 11500049,
+   "seed": 11600049,
    "init_state": {
     "robot_qpos": [
      0.0,
@@ -1854,7 +1854,7 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 309
+    "steps": 291
    },
    "index": 49
   }

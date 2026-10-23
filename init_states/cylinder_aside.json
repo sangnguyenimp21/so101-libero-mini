@@ -3,7 +3,7 @@
  "language": "Pick up the light gray cylinder and put it aside.",
  "layout": "tri_tabletop_v2",
  "scene_hash": "ed247767175798ad",
- "rules_hash": "f182fa8e31bb9084",
+ "rules_hash": "24b5cc2b7eeb292b",
  "seed_base": 11300000,
  "num": 50,
  "rejected_candidates": [],
@@ -41,7 +41,7 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 347
+    "steps": 340
    },
    "index": 0
   },
@@ -78,7 +78,7 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 338
+    "steps": 337
    },
    "index": 1
   },
@@ -115,7 +115,7 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 353
+    "steps": 338
    },
    "index": 2
   },
@@ -189,7 +189,7 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 343
+    "steps": 344
    },
    "index": 4
   },
@@ -226,7 +226,7 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 335
+    "steps": 331
    },
    "index": 5
   },
@@ -263,7 +263,7 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 338
+    "steps": 344
    },
    "index": 6
   },
@@ -300,7 +300,7 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 350
+    "steps": 344
    },
    "index": 7
   },
@@ -337,7 +337,7 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 344
+    "steps": 341
    },
    "index": 8
   },
@@ -374,7 +374,7 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 334
+    "steps": 338
    },
    "index": 9
   },
@@ -411,7 +411,7 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 347
+    "steps": 351
    },
    "index": 10
   },
@@ -448,7 +448,7 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 341
+    "steps": 346
    },
    "index": 11
   },
@@ -485,7 +485,7 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 338
+    "steps": 340
    },
    "index": 12
   },
@@ -522,7 +522,7 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 350
+    "steps": 348
    },
    "index": 13
   },
@@ -559,7 +559,7 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 330
+    "steps": 333
    },
    "index": 14
   },
@@ -596,7 +596,7 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 332
+    "steps": 345
    },
    "index": 15
   },
@@ -633,7 +633,7 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 336
+    "steps": 331
    },
    "index": 16
   },
@@ -670,7 +670,7 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 342
+    "steps": 351
    },
    "index": 17
   },
@@ -707,7 +707,7 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 342
+    "steps": 338
    },
    "index": 18
   },
@@ -744,7 +744,7 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 341
+    "steps": 333
    },
    "index": 19
   },
@@ -781,7 +781,7 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 343
+    "steps": 338
    },
    "index": 20
   },
@@ -818,7 +818,7 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 336
+    "steps": 338
    },
    "index": 21
   },
@@ -855,7 +855,7 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 342
+    "steps": 354
    },
    "index": 22
   },
@@ -892,7 +892,7 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 336
+    "steps": 349
    },
    "index": 23
   },
@@ -929,7 +929,7 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 338
+    "steps": 329
    },
    "index": 24
   },
@@ -966,7 +966,7 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 333
+    "steps": 330
    },
    "index": 25
   },
@@ -1003,7 +1003,7 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 331
+    "steps": 335
    },
    "index": 26
   },
@@ -1040,7 +1040,7 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 344
+    "steps": 353
    },
    "index": 27
   },
@@ -1077,7 +1077,7 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 341
+    "steps": 339
    },
    "index": 28
   },
@@ -1114,7 +1114,7 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 329
+    "steps": 333
    },
    "index": 29
   },
@@ -1188,7 +1188,7 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 333
+    "steps": 344
    },
    "index": 31
   },
@@ -1225,7 +1225,7 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 337
+    "steps": 350
    },
    "index": 32
   },
@@ -1262,7 +1262,7 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 352
+    "steps": 354
    },
    "index": 33
   },
@@ -1299,7 +1299,7 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 340
+    "steps": 334
    },
    "index": 34
   },
@@ -1373,7 +1373,7 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 337
+    "steps": 341
    },
    "index": 36
   },
@@ -1410,7 +1410,7 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 339
+    "steps": 343
    },
    "index": 37
   },
@@ -1447,7 +1447,7 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 340
+    "steps": 344
    },
    "index": 38
   },
@@ -1484,7 +1484,7 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 330
+    "steps": 340
    },
    "index": 39
   },
@@ -1521,7 +1521,7 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 337
+    "steps": 334
    },
    "index": 40
   },
@@ -1558,7 +1558,7 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 339
+    "steps": 345
    },
    "index": 41
   },
@@ -1595,7 +1595,7 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 346
+    "steps": 340
    },
    "index": 42
   },
@@ -1632,7 +1632,7 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 349
+    "steps": 338
    },
    "index": 43
   },
@@ -1669,7 +1669,7 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 335
+    "steps": 345
    },
    "index": 44
   },
@@ -1706,7 +1706,7 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 337
+    "steps": 336
    },
    "index": 45
   },
@@ -1743,7 +1743,7 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 344
+    "steps": 348
    },
    "index": 46
   },
@@ -1780,7 +1780,7 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 353
+    "steps": 340
    },
    "index": 47
   },
@@ -1817,7 +1817,7 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 340
+    "steps": 339
    },
    "index": 48
   },
@@ -1854,7 +1854,7 @@
    "expert": {
     "success": true,
     "failure": null,
-    "steps": 340
+    "steps": 341
    },
    "index": 49
   }

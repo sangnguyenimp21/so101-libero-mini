@@ -107,17 +107,17 @@
     "cylinder_aside": {
      "success": true,
      "failure": null,
-     "steps": 328
+     "steps": 327
     },
     "cube_flip": {
      "success": true,
      "failure": null,
      "steps": 364
     },
-    "green_into_tray": {
+    "green_push_forward": {
      "success": true,
      "failure": null,
-     "steps": 315
+     "steps": 276
     }
    },
    "ok": true
@@ -226,17 +226,17 @@
     "cylinder_aside": {
      "success": true,
      "failure": null,
-     "steps": 350
+     "steps": 349
     },
     "cube_flip": {
      "success": true,
      "failure": null,
      "steps": 368
     },
-    "green_into_tray": {
+    "green_push_forward": {
      "success": true,
      "failure": null,
-     "steps": 313
+     "steps": 288
     }
    },
    "ok": true
@@ -345,17 +345,17 @@
     "cylinder_aside": {
      "success": true,
      "failure": null,
-     "steps": 340
+     "steps": 357
     },
     "cube_flip": {
      "success": true,
      "failure": null,
      "steps": 379
     },
-    "green_into_tray": {
+    "green_push_forward": {
      "success": true,
      "failure": null,
-     "steps": 319
+     "steps": 286
     }
    },
    "ok": true
@@ -464,17 +464,17 @@
     "cylinder_aside": {
      "success": true,
      "failure": null,
-     "steps": 341
+     "steps": 343
     },
     "cube_flip": {
      "success": true,
      "failure": null,
      "steps": 375
     },
-    "green_into_tray": {
+    "green_push_forward": {
      "success": true,
      "failure": null,
-     "steps": 322
+     "steps": 284
     }
    },
    "ok": true
@@ -583,17 +583,17 @@
     "cylinder_aside": {
      "success": true,
      "failure": null,
-     "steps": 347
+     "steps": 348
     },
     "cube_flip": {
      "success": true,
      "failure": null,
      "steps": 375
     },
-    "green_into_tray": {
+    "green_push_forward": {
      "success": true,
      "failure": null,
-     "steps": 312
+     "steps": 289
     }
    },
    "ok": true

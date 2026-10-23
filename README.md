@@ -73,7 +73,7 @@ so101_libero/
   tasks/base.py                    Region, Layout (placement sampling), WorldState, predicates, plans, Task
   tasks/registry.py                the tasks and suites  <- add tasks here
   tasks/tri_tasks.py               suite so101_tri: scene, directions, 5 placements, tolerances, 3 tasks (docs/TRI_TASKS.md)
-  expert/tri_tasks.py              so101_tri demonstration controllers (carry upright aside, tip the cube over, tray)
+  expert/tri_tasks.py              so101_tri demonstration controllers (side grasp + carry aside, tip the cube over, push)
   train/lerobot_train_balanced.py  lerobot-train with task-balanced sampling (multitask datasets)
   env.py                           gymnasium env (the policy-facing observation/action interface)
   expert/                          ik.py, pick_place.py (expert), rollout.py (episode runner + grasp monitor)
@@ -87,8 +87,8 @@ scripts/train.sh                   lerobot-train wrapper with project defaults (
 scripts/eval_variants.sh           evaluate one checkpoint with several inference settings
 scripts/setup_*.sh                 one-time setup (OSMesa, EGL shim, SmolVLA extras; conda runtime for SLURM)
 pbs/                               Hopper GPU jobs: smoke, generate, train (+eval), eval (+ small diagnostics)
-slurm/train_smolvla_*.slurm        so101_tri SmolVLA jobs (cylinder_aside, cube_flip, green_into_tray, multitask; settings
-                                   in slurm/tri_tasks.env; every checkpoint evaluated), wrappers like the stacking job
+slurm/train_smolvla_*.slurm        so101_tri SmolVLA jobs (cylinder_side, cube_flip, green_push, multitask; settings in
+                                   slurm/tri_tasks.env; every checkpoint evaluated), wrappers like the stacking job
 slurm/                             SLURM H100 jobs, SmolVLA end to end (conda env, data, train, eval): red_cube_to_box,
                                    red_cube_to_black_box, stack_red_on_blue (each: its defaults on top of the shared
                                    driver smolvla_job.sbatch; 100 demos, 100k steps, checkpoints and evaluation every 20k)
@@ -244,14 +244,14 @@ training seeds 400000+, evaluation seeds 10,400,000+):
 | `stack_red_on_blue` | Put the red cube on top of the blue cube. | On(red_cube, blue_cube); like `lerobot/svla_so100_stacking`: two 3 cm cubes on the robot's left, the blue one always 10 cm further left, the pair moved as one (4 cells, cell = seed % 4); starts and parks at rest (index 9: training seeds 900000+, evaluation 10,900,000+) |
 
 Suite `so101_tri` (one scene: a fixed white tray on the robot's right, an all-red cube, a green
-half-cylinder and a light gray cylinder; exactly five placements of the three small objects; registry indices 13-15;
+half-cylinder and a light gray cylinder; exactly five placements of the three small objects; registry indices 13, 14, 16;
 full description, commands and limitations in [docs/TRI_TASKS.md](docs/TRI_TASKS.md)):
 
 | id | instruction | goal |
 |---|---|---|
-| `cylinder_aside` | Pick up the light gray cylinder and put it aside. | OnTableIn(gray_cylinder, aside_zone: the robot's left-back corner), upright, carried ≥ 2 cm high, others undisturbed |
+| `cylinder_aside` | Pick up the light gray cylinder and put it aside. | OnTableIn(gray_cylinder, aside_zone: the robot's left, beside the base), upright, carried ≥ 2 cm high, others undisturbed; side-grasp demonstrations (wrist camera on top, 45° approach) |
 | `cube_flip` | Pick up the red cube and flip it onto its side. | TurnedOnSide(red_cube): its top face turned sideways (tracked body orientation), resting flat ≤ 2 cm from its start, lifted, others undisturbed |
-| `green_into_tray` | Pick up the green semicircular block and put it into the white tray. | RestingIn(green_block, white_tray), others undisturbed |
+| `green_push_forward` | Push the green semicircular block forward 5 cm. | PushedBy(green_block, 5 cm forward ± 1 cm, ≤ 1.5 cm sideways), still flat, never carried, others undisturbed |
 
 Items and start regions (world frame, metres: x forward from the base origin, which lies 3.9 cm behind the shoulder's pan axis, y = the robot's left; uniform x, y, yaw; collision-free rejection sampling with 2 cm
 clearance; the arm starts at a fixed home pose):

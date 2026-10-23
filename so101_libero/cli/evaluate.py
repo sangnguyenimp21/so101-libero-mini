@@ -38,12 +38,12 @@ def wilson(k: int, n: int, z: float = 1.96) -> tuple[float, float]:
 
 def classify(env, task, lifted: bool) -> str:
     """Where the manipulated object ended up (privileged, for diagnostics only)."""
-    from so101_libero.tasks.base import (PickPlace, PlaceAt, PlaceInBox, PlaceUprightAt, StackOn, TipOver,
+    from so101_libero.tasks.base import (PickPlace, PlaceAt, PlaceUprightAt, PushBy, PushedBy, StackOn, TipOver,
                                          inside_any_container)
 
     ws = env.world
     obj = task.plan.obj if task.plan else task.goal[0].obj
-    target = task.plan.target if isinstance(task.plan, (PickPlace, PlaceInBox)) else None
+    target = task.plan.target if isinstance(task.plan, PickPlace) else None
     if ws.pos(obj)[2] < -0.05:
         return "fell_off_table"
     if isinstance(task.plan, TipOver):
@@ -57,6 +57,23 @@ def classify(env, task, lifted: bool) -> str:
         if up > 0.26:
             return "turned_but_not_flat"
         return "turned_but_not_in_place_or_not_settled"
+    if isinstance(task.plan, PushBy):
+        pred = next(g for g in task.goal if isinstance(g, PushedBy))
+        if ws.lifted(obj, pred.max_lift):
+            return "picked_up_not_pushed"
+        if not ws.upright(obj, pred.max_tilt_deg):
+            return "tipped_over"
+        along, across = pred.displacement(ws)
+        if abs(along) < 0.005 and across < 0.005:
+            return "not_moved"
+        if across > pred.lateral_tol:
+            return "pushed_sideways"
+        dist = float(np.linalg.norm(pred.offset))
+        if along < dist - pred.along_tol:
+            return "pushed_too_little"
+        if along > dist + pred.along_tol:
+            return "pushed_too_far"
+        return "pushed_but_gripper_near_or_not_settled"
     if isinstance(task.plan, (PlaceAt, PlaceUprightAt)):  # put it in a zone (red_cube_aside, cylinder_aside)
         from so101_libero.tasks.base import OnTable, OnTableInRegion
 

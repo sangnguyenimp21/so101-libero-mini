@@ -14,10 +14,13 @@ Default scene (metres, world frame; the base origin is 3.9 cm behind the shoulde
   gray cyl.    3 cm diameter x 6 cm tall, upright; centre 20 cm FRONT, 13 cm LEFT (left-front)
   green block  half-cylinder, 3.5 cm diameter x 3 cm long, flat face down, extrusion axis along FRONT; centre 22.5 cm
                FRONT, 3 cm LEFT (centre-front, in front of the folded arm)
-  red cube     3 cm, its top face white; centre 23.2 cm FRONT, 7.2 cm RIGHT (right-front), turned to face the shoulder's
+  red cube     3 x 3 x 3 cm, all red; centre 23.2 cm FRONT, 7.2 cm RIGHT (right-front), turned to face the shoulder's
                pan axis (yaw -20.4 deg: faces tangential/radial there, so the 45 degree flip grasp closes across two
                faces)
-  aside zone   5-12 cm FRONT, 12-19 cm LEFT: the left-back corner of the workspace, opposite the tray
+  aside zone   6-13 cm FRONT, 16-22 cm LEFT: the left-back of the workspace, opposite the tray (>= ~18 cm from the pan
+               axis, where the cylinder's 45 degree side grip reaches the table)
+The tray belongs to no task since green_into_tray was replaced by green_push_forward (2026-10-23); it stays so that the
+scene, and with it the cube_flip data and models, is unchanged.
 Over the five placements the objects stand ~10 cm apart (centre to centre, >= 5.8 cm between footprints), 17.9-21.6 cm
 from the pan axis, >= 3.4 cm clear of the folded arm at rest and while it unfolds, and >= 5.1 cm clear of the tray
 (``python -m so101_libero.cli.render_placements --task cylinder_aside`` measures all of this).
@@ -46,8 +49,8 @@ import numpy as np
 
 from so101_libero.sim.objects import ContainerSpec, ObjectSpec
 from so101_libero.sim.robot import REST_DEG
-from so101_libero.tasks.base import (FixedPlacementLayout, OnTableInRegion, PlaceInBox, PlaceUprightAt, Region,
-                                     RestingInContainer, Task, TipOver, TurnedOnSide, Undisturbed)
+from so101_libero.tasks.base import (FixedPlacementLayout, OnTableInRegion, PlaceUprightAt, PushBy, PushedBy, Region,
+                                     Task, TipOver, TurnedOnSide, Undisturbed)
 
 PAN_AXIS_FRONT = 0.0388  # the shoulder's pan axis, along FRONT from the base origin (so101.xml)
 
@@ -91,8 +94,10 @@ class TriTolerances:
     aside_max_release_offset: float = 0.03  # ... released within 3 cm of where it rests (carried there, not shoved)
     flip_tol: float = 0.02  # cube back within 2 cm (horizontal) of its start
     flip_max_tilt_deg: float = 15.0  # start-top face within 15 deg of sideways; resting flat within 15 deg
-    tray_margin: float = 0.003  # block centre this far inside the inner walls
-    tray_max_float: float = 0.005  # block centre at most max half extent + this above the tray floor (resting on it)
+    push_along_tol: float = 0.01  # green block pushed 5 cm FRONT +- 1 cm ...
+    push_lateral_tol: float = 0.015  # ... at most 1.5 cm sideways ...
+    push_max_tilt_deg: float = 20.0  # ... still lying on its flat face ...
+    push_max_lift: float = 0.01  # ... and never carried in the jaws higher than 1 cm (pushed, not picked up)
     others_max_shift: float = 0.02  # the other objects stay within 2 cm of their start ...
     others_max_tilt_deg: float = 20.0  # ... and within 20 deg of their start orientation
 
@@ -118,8 +123,9 @@ class TriSceneConfig:
     cylinder_at: tuple[float, float] = (0.20, 0.13)  # default placement centres (FRONT, LEFT)
     green_at: tuple[float, float] = (0.225, 0.03)
     cube_at: tuple[float, float] = (0.232, -0.072)
-    aside_front: tuple[float, float] = (0.05, 0.12)  # aside zone (the cylinder's centre must end inside it)
-    aside_left: tuple[float, float] = (0.12, 0.19)
+    aside_front: tuple[float, float] = (0.06, 0.13)  # aside zone (the cylinder's centre must end inside it)
+    aside_left: tuple[float, float] = (0.16, 0.22)
+    push_distance: float = 0.05  # green_push_forward: along FRONT
     placement_step: float = 0.01
     tolerances: TriTolerances = field(default_factory=TriTolerances)
 
@@ -231,15 +237,16 @@ CUBE_FLIP = Task(
     return_to_start=True,
 )
 
-GREEN_INTO_TRAY = Task(
-    task_id="green_into_tray",
-    language="Pick up the green semicircular block and put it into the white tray.",
+PUSH_OFFSET = tuple(float(v) for v in _c.push_distance * _c.directions.vec("front"))
+GREEN_PUSH_FORWARD = Task(
+    task_id="green_push_forward",
+    language="Push the green semicircular block forward 5 cm.",
     layout=TRI_LAYOUT,
-    goal=(RestingInContainer("green_block", "white_tray", margin=_tol.tray_margin, max_float=_tol.tray_max_float,
-                             min_lift=_tol.min_lift, max_speed=_tol.max_speed,
-                             min_tcp_distance=_tol.min_tcp_distance),
+    goal=(PushedBy("green_block", PUSH_OFFSET, along_tol=_tol.push_along_tol, lateral_tol=_tol.push_lateral_tol,
+                   max_tilt_deg=_tol.push_max_tilt_deg, max_lift=_tol.push_max_lift, max_speed=_tol.max_speed,
+                   min_tcp_distance=_tol.min_tcp_distance),
           _undisturbed("green_block")),
-    plan=PlaceInBox("green_block", "white_tray"),
+    plan=PushBy("green_block", PUSH_OFFSET),
     max_steps=450,
     success_hold_steps=_tol.hold_steps,
     tags=("so101_tri",),
@@ -247,4 +254,4 @@ GREEN_INTO_TRAY = Task(
     return_to_start=True,
 )
 
-TRI_TASKS = (CYLINDER_ASIDE, CUBE_FLIP, GREEN_INTO_TRAY)
+TRI_TASKS = (CYLINDER_ASIDE, CUBE_FLIP, GREEN_PUSH_FORWARD)

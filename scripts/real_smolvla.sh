@@ -7,7 +7,7 @@
 #   TASK="Pick up the red cylinder and place it inside the circular container." bash scripts/real_smolvla.sh
 #
 # TASK is a task id (red_cube_aside, red_cube_to_box [default], red_cube_to_black_box, stack_red_on_blue,
-# cylinder_to_tray, cylinder_to_container, cube_to_tray, cylinder_aside, cube_flip, green_into_tray) or a full
+# cylinder_to_tray, cylinder_to_container, cube_to_tray, cylinder_aside, cube_flip, green_push_forward) or a full
 # instruction; it must be the training instruction of RUN.
 #   RUN=smolvla_real_cube_black_box_100 CKPT=100000 TASK=red_cube_to_black_box bash scripts/real_smolvla.sh
 #   RUN=smolvla_real_stack_red_blue_100 CKPT=100000 TASK=stack_red_on_blue bash scripts/real_smolvla.sh
@@ -78,7 +78,7 @@ case "$TASK" in
     cube_to_tray) TASK="Pick up the blue object and place it inside the black tray." ;;
     cylinder_aside) TASK="Pick up the light gray cylinder and put it aside." ;;
     cube_flip) TASK="Pick up the red cube and flip it onto its side." ;;
-    green_into_tray) TASK="Pick up the green semicircular block and put it into the white tray." ;;
+    green_push_forward) TASK="Push the green semicircular block forward 5 cm." ;;
 esac
 
 POLICY_PATH="$PROJECT_ROOT/outputs/train/$RUN/checkpoints/$CKPT/pretrained_model"

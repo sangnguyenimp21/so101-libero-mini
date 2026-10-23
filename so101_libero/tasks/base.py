@@ -480,34 +480,40 @@ def _released(ws: WorldState, obj: str, max_speed: float, min_tcp_distance: floa
 
 
 @dataclass(frozen=True)
-class RestingInContainer:
-    """``obj`` was picked up and now rests inside ``container`` in any orientation: its centre lies inside the inner
-    area (``margin`` from the inner walls) and between the floor and ``max_half_extent + max_float`` above it (on the
-    floor, not held above it, not on a rim), and it is released, at rest and clear of the gripper. Works for free and
-    fixed containers (a free one must stand upright on the table, untouched)."""
+class PushedBy:
+    """``obj`` was pushed, not picked up (never carried in the jaws higher than ``max_lift``), by ``offset`` (world xy,
+    m) from where it started: its displacement along the offset is within ``along_tol`` of the offset's length and at
+    most ``lateral_tol`` across it; it still lies on its base (``max_tilt_deg``) directly on the table, at rest, and the
+    gripper has let go and moved off (no contact, TCP at least ``min_tcp_distance`` from its centre)."""
 
     obj: str
-    container: str
-    margin: float = 0.003
-    max_float: float = 0.005
-    min_lift: float = 0.02
+    offset: tuple[float, float]
+    along_tol: float = 0.01
+    lateral_tol: float = 0.015
+    max_tilt_deg: float = 20.0
+    max_lift: float = 0.01
     max_speed: float = 0.02
     min_tcp_distance: float = 0.04
 
+    def displacement(self, ws: WorldState) -> tuple[float, float]:
+        """(along, across) the offset direction: the object's horizontal displacement since the reset (m)."""
+        u = np.asarray(self.offset, float) / np.linalg.norm(self.offset)
+        d = ws.pos(self.obj)[:2] - ws.init_pos[self.obj][:2]
+        along = float(d @ u)
+        return along, float(np.linalg.norm(d - along * u))
+
     def __call__(self, ws: WorldState) -> bool:
-        c = ws.h.containers[self.container]
-        if not ws.h.is_fixed(self.container) and not ws.resting_on_table(self.container):
+        if self.obj not in ws.init_pos:
             return False
-        local = ws.rot(self.container).T @ (ws.pos(self.obj) - ws.pos(self.container))
-        if not c.inside_xy(local[:2], self.margin):
+        along, across = self.displacement(ws)
+        if abs(along - float(np.linalg.norm(self.offset))) > self.along_tol or across > self.lateral_tol:
             return False
-        height = local[2] - c.base_thickness
-        if not 0.0 < height <= ws.h.objects[self.obj].max_half_extent + self.max_float:
+        if ws.lifted(self.obj, self.max_lift) or not ws.upright(self.obj, self.max_tilt_deg) or not OnTable(self.obj)(ws):
             return False
-        return _released(ws, self.obj, self.max_speed, self.min_tcp_distance) and ws.lifted(self.obj, self.min_lift)
+        return _released(ws, self.obj, self.max_speed, self.min_tcp_distance)
 
     def describe(self) -> str:
-        return f"RestingIn({self.obj}, {self.container})"
+        return f"PushedBy({self.obj}, {self.offset[0]:+.3f}, {self.offset[1]:+.3f})"
 
 
 @dataclass(frozen=True)
@@ -601,23 +607,25 @@ class StackOn:
 
 
 @dataclass(frozen=True)
-class PlaceInBox:
-    """Expert plan: pick ``obj`` and lower it into the open ``target`` container (fixed or free), the jaws closing along
-    the container's long side, and release it a few millimetres above the floor."""
-
-    obj: str
-    target: str
-
-
-@dataclass(frozen=True)
 class PlaceUprightAt:
-    """Expert plan for a tall object (the 6 cm cylinder): pick it at its middle and stand it at a free reachable spot
-    inside ``region`` (shrunk by ``margin``), the gripper keeping one orientation while it holds the object, so the
-    object stays upright."""
+    """Expert plan for a tall object (the 6 cm cylinder): a side grasp at its middle (the wrist turned so the wrist
+    camera is on top, the approach tilted ``tilt_deg`` from vertical, the jaws closing across it horizontally), then
+    stand it at a free reachable spot inside ``region`` (shrunk by ``margin``), the gripper keeping one orientation
+    while it holds the object, so the object stays upright."""
 
     obj: str
     region: Region
     margin: float = 0.02
+    tilt_deg: float = 45.0
+
+
+@dataclass(frozen=True)
+class PushBy:
+    """Expert plan: push ``obj`` by ``offset`` (world xy, m) along the table with the closed gripper pointing down, the
+    fixed jaw's flat outer face against the object's face that looks away from the push."""
+
+    obj: str
+    offset: tuple[float, float]
 
 
 @dataclass(frozen=True)
@@ -636,7 +644,7 @@ class Task:
     language: str
     layout: Layout
     goal: tuple  # predicates; all must hold
-    plan: PickPlace | PlaceRelative | PlaceAt | StackOn | PlaceInBox | PlaceUprightAt | TipOver | None = None
+    plan: PickPlace | PlaceRelative | PlaceAt | StackOn | PlaceUprightAt | PushBy | TipOver | None = None
     max_steps: int = 450  # 15 s at 30 Hz
     success_hold_steps: int = 5  # goal must hold this many consecutive control steps
     tags: tuple[str, ...] = field(default_factory=tuple)

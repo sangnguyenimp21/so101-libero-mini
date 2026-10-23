@@ -190,10 +190,13 @@ def get_suite(name: str) -> list[Task]:
 # half-cylinder, a light gray cylinder), exactly five predefined placements of the three small objects, three tasks
 # (so101_libero/tasks/tri_tasks.py documents the geometry, directions and tolerances). The first version of this suite
 # (cube_left, green_into_box, cylinder_flip: white box on the robot's left) was retired on 2026-10-21; its seed slots
-# 10-12 stay reserved. Slots 13-15: training seeds 1,300,000+ / 1,400,000+ / 1,500,000+.
-from so101_libero.tasks.tri_tasks import TRI_TASKS  # noqa: E402
+# 10-12 stay reserved. green_into_tray (slot 15) was replaced by green_push_forward on 2026-10-23. Slots 13, 14, 16:
+# training seeds 1,300,000+ (cylinder_aside), 1,400,000+ (cube_flip), 1,600,000+ (green_push_forward).
+from so101_libero.tasks.tri_tasks import CUBE_FLIP, CYLINDER_ASIDE, GREEN_PUSH_FORWARD  # noqa: E402
 
 for _retired in ("cube_left", "green_into_box", "cylinder_flip"):
     retire(_retired)
-for _task in TRI_TASKS:
-    register(_task, suite="so101_tri")
+register(CYLINDER_ASIDE, suite="so101_tri")
+register(CUBE_FLIP, suite="so101_tri")
+retire("green_into_tray")
+register(GREEN_PUSH_FORWARD, suite="so101_tri")

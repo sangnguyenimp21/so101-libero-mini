@@ -6,17 +6,19 @@ lifted, still held, placed). Everything moves through joint-position actions and
 attached or teleported. Every episode starts in the folded rest pose (the unfold is collision-checked against the
 objects) and the demonstration parks there again and holds 2 s, as in stack_red_on_blue.
 
-  CylinderAsideExpert (PlaceUprightAt) top-down grasp at the cylinder's middle, carry it to a free reachable spot in the
-                                       aside zone and stand it there; the gripper keeps one orientation while it holds
-                                       the cylinder (any tilt change would tilt the 6 cm cylinder and topple it).
+  CylinderAsideExpert (PlaceUprightAt) side grasp: turn the wrist so the wrist camera is on top, slide in along the
+                                       45 degree approach axis with open jaws around the cylinder's middle, close, lift,
+                                       carry it to a free reachable spot in the aside zone, stand it there and back out
+                                       along the approach axis; the gripper keeps one orientation while it holds the
+                                       cylinder (any tilt change would tilt the 6 cm cylinder and topple it).
   CubeFlipExpert      (TipOver)        grasp the cube across two vertical faces with the approach tilted 45 degrees
                                        outward, lift, roll the wrist 180 degrees about the approach axis (the cube turns
                                        90 degrees: its top face ends up facing the robot) and release it over its
                                        start, ~2 cm above the table (after the roll the wrist-camera mount hangs below
                                        the TCP's height, so the arm cannot go lower).
-  BoxPlaceExpert      (PlaceInBox)     top-down grasp across the green block's flat end faces, carry over the 5 cm walls,
-                                       turn the jaws along the tray's long side, lower inside and release just above the
-                                       floor at a reachable spot (searched on a grid inside the tray).
+  PushExpert          (PushBy)         push the object along the table with the closed gripper pointing down: the fixed
+                                       jaw's flat outer face against the object's back face, a straight push at constant
+                                       height, then back off, lift and park.
 """
 
 from __future__ import annotations
@@ -33,7 +35,7 @@ from so101_libero.expert.ik import wrap_angle
 from so101_libero.expert.pick_place import DEG, ExpertConfig, PickPlaceExpert, PlanError, min_jerk
 from so101_libero.sim.robot import HOME_QPOS, lerobot_to_sim
 from so101_libero.sim.scene import TCP_POS
-from so101_libero.tasks.base import PlaceInBox, PlaceUprightAt, TipOver, _gap_to_tray
+from so101_libero.tasks.base import PlaceUprightAt, PushBy, TipOver, _gap_to_tray
 
 
 class _TriExpert(PickPlaceExpert):
@@ -101,6 +103,12 @@ class _TriExpert(PickPlaceExpert):
             self._check_joint_path(HOME_QPOS[:5], self._q[5])  # the unfold from rest must clear every object
         super()._advance()
 
+    def _park(self) -> None:
+        """Back to the start pose via home (the demonstration ends parked, as in stack_red_on_blue)."""
+        start = lerobot_to_sim(np.asarray(self.env.task.start_deg))
+        self._joint_move(HOME_QPOS[:5], start[5])
+        self._joint_move(start[:5], start[5])
+
     # ------------------------------------------------------------------------------------------ motion
     def _arc_yaw(self, start: np.ndarray, goal: np.ndarray, yaw0: float, yaw1: float, grip: float) -> None:
         """Constant-height arc around the pan axis (like ``_arc``) with the jaw yaw interpolated in the world."""
@@ -131,75 +139,6 @@ class _TriExpert(PickPlaceExpert):
     def _tcp_for(goal_xy: np.ndarray, held: np.ndarray, yaw: float) -> np.ndarray:
         c, s = math.cos(yaw), math.sin(yaw)
         return np.asarray(goal_xy)[:2] - np.array([c * held[0] - s * held[1], s * held[0] + c * held[1]])
-
-
-class BoxPlaceExpert(_TriExpert):
-    """Pick the object and release it inside an open box (fixed or free) with the jaws along the box's long side."""
-
-    release_floor_gap: tuple[float, float] = (0.005, 0.009)  # object bottom above the box floor when releasing
-    fixed_jaw_reach: float = 0.026  # outer face of the fixed jaw from the TCP, with margin (along the closing axis)
-    moving_jaw_reach: float = 0.05  # outer face of the moving jaw at the release opening, with margin
-    finger_half_width: float = 0.016  # across the closing axis
-    wall_margin: float = 0.005
-
-    def __init__(self, env, plan: PlaceInBox, rng, cfg=None):
-        # The 1.75 cm tall block is grasped a little lower than a 3 cm cube: the fixed jaw's lowest point (15 mm below
-        # the TCP) stays 2.5-4.5 mm above the table, the pads cover the end faces from ~1 cm up to the top.
-        super().__init__(env, plan, rng, cfg, grasp_height=(0.0175, 0.0195))
-        self.container = env.h.containers[plan.target]
-        self._release_yaw: float | None = None
-
-    def _yaw_at(self, pos: np.ndarray) -> float:
-        return self._release_yaw if self._release_yaw is not None else super()._yaw_at(pos)
-
-    def _release_z(self) -> float:
-        return self.container.base_thickness + self._grasp_z + self._u(self.release_floor_gap)
-
-    def _plan_transport(self) -> None:
-        box, held_now = self.plan.target, self._held_offset()
-        held, yaw_now, held_z = held_now
-        self._grasp_z = held_z
-        centre, rot = self.ws.pos(box), self.ws.rot(box)
-        box_yaw = math.atan2(rot[1, 0], rot[0, 0])
-        hx, hy = self.container.inner_size
-        long_axis = box_yaw + (math.pi / 2 if hy >= hx else 0.0)
-        half_long, half_short = max(hx, hy), min(hx, hy)
-        yaws = sorted((long_axis, long_axis + math.pi), key=lambda y: abs(wrap_angle(y - yaw_now)))
-        # Release spots for the object's centre along the long side (u) and across it (v), box frame; the jaws must stay
-        # inside the walls. Tried nearest to a randomly jittered spot first (demonstrations differ), then the rest.
-        reach_obj = self.obj.footprint_radius
-        v_lim = half_short - max(self.finger_half_width, reach_obj) - self.wall_margin
-        tcp = self.ws.tcp_pos()
-        z_carry, z_release = tcp[2], self._release_z()
-        for yaw in yaws:
-            sign = math.cos(wrap_angle(yaw - long_axis))  # +1: closing along +long side
-            # TCP along the long side: [-half_long + fixed reach, half_long - moving reach] (closing towards +u)
-            u_lo, u_hi = -half_long + self.fixed_jaw_reach + self.wall_margin, half_long - self.moving_jaw_reach - self.wall_margin
-            if sign < 0:
-                u_lo, u_hi = -u_hi, -u_lo
-            us = np.linspace(u_lo, u_hi, 7)
-            vs = np.linspace(-v_lim, v_lim, 5) if v_lim > 0 else np.zeros(1)
-            pref = np.array([self.rng.uniform(u_lo, u_hi), self.rng.uniform(-max(v_lim, 0), max(v_lim, 0))])
-            cands = sorted(((u, v) for u in us for v in vs), key=lambda uv: np.hypot(uv[0] - pref[0], uv[1] - pref[1]))
-            for u, v in cands:
-                ax = np.array([math.cos(long_axis), math.sin(long_axis)])
-                tcp_xy = centre[:2] + ax * u + np.array([-ax[1], ax[0]]) * v
-                obj_goal = tcp_xy + (self._tcp_for(np.zeros(2), -held, yaw))  # centre of the held object there
-                local = rot[:2, :2].T @ (obj_goal - centre[:2])
-                if not self.container.inside_xy(local, reach_obj * 0.5 + 0.003):
-                    continue
-                try:
-                    self._solve(np.r_[tcp_xy, z_carry], yaw)
-                    _, q_rel = self._solve(np.r_[tcp_xy, z_release], yaw)
-                except PlanError:
-                    continue
-                if self._collision(q_rel, self._release) is not None:
-                    continue
-                self._release_yaw = yaw
-                self._place_target = np.r_[tcp_xy, 0.0]
-                self._arc_yaw(tcp, np.r_[tcp_xy, z_carry], yaw_now, yaw, self._closed)
-                return
-        raise PlanError("no reachable release spot inside the box")
 
 
 class _HeldFrameExpert(_TriExpert):
@@ -333,12 +272,6 @@ class _HeldFrameExpert(_TriExpert):
     def _extra_checks(self, psi: float, grasp_xy: np.ndarray, q_grasp: np.ndarray) -> None:
         """Task-specific feasibility checks of a grasp candidate (raise PlanError to reject it)."""
 
-    def _park(self) -> None:
-        """Back to the start pose via home (the demonstration ends parked, as in stack_red_on_blue)."""
-        start = lerobot_to_sim(np.asarray(self.env.task.start_deg))
-        self._joint_move(HOME_QPOS[:5], start[5])
-        self._joint_move(start[:5], start[5])
-
     def _object_bottom(self) -> float:
         """Lowest point of the held object (a box: its lowest corner; else centre - half height)."""
         p, rot = self.ws.pos(self.plan.obj), self.ws.rot(self.plan.obj)
@@ -349,63 +282,99 @@ class _HeldFrameExpert(_TriExpert):
 
 
 class CylinderAsideExpert(_HeldFrameExpert):
-    """Stand a tall object at a free reachable spot inside a region, holding it at its middle in one orientation."""
+    """Side grasp of a tall object, then stand it at a free reachable spot inside a region, holding it in one
+    orientation: the wrist turned so the wrist camera is on top, the approach tilted ``plan.tilt_deg`` from vertical in
+    the arm plane, the jaws closing across the object horizontally (tangentially), so the pads stay vertical."""
 
-    pregrasp_z: tuple[float, float] = (0.10, 0.11)  # finger tips >= 2.8 cm above the 6 cm top before descending
-    grasp_z: tuple[float, float] = (0.029, 0.031)  # the cylinder's middle
-    carry_z: tuple[float, float] = (0.08, 0.09)  # the bottom 5-6 cm above the table while carried
+    approach_back: tuple[float, float] = (0.045, 0.055)  # pre-grasp this far back along the approach axis
+    grasp_z: tuple[float, float] = (0.033, 0.037)  # TCP just above the cylinder's middle (3 cm)
+    carry_z: tuple[float, float] = (0.085, 0.095)  # the bottom 5-6 cm above the table while carried
     place_gap: tuple[float, float] = (0.002, 0.004)  # bottom above the table when released
-    tilts_deg: tuple[float, ...] = (0.0, 15.0, 30.0)  # least tilt for which every pose of the plan is reachable
+    retreat_back: float = 0.05  # after the release, back out along the approach axis
+    # Closing direction at azimuth - 90 deg: the wrist camera sits 4-6.5 cm above the TCP (at +90 deg it hangs below).
+    camera_up_psi: float = -math.pi / 2
 
     def __init__(self, env, plan: PlaceUprightAt, rng, cfg=None):
         super().__init__(env, plan, rng, cfg)
+        self.tilt = math.radians(plan.tilt_deg)
+        self._psi = self.camera_up_psi
 
-    def _choose_target_and_tilt(self) -> None:
-        """A free spot in the region (shrunk by the plan's margin) and the least tilt at which the start and the spot
-        are reachable at every height of the plan; up to 40 random spots."""
-        p = self.plan
+    def _approach_axis(self, pos: np.ndarray) -> np.ndarray:
+        """Unit vector the gripper points along at TCP position ``pos`` (outward and down)."""
+        return -self._frame(pos)[:, 2]
+
+    def _side_grasp(self, obj_xy: np.ndarray, z: float) -> np.ndarray:
+        """TCP of the grasp: the object's centre shifted towards the fixed jaw, so the fixed jaw clears it while sliding
+        in and the moving jaw then pushes it against the fixed jaw."""
+        yaw = self.ik.azimuth(np.r_[obj_xy[:2], 0.0]) + self._psi
+        return np.r_[np.asarray(obj_xy)[:2] - np.array([math.cos(yaw), math.sin(yaw)]) * self._approach_offset, z]
+
+    def _plan(self) -> None:
+        """The side approach (pre-grasp -> grasp, open jaws clear of everything, the object included) and a random free
+        spot in the region (shrunk by the plan's margin) where the carry, place and retreat poses are reachable in the
+        same frame family and the open jaws are clear; up to 40 spots."""
+        p, obj = self.plan, self.ws.pos(self.plan.obj)
+        self._grasp = self._side_grasp(obj[:2], self._u(self.grasp_z))
+        self._pre = self._grasp - self._approach_axis(self._grasp) * self._u(self.approach_back)
+        self._q_pre = self._solve_frame(self._pre, self._frame(self._pre))
+        q = self._q_pre
+        for s in np.linspace(0.0, 1.0, 7):
+            pt = self._pre + s * (self._grasp - self._pre)
+            q = self._solve_frame(pt, self._frame(pt), q)
+            hit = self._collision_any(q, self._open)
+            if hit:
+                raise PlanError(f"side approach collides ({hit})")
+        self._carry = self._u(self.carry_z)
+        self._solve_frame(np.r_[self._grasp[:2], self._carry], self._frame(np.r_[self._grasp[:2], self._carry]), q)
         lo = np.array([p.region.x[0], p.region.y[0]]) + p.margin
         hi = np.array([p.region.x[1], p.region.y[1]]) - p.margin
-        obj = self.ws.pos(p.obj)
         for _ in range(40):
             spot = self.rng.uniform(lo, hi)
             if self._spot_blocked(np.r_[spot, 0.0], min_gap=0.02):
                 continue
-            for tilt in np.radians(self.tilts_deg):
-                # top-down: the closing yaw is free; tilted: only tangential closing keeps the pads vertical
-                psis = [0.0, math.pi / 2, math.pi / 4, -math.pi / 4] if tilt == 0 else [math.pi / 2, -math.pi / 2]
-                feasible = [psi for psi in psis if self._reachable_at(tilt, psi, obj[:2], spot)]
-                if feasible:
-                    self.tilt, self._psis, self._target = float(tilt), feasible, spot
-                    return
+            place = self._side_grasp(spot, self._grasp[2])
+            back = place - self._approach_axis(place) * self.retreat_back
+            try:
+                q = self._solve_frame(np.r_[place[:2], self._carry], self._frame(np.r_[place[:2], self._carry]))
+                for pt, grip in ((place, self._release), (back, self._release)):
+                    q = self._solve_frame(pt, self._frame(pt), q)
+                    if self._collision_any(q, grip, ignore=(p.obj,)):
+                        raise PlanError("place or retreat collides")
+            except PlanError:
+                continue
+            self._target = spot
+            return
         raise PlanError("no reachable free spot in the aside zone")
-
-    def _reachable_at(self, tilt: float, psi: float, start_xy: np.ndarray, spot: np.ndarray) -> bool:
-        """Every pose of the plan (pre-grasp, grasp, carry, place, retreat) reachable at this tilt and closing yaw."""
-        try:
-            for xy, z in ((start_xy, self.pregrasp_z[1]), (start_xy, self.grasp_z[0]), (start_xy, self.carry_z[1]),
-                          (spot, self.carry_z[1]), (spot, self.grasp_z[0]), (spot, self.retreat_z)):
-                pos = np.r_[xy, z]
-                self._solve_frame(pos, self._frame(pos, tilt=tilt, psi=psi))
-        except PlanError:
-            return False
-        return True
 
     def _advance(self) -> None:
         c, ws, obj = self.cfg, self.ws, self.plan.obj
         p = self.phase
         if p == "start":
             self._check_joint_path(HOME_QPOS[:5], self._q[5])  # the unfold from rest must clear every object
-            self._choose_target_and_tilt()
+            self._plan()
             self._enter("unfold")
             self._joint_move(HOME_QPOS[:5], self._q[5])
         elif p == "unfold":
+            self._enter("turn")  # turn the wrist first (the wrist camera comes on top), opening the jaws
+            q_turn = HOME_QPOS[:5].copy()
+            q_turn[4] = self._q_pre[4]
+            self._check_joint_path(q_turn, self._open)
+            self._joint_move(q_turn, self._open)
+        elif p == "turn":
             self._enter("approach")
-            self._approach(ws.pos(obj), self._psis, self._u(self.pregrasp_z), self.grasp_z[0])
+            try:
+                self._check_joint_path(self._q_pre, self._open)
+            except PlanError:  # via a raised waypoint
+                up = np.r_[self._pre[:2], self._pre[2] + 0.05]
+                q_up = self._solve_frame(up, self._frame(up), self._q_pre)
+                self._check_joint_path(q_up, self._open)
+                self._joint_move(q_up, self._open)
+                self._check_joint_path(self._q_pre, self._open)
+            self._joint_move(self._q_pre, self._open)
         elif p == "approach":
-            self._enter("descend")
-            self._line(np.r_[self._grasp_xy, self._u(self.grasp_z)], self._open)
-        elif p == "descend":
+            self._enter("slide")  # in along the approach axis, the open jaws around the object
+            self._line(self._grasp, self._open)
+        elif p == "slide":
             self._enter("close")
             self._gripper_move(self._closed, c.close_time)
             self._hold(c.settle_time)
@@ -414,7 +383,7 @@ class CylinderAsideExpert(_HeldFrameExpert):
                 return self._fail("grasp_failed")
             self._enter("lift")
             tcp = ws.tcp_pos()
-            self._line(np.r_[tcp[:2], self._u(self.carry_z)], self._closed)
+            self._line(np.r_[tcp[:2], self._carry], self._closed)
         elif p == "lift":
             if not self._held():
                 return self._fail("dropped_during_lift")
@@ -439,9 +408,9 @@ class CylinderAsideExpert(_HeldFrameExpert):
             self._gripper_move(self._release, 0.4)
             self._hold(c.settle_time)
         elif p == "release":
-            self._enter("retreat")
+            self._enter("retreat")  # back out along the approach axis, the open jaws sliding off the object
             tcp = ws.tcp_pos()
-            self._line(np.r_[tcp[:2], self.retreat_z], self._release)
+            self._line(tcp - self._approach_axis(tcp) * self.retreat_back, self._release)
         elif p == "retreat":
             self._enter("return")
             self._park()
@@ -583,11 +552,137 @@ class CubeFlipExpert(_HeldFrameExpert):
         return [math.pi / 2, -math.pi / 2]
 
 
+class PushExpert(_TriExpert):
+    """Push an object along the table with the closed gripper pointing straight down: lowered behind the object (its
+    side away from the push), a straight push at constant height, then back off, lift and park."""
+
+    push_z: tuple[float, float] = (0.0175, 0.0195)  # TCP height while pushing: the jaw tips ~3-5 mm above the table
+    pre_z: tuple[float, float] = (0.06, 0.07)  # TCP height above the push start
+    gap: tuple[float, float] = (0.004, 0.008)  # the gripper's front behind the object's back before the push
+    travel_jitter: tuple[float, float] = (-0.002, 0.002)  # m added to the push length
+    push_speed: float = 0.04  # m/s
+    backoff: float = 0.015  # back off this far along the push line before lifting
+    lift_z: float = 0.10
+    # Jaw closing direction relative to the push direction. -90: both closed fingers lead side by side (a flat face
+    # across the push) with the wrist camera in front, watching the object; the moving jaw leading (0) turns the
+    # object up to 25 deg, its outer face slants. The wrist roll cannot reach 180 (the fixed jaw leading).
+    closing_rel_deg: float = -90.0
+
+    def __init__(self, env, plan: PushBy, rng, cfg=None):
+        super().__init__(env, plan, rng, cfg)
+        off = np.asarray(plan.offset, float)
+        self.dist = float(np.linalg.norm(off))
+        self.u = np.r_[off / self.dist, 0.0]
+        self.yaw = math.atan2(self.u[1], self.u[0]) + math.radians(self.closing_rel_deg)
+
+    def _geom_points(self, g: int, d: mujoco.MjData) -> np.ndarray:
+        """World points spanning geom ``g`` in ``d``: mesh vertices, box corners, else the centre +- its radius along
+        the push direction and vertically."""
+        m = self.env.model
+        rot = d.geom_xmat[g].reshape(3, 3)
+        if m.geom_type[g] == mujoco.mjtGeom.mjGEOM_MESH:
+            mid = m.geom_dataid[g]
+            return d.geom_xpos[g] + m.mesh_vert[m.mesh_vertadr[mid]:m.mesh_vertadr[mid] + m.mesh_vertnum[mid]] @ rot.T
+        if m.geom_type[g] == mujoco.mjtGeom.mjGEOM_BOX:
+            corners = np.array(list(itertools.product((-1, 1), repeat=3))) * m.geom_size[g]
+            return d.geom_xpos[g] + corners @ rot.T
+        r = m.geom_size[g][0]
+        return d.geom_xpos[g] + r * np.array([self.u, -self.u, [0.0, 0.0, 1.0], [0.0, 0.0, -1.0]])
+
+    def _extent(self, geoms, origin: np.ndarray, d: mujoco.MjData) -> float:
+        """Largest projection on the push direction of ``geoms``' points relative to ``origin``."""
+        return max(float(np.max((self._geom_points(g, d) - origin) @ self.u)) for g in geoms)
+
+    def _front_face(self, d: mujoco.MjData) -> tuple[float, float]:
+        """The pushing face of the gripper in ``d``: how far its front lies ahead of the TCP along the push, and its
+        sideways centre relative to the TCP (points more than 3 mm under the TCP, within 4 mm of the front)."""
+        m, h = self.env.model, self.env.h
+        tcp = d.site_xpos[h.tcp_site]
+        pts = np.vstack([self._geom_points(g, d) - tcp for g in range(m.ngeom)
+                         if m.geom_bodyid[g] in h.robot_bodies and (m.geom_contype[g] or m.geom_conaffinity[g])])
+        pts = pts[pts[:, 2] < -0.003]
+        ahead = pts @ self.u
+        front = float(ahead.max())
+        side = pts[ahead > front - 0.004] @ np.array([-self.u[1], self.u[0], 0.0])
+        return front, float(side.min() + side.max()) / 2
+
+    def _plan(self) -> None:
+        """Push start and end from the measured geometry (the object's back, the gripper's front at the push pose),
+        every pose reachable pointing down, the gripper landing clear of the object."""
+        m, h, obj = self.env.model, self.env.h, self.plan.obj
+        d = self._scratch
+        d.qpos[:] = self.env.data.qpos
+        mujoco.mj_kinematics(m, d)
+        centre = self.ws.pos(obj)
+        solid = [g for g in h.item_geoms[obj] if m.geom_contype[g] or m.geom_conaffinity[g]]
+        self.u = -self.u
+        back = self._extent(solid, centre, d)  # the object's back: this far behind its centre along the push
+        self.u = -self.u
+        z = self._u(self.push_z)
+        probe = np.r_[(centre - self.u * (back + 0.03))[:2], z]
+        _, q = self._solve(probe, self.yaw, HOME_QPOS[:5])
+        d.qpos[h.joint_qpos_adr] = np.r_[q, self._closed]
+        mujoco.mj_kinematics(m, d)
+        front, side = self._front_face(d)  # the face is centred on the object's centre line, not the TCP
+        gap = self._u(self.gap)
+        start = np.r_[(centre - self.u * (back + front + gap) - np.array([-self.u[1], self.u[0], 0.0]) * side)[:2], z]
+        end = start + self.u * (self.dist + gap + self._u(self.travel_jitter))
+        pre = np.r_[start[:2], self._u(self.pre_z)]
+        self._q_pre = self._solve(pre, self.yaw, q)[1]
+        for pt, ignore in ((pre, ()), (start, ()), (end, (obj,))):
+            hit = self._collision_any(self._solve(pt, self.yaw, self._q_pre)[1], self._closed, ignore)
+            if hit:
+                raise PlanError(f"push pose collides ({hit})")
+        self._start, self._end = start, end
+
+    def _line_to(self, goal: np.ndarray, speed: float) -> None:
+        p0, _ = self.ik.fk(self._q[:5])
+        self._path(lambda sv: (p0 + sv * (goal - p0), self.yaw), float(np.linalg.norm(goal - p0)), speed, self._closed)
+
+    def _advance(self) -> None:
+        c = self.cfg
+        p = self.phase
+        if p == "start":
+            self._check_joint_path(HOME_QPOS[:5], self._q[5])  # the unfold from rest must clear every object
+            self._plan()
+            self._enter("unfold")
+            self._joint_move(HOME_QPOS[:5], self._closed)
+        elif p == "unfold":
+            self._enter("approach")
+            self._check_joint_path(self._q_pre, self._closed)
+            self._joint_move(self._q_pre, self._closed)
+        elif p == "approach":
+            self._enter("descend")
+            self._line_to(self._start, 0.08)
+        elif p == "descend":
+            self._enter("push")
+            self._line_to(self._end, self.push_speed)
+            self._hold(c.settle_time)
+        elif p == "push":
+            self._enter("backoff")
+            self._line_to(self._end - self.u * self.backoff, 0.05)
+        elif p == "backoff":
+            self._enter("retreat")
+            tcp = self.ws.tcp_pos()
+            self._line_to(np.r_[tcp[:2], self.lift_z], 0.10)
+        elif p == "retreat":
+            self._enter("return")
+            self._park()
+        elif p == "return":
+            self._enter("hold")
+            self._hold(c.park_hold_time)
+        elif p == "hold":
+            self.done = True
+            self.phase = "done"
+        else:
+            raise AssertionError(p)
+
+
 def make_tri_expert(env: SO101TabletopEnv, plan, rng: np.random.Generator, cfg: ExpertConfig | None = None):
     if isinstance(plan, PlaceUprightAt):
         return CylinderAsideExpert(env, plan, rng, cfg)
     if isinstance(plan, TipOver):
         return CubeFlipExpert(env, plan, rng, cfg)
-    if isinstance(plan, PlaceInBox):
-        return BoxPlaceExpert(env, plan, rng, cfg)
+    if isinstance(plan, PushBy):
+        return PushExpert(env, plan, rng, cfg)
     return None
