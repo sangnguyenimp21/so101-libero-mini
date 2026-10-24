@@ -32,9 +32,9 @@ set -u
 
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
-RUN="${RUN:-smolvla_real_stack_red_blue_100}"
-CKPT="${CKPT:-080000}"
-TASK="${TASK:-stack_red_on_blue}"
+RUN="${RUN:-smolvla_tri_green_push_100}"
+CKPT="${CKPT:-last}"
+TASK="${TASK:-green_push_forward}"
 
 # LAB Settings
 PORT="${PORT:-/dev/tty.usbmodem5B610366661}"
