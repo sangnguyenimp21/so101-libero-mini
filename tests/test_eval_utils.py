@@ -19,8 +19,9 @@ def test_wilson_interval():
 @pytest.mark.parametrize("task_id", list(TASKS))
 def test_init_state_files_match_scene_and_are_disjoint_from_training(task_id):
     init = load_init_states(task_id)
+    n = 25 if "so101_three_cubes" in TASKS[task_id].tags else 50  # three-cube tasks: 5 layouts x 5 trials
     assert init["scene_hash"] == scene_hash(TASKS[task_id]), "scene changed since the eval states were made"
-    assert len(init["states"]) == 50 and all(s["expert"]["success"] for s in init["states"])
+    assert len(init["states"]) == n and all(s["expert"]["success"] for s in init["states"])
     assert min(s["seed"] for s in init["states"]) >= 10_000_000  # training seeds are < 10,000,000
-    assert [s["index"] for s in init["states"]] == list(range(50))
+    assert [s["index"] for s in init["states"]] == list(range(n))
     json.dumps(init)  # serializable

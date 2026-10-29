@@ -85,6 +85,9 @@ class SO101TabletopEnv(gym.Env):
         self._step = 0
         self._streak = 0
         self.init_state: dict | None = None
+        # False: observations carry the joint state only (no camera rendering), e.g. while a deterministic controller
+        # moves the arm and nothing records the frames. Always True for policies and datasets.
+        self.render_observations = True
 
     # ------------------------------------------------------------------------------------------- core
     def reset(self, *, seed: int | None = None, options: dict | None = None):
@@ -196,7 +199,7 @@ class SO101TabletopEnv(gym.Env):
 
     def _obs(self) -> dict:
         obs = {"observation.state": self.joint_state()}
-        if self._renderer is not None:
+        if self._renderer is not None and self.render_observations:
             for cam in self.cfg.cameras:
                 obs[f"observation.images.{cam}"] = self.render_camera(cam)
         return obs

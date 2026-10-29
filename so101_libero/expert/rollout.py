@@ -40,10 +40,13 @@ class ExpertEpisode:
 
 
 def make_expert(env: SO101TabletopEnv, plan, rng: np.random.Generator, cfg: ExpertConfig | None = None):
-    """The scripted expert for a task's plan: the so101_tri experts for their plans, else the pick-and-place expert."""
+    """The scripted expert for a task's plan: the so101_three_cubes and so101_tri experts for their plans, else the
+    pick-and-place expert."""
+    from so101_libero.expert.three_cubes import make_three_cube_expert
     from so101_libero.expert.tri_tasks import make_tri_expert
 
-    return make_tri_expert(env, plan, rng, cfg) or PickPlaceExpert(env, plan, rng, cfg)
+    return (make_three_cube_expert(env, plan, rng, cfg) or make_tri_expert(env, plan, rng, cfg)
+            or PickPlaceExpert(env, plan, rng, cfg))
 
 
 class GraspMonitor:
@@ -62,7 +65,9 @@ class GraspMonitor:
         self.forces: list[float] = []
         self._f6 = np.zeros(6)
 
-    def update(self, phase: str) -> None:
+    def update(self, phase: str, obj: str | None = None) -> None:
+        if obj is not None and obj != self.obj:  # experts that handle several objects (sort): a new grasp
+            self.obj, self.ref = obj, None
         if phase == "regrasp":  # a new grasp follows: measure the carry of the grasp that actually holds the object
             self.ref, self.max_slip, self.max_pen, self.forces = None, 0.0, 0.0, []
             return
@@ -131,7 +136,7 @@ def run_expert_episode(env: SO101TabletopEnv, seed: int, cfg: ExpertConfig | Non
             frames.append((obs, action))
         obs, _, terminated, truncated, info = env.step(action)
         steps += 1
-        monitor.update(expert.phase)
+        monitor.update(expert.phase, getattr(expert, "active_obj", None))
         if info["is_success"] and success_step is None:
             success_step = steps
         if info.get("failure"):

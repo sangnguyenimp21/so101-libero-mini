@@ -44,11 +44,12 @@ fi
 python - <<'PY'
 from huggingface_hub import snapshot_download
 
+skip = ["onnx/*", "*.onnx"]  # SmolVLM2's ONNX exports (4.8 GB): SmolVLA loads model.safetensors only
 for repo in ("lerobot/smolvla_base", "HuggingFaceTB/SmolVLM2-500M-Video-Instruct"):
     try:
-        path = snapshot_download(repo, local_files_only=True)
+        path = snapshot_download(repo, local_files_only=True, ignore_patterns=skip)
     except Exception:  # noqa: BLE001  (not cached yet)
-        path = snapshot_download(repo)
+        path = snapshot_download(repo, ignore_patterns=skip)
     print("[setup]", repo, "->", path)
 PY
 python -c "import importlib.metadata as m, torch; print('[setup] ready: lerobot', m.version('lerobot'), '| torch',
