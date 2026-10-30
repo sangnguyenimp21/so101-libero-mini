@@ -1,6 +1,6 @@
-# so101_three_cubes: flip, sort and pyramid with SmolVLA (simulation → demonstrations → training → evaluation → robot)
+# so101_three_cubes: flip, sort, pyramid, stack and green_right with SmolVLA (simulation → demonstrations → training → evaluation → robot)
 
-One SO-101 tabletop scene with three plain 3 cm cubes (red, yellow, green), three tasks, five global workspace layouts,
+One SO-101 tabletop scene with three plain 3 cm cubes (red, yellow, green), five tasks, five global workspace layouts,
 scripted experts, LeRobot datasets of exactly 100 demonstrations per task, direct (no SLURM) SmolVLA training scripts
 (20k/40k/60k/80k checkpoints), and one episode controller used by simulated evaluation, simulated inference and the
 real robot: **HOME → SmolVLA → task success detected → policy stopped at once, queued actions discarded → safe release
@@ -11,6 +11,11 @@ real robot: **HOME → SmolVLA → task success detected → policy stopped at o
 | `flip` | `flip_red_cube` | Flip the red cube and place it back at its original position. |
 | `sort` | `sort_ryg` | Arrange the cubes from left to right as red, yellow, green. |
 | `pyramid` | `build_pyramid` | Place the green cube centered on top of the red and yellow cubes. |
+| `stack` | `stack_yellow_on_red` | Put the yellow cube on top of the red cube. |
+| `green_right` | `green_right_of_red` | Move the green cube to the right of the red cube. |
+
+`stack` and `green_right` (added 2026-10-31, as easier one-pick tasks next to the long sort) start from the same row of cubes,
+so only the instruction tells them apart. The multitask run (`outputs/multitask`) is still flip + sort + pyramid.
 
 ## Quick start (from the project root, on this server)
 
@@ -66,9 +71,12 @@ vertical axis of the base motor; left/right = from the robot's centre line, the 
 | flip | 19.3 cm forward, centre line, one face toward the robot | 13.6 forward, 10.5 left | 13.6 forward, 10.5 right |
 | sort | start row 13.3 cm forward, slots 9 cm left / centre / 9 cm right, permuted (below) | same row | same row |
 | pyramid | 17.6 forward, 2.5 right (red on the robot's left of yellow) | 17.6 forward, 5.5 right (1 mm gap: touching) | 15.1 forward, 9.0 left |
+| stack, green_right | 13.3 forward, 9 right | 13.3 forward, centre line | 13.3 forward, 9 left |
 
 Other layouts: add the offset (e.g. `left`: every y +2 cm). Flip: the red cube faces the pan axis in every layout (layouts
-`left`/`right` turn it by ±5.9°); sort and pyramid cubes are square to the table. Sort targets (`center`): a row 19.3 cm
+`left`/`right` turn it by ±5.9°); the other tasks' cubes are square to the table. The stack/green_right row is the sort's start
+row in its `GYR` permutation (green, yellow, red from the robot's left), so it was already checked for reach and
+visibility; in layout `left` the green cube is outside the wrist camera's view at HOME (the front camera sees it). Sort targets (`center`): a row 19.3 cm
 forward, red 5 cm left, yellow on the centre line, green 5 cm right (5 cm centre to centre; the row moves with the layout).
 Sort starting permutations (letters = left, centre, right slot): GRY, YGR, RGY, GYR, YRG (never already sorted); every
 layout is combined with every permutation (25 placements), so no permutation belongs to one layout.
@@ -98,6 +106,20 @@ policies get the joint state, the two camera images and the instruction, nothing
   tops, touching red and yellow and not the table (half supported by each), flat; red and yellow moved ≤ 1 cm, still on
   the table; everything released and at rest, TCP ≥ 4 cm from green. Expert: top-down pick of green, carried over the
   midpoint (turned square to the base on the way), lowered to 3-6 mm above it, released, lifted to 10 cm.
+- **Stack** (`StackedOn` + `Undisturbed`): yellow's centre within 1.2 cm of red's (horizontal), its bottom within 4 mm of
+  red's top, both flat; red moved ≤ 1 cm and still on the table, green moved ≤ 2 cm; released, at rest, TCP ≥ 4 cm from
+  yellow. Expert: the pyramid's, onto one base (`StackExpert`): top-down pick of yellow, carried over red, lowered to 3-6
+  mm above it, released, lifted to 10 cm.
+- **Green right** (`RelativeTo` + `Released` + `Undisturbed`): green's centre ≥ 4 cm to the robot's right of red's and
+  ≤ 2.5 cm in front of or behind it, both directly on the table; red moved ≤ 1 cm, yellow ≤ 2 cm; green released, at
+  rest, TCP ≥ 4 cm away. Expert: one sort step (`PlaceRelativeExpert`): green picked with the jaws closing along the row,
+  carried over yellow and red, set down 6 cm right of red (± 3 mm) with the jaws closing front-back, released, lifted to
+  10 cm. Its target is the farthest point of the suite from the centre line (17 cm right in layout `right`); the placed
+  cube still has ≥ 16 px to the front image's edge in every layout.
+
+Expert check (2026-10-31, 2 seeds × 5 layouts each, physics only): stack 10/10 (168-174 steps, goal from step 141-147),
+green_right 10/10 (206-219 steps, from step 175-188). The flip, sort and pyramid experts are unchanged (their actions
+are bit-identical before and after the stack/green_right code was added).
 
 Demonstrations start at HOME and **end right after the manipulation**: release, a short retreat straight up (~10 cm), a 1 s
 hold. Returning HOME is not in the data: the deterministic finisher does it at run time.
@@ -126,8 +148,8 @@ SAFE_RETREAT → RETURN_HOME → FINISHED`.
   5 cm/s, so the open jaws slide off the cubes vertically.
 - **Return HOME** (`return_home`, also `move_to_home` before an episode): one min-jerk joint move (≤ 40°/s average per
   joint), 0.5 s settle, success = every arm joint within 3° of HOME.
-- **Timeouts and failures.** Policy timeout = the task's horizon (flip 600 steps = 20 s, sort 1050 = 35 s, pyramid
-  450 = 15 s; `--max-steps`, real robot also `--max-seconds`). ABORTED on: camera failure / blank frame, invalid
+- **Timeouts and failures.** Policy timeout = the task's horizon (flip 600 steps = 20 s, sort 1050 = 35 s, pyramid,
+  stack and green_right 450 = 15 s; `--max-steps`, real robot also `--max-seconds`). ABORTED on: camera failure / blank frame, invalid
   observation, non-finite action, an action > 15° beyond a joint limit, a policy exception, a communication error, a
   simulation failure, Ctrl-C. Every ending goes through stop → discard → release-if-needed → retreat → HOME. On the
   real robot nothing moves on its own after something went wrong: after Ctrl-C you are asked first (ENTER: park; `n`:
@@ -149,6 +171,12 @@ SAFE_RETREAT → RETURN_HOME → FINISHED`.
 | `behavior` | real robot (default) | 1 grasp→release cycle, jaws open, TCP ≥ 7 cm, arm still 0.33 s, +5 steps | 3 cycles, same | 1 cycle, same |
 | `vision` | real robot (success = behaviour AND this check) | behavior + red cube back within 2.5 cm of its start position (front camera, at HOME) | behavior + row R-Y-G, 3.5-6.5 cm spacing, aligned (front camera, at HOME, 5 frames) | behavior + red/yellow side by side (blobs ≤ 5.5 cm apart) and green blob where a stacked cube projects (at HOME, 5 frames) |
 
+Stack and green_right work like the pyramid: `sim` = their ground truth above, `behavior` = 1 cycle, `vision` =
+behaviour + (stack) yellow's blob where a cube on top of red projects (within 2 cm of red's blob, ≥ 60 % of an unhidden
+cube's area) or (green_right) green's blob ≥ 3.5 cm to the robot's right of red's and ≤ 3 cm in front of or behind it,
+at HOME, 5 frames. On the simulated end states of the 5 layouts these give 1.0-1.2 cm (stack) and 5.9-6.1 cm beside,
+≤ 0.4 cm forward or back (green_right); the untouched start fails both.
+
 A grasp→release cycle = the gripper is commanded closed but blocked well above the command for ≥ 5 steps (an object in
 the jaws; in simulation a 3 cm cube holds it at ~18/100 while the command is 0, an empty close follows to ~0), then
 commanded open and following freely. A missed grasp or a dropped cube is not a cycle. On all 35 expert demonstrations
@@ -164,7 +192,7 @@ simulation: table cubes 0.3 mm mean / 1.3 mm max error (`python -m so101_libero.
   behaviour ran to its end (one grasp, one release, lifted, still), and `vision` adds only a position check (back
   near its start). A flip that is dropped and lands on the wrong face, or a grasp released without turning, is
   reported as complete.
-- **Sort and pyramid** with `behavior` confirm the end of the behaviour, not the result. `vision` checks the result but
+- **Sort, pyramid, stack and green_right** with `behavior` confirm the end of the behaviour, not the result. `vision` checks the result but
   depends on the HSV colour bands (tuned to the simulated colours: check them on your camera with
   `python -m so101_libero.control.completion.vision --image <front frame>`), on the camera pose matching the calibrated
   front camera, and for the pyramid on an area heuristic (one camera cannot measure height).
@@ -176,12 +204,12 @@ simulation: table cubes 0.3 mm mean / 1.3 mm max error (`python -m so101_libero.
 
 | step | command | output |
 |---|---|---|
-| inspect a task (layouts, cameras, one expert demo + success trace, dataset replay, stop-on-success and return-home demo) | `bash scripts/debug_task.sh flip` (`sort`, `pyramid`; modes `layouts`, `expert`, `replay`, `controller`, `all`; `--layout K`, `--perm GRY`) | `outputs/debug/<task>/` |
-| 100 demos per task | `bash scripts/collect_flip.sh`, `collect_sort.sh`, `collect_pyramid.sh` (`WORKERS=12`) | `~/so101lm/datasets/lerobot/local/smolvla_{flip_red,sort_ryg,pyramid}` |
-| dataset sanity check | `bash scripts/check_dataset.sh flip` (`sort`, `pyramid`, `multitask`) | printed + `results/dataset_check_<dataset>.json` |
-| train (80k, ckpt every 20k) | `bash scripts/train_flip_smolvla.sh`, `train_sort_smolvla.sh`, `train_pyramid_smolvla.sh` | `outputs/{flip_red,sort_ryg,pyramid}/checkpoints/0{2,4,6,8}0000/pretrained_model` |
+| inspect a task (layouts, cameras, one expert demo + success trace, dataset replay, stop-on-success and return-home demo) | `bash scripts/debug_task.sh flip` (`sort`, `pyramid`, `stack`, `green_right`; modes `layouts`, `expert`, `replay`, `controller`, `all`; `--layout K`, `--perm GRY`) | `outputs/debug/<task>/` |
+| 100 demos per task | `bash scripts/collect_flip.sh`, `collect_sort.sh`, `collect_pyramid.sh`, `collect_stack.sh`, `collect_green_right.sh` (`WORKERS=12`) | `~/so101lm/datasets/lerobot/local/smolvla_{flip_red,sort_ryg,pyramid,stack_yr,green_right}` |
+| dataset sanity check | `bash scripts/check_dataset.sh flip` (`sort`, `pyramid`, `stack`, `green_right`, `multitask`) | printed + `results/dataset_check_<dataset>.json` |
+| train (80k, ckpt every 20k) | `bash scripts/train_flip_smolvla.sh`, `train_sort_smolvla.sh`, `train_pyramid_smolvla.sh`, `train_stack_smolvla.sh`, `train_green_right_smolvla.sh` | `outputs/{flip_red,sort_ryg,pyramid,stack_yr,green_right}/checkpoints/0{2,4,6,8}0000/pretrained_model` |
 | multitask (300 demos, task-balanced) | `bash scripts/train_multitask_smolvla.sh` (merges the three datasets first) | `outputs/multitask/checkpoints/...` |
-| evaluate 20k/40k/60k/80k | `bash scripts/evaluate_all.sh` (or `eval_flip.sh`, `eval_sort.sh`, `eval_pyramid.sh`, `eval_multitask.sh`) | `results/{flip,sort,pyramid,multitask}_eval.{csv,json}`, `<run>/eval/<step>/<task_id>/` |
+| evaluate 20k/40k/60k/80k | `bash scripts/evaluate_all.sh` (or `eval_flip.sh`, `eval_sort.sh`, `eval_pyramid.sh`, `eval_stack.sh`, `eval_green_right.sh`, `eval_multitask.sh`) | `results/{flip,sort,pyramid,stack,green_right,multitask}_eval.{csv,json}`, `<run>/eval/<step>/<task_id>/` |
 | simulated inference | `bash scripts/run_sim.sh --task flip --checkpoint <ckpt>` (`--episodes`, `--layout`, `--video`, `--detector behavior`) | `outputs/run_sim/<task>_<time>/` |
 | real robot | `bash scripts/run_real.sh --task flip --checkpoint <ckpt> --port ... --front-camera ... --wrist-camera ...` | `outputs/run_real/<task>_<time>/` |
 
@@ -216,6 +244,8 @@ checkpoint), all running at the same time on four GPUs:
 sbatch slurm/train_flip_h100.sbatch
 sbatch slurm/train_sort_h100.sbatch
 sbatch slurm/train_pyramid_h100.sbatch
+sbatch slurm/train_stack_h100.sbatch
+sbatch slurm/train_green_right_h100.sbatch
 sbatch slurm/train_multitask_h100.sbatch      # waits for (or makes) the three task datasets, merges them
 # account / partition / longer time if needed:  sbatch --account=<acct> --time=36:00:00 slurm/train_flip_h100.sbatch
 # another batch size:                           BATCH_SIZE=64 sbatch slurm/train_flip_h100.sbatch
@@ -289,15 +319,18 @@ pose). Specific to these tasks:
 New: `so101_libero/tasks/three_cubes.py` (scene, layouts, tasks), `so101_libero/three_cube_env.py`
 (`SO101ThreeCubeEnv`), `so101_libero/expert/three_cubes.py`, `so101_libero/control/` (`episode_controller.py`,
 `episode_finisher.py`, `home.py`, `kinematics.py`, `policies.py`, `robots.py`, `completion/{base,flip_completion,
-sort_completion,pyramid_completion,vision}.py`), `so101_libero/sim/cameras.py`, `so101_libero/cli/{run_episodes,
-eval_three_cubes,check_dataset,debug_three_cubes}.py`, `init_states/{flip_red_cube,sort_ryg,build_pyramid}.json`,
-`scripts/{local_env,three_cubes_common,collect_task,collect_flip,collect_sort,collect_pyramid,check_dataset,
-train_smolvla_task,train_flip_smolvla,train_sort_smolvla,train_pyramid_smolvla,train_multitask_smolvla,eval_task,
-eval_flip,eval_sort,eval_pyramid,eval_multitask,evaluate_all,run_sim,run_real,debug_task}.sh`, `tests/test_three_cubes.py`.
+sort_completion,pyramid_completion,stack_completion,right_completion,vision}.py`), `so101_libero/sim/cameras.py`,
+`so101_libero/cli/{run_episodes,eval_three_cubes,check_dataset,debug_three_cubes}.py`,
+`init_states/{flip_red_cube,sort_ryg,build_pyramid,stack_yellow_on_red,green_right_of_red}.json`,
+`scripts/{local_env,three_cubes_common,collect_task,collect_flip,collect_sort,collect_pyramid,collect_stack,
+collect_green_right,check_dataset,train_smolvla_task,train_flip_smolvla,train_sort_smolvla,train_pyramid_smolvla,
+train_stack_smolvla,train_green_right_smolvla,train_multitask_smolvla,eval_task,eval_flip,eval_sort,eval_pyramid,eval_stack,
+eval_green_right,eval_multitask,evaluate_all,run_sim,run_real,debug_task}.sh`,
+`slurm/train_{stack,green_right}_h100.sbatch`, `tests/test_three_cubes.py`.
 
 Changed (backwards compatible; the existing tasks' scene hashes and datasets are unchanged): `tasks/base.py` (new
-predicates and plans, `WorldState.touching/flat/rotation_from_start/start_top_turn`), `tasks/registry.py` (the suite,
-seed slots 17, 18 (+19, 20 reserved for sort's 25 placements), 21), `expert/rollout.py` (dispatch, grasp monitor follows
+predicates and plans, `Released`, `WorldState.touching/flat/rotation_from_start/start_top_turn`), `tasks/registry.py` (the suite,
+seed slots 17, 18 (+19, 20 reserved for sort's 25 placements), 21, and 22 / 23 for stack / green_right), `expert/rollout.py` (dispatch, grasp monitor follows
 the cube being handled), `env.py` (`render_observations` switch), `sim/scene.py` (camera spec moved to `sim/cameras.py`),
 `data/writer.py` + `cli/generate.py` (per-frame `layout_id`, `permutation_id`), `tests/test_eval_utils.py` (25 states
 for the three-cube tasks).

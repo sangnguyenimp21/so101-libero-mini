@@ -2,6 +2,7 @@
 # The three-cube SmolVLA job (one task, one H100 96 GB, end to end). Submit a wrapper, not this file:
 #   sbatch slurm/train_flip_h100.sbatch       sbatch slurm/train_sort_h100.sbatch
 #   sbatch slurm/train_pyramid_h100.sbatch    sbatch slurm/train_multitask_h100.sbatch
+#   sbatch slurm/train_stack_h100.sbatch      sbatch slurm/train_green_right_h100.sbatch
 # Settings: slurm/three_cubes.env (BATCH_SIZE, NUM_WORKERS, EVAL_*, ...), overridable from the submitting shell.
 # Every stage skips what is already done, so resubmitting the same command after a timeout continues:
 #  1. runtime: conda env via scripts/setup_conda_env.sh under a lock (the first job on a cluster: ~15 min, internet)
@@ -19,7 +20,7 @@
 set -euo pipefail
 cd "${SLURM_SUBMIT_DIR:-$PWD}"
 [ -f so101_libero/__init__.py ] || { echo "submit from the project root" >&2; exit 1; }
-: "${TASK:?set TASK=flip|sort|pyramid|multitask (submit a wrapper, e.g. sbatch slurm/train_flip_h100.sbatch)}"
+: "${TASK:?set TASK=flip|sort|pyramid|stack|green_right|multitask (submit a wrapper, e.g. sbatch slurm/train_flip_h100.sbatch)}"
 # shellcheck disable=SC1091
 source slurm/three_cubes.env
 PROJECT_ROOT="$PWD"

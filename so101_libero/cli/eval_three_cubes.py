@@ -47,8 +47,10 @@ from pathlib import Path
 import numpy as np
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
-TASK_SHORT = {"flip_red_cube": "Flip", "sort_ryg": "Sort", "build_pyramid": "Pyramid"}
-RESULT_NAME = {"flip_red_cube": "flip", "sort_ryg": "sort", "build_pyramid": "pyramid"}
+TASK_SHORT = {"flip_red_cube": "Flip", "sort_ryg": "Sort", "build_pyramid": "Pyramid", "stack_yellow_on_red": "Stack",
+              "green_right_of_red": "GreenRight"}
+RESULT_NAME = {"flip_red_cube": "flip", "sort_ryg": "sort", "build_pyramid": "pyramid", "stack_yellow_on_red": "stack",
+               "green_right_of_red": "green_right"}
 BEST_RULE = "highest manipulation success rate; ties -> the earlier checkpoint"
 BEST_RULE_MULTI = "highest mean manipulation success rate over flip, sort and pyramid; ties -> the earlier checkpoint"
 
@@ -156,6 +158,30 @@ def outcome_of(task_id: str, rec: dict) -> str:
         if max(d.get("base_shift_cm") or [0.0]) > 1.0:
             return "base_displaced"
         return "stacked_not_released_or_not_settled"
+    if task_id == "stack_yellow_on_red":
+        z, off = d.get("yellow_z_cm"), d.get("yellow_offset_cm")
+        if z is None:
+            return "timeout"
+        if float(z) < 3.5:
+            return "yellow_not_on_top"
+        if float(off) > 1.2:
+            return "yellow_off_centre"
+        if float(d.get("red_shift_cm") or 0.0) > 1.0:
+            return "red_displaced"
+        return "stacked_not_released_or_not_settled"
+    if task_id == "green_right_of_red":
+        beside = d.get("green_beside_cm")
+        if beside is None:
+            return "timeout"
+        if float(d.get("lifted_cm") or 0.0) < 2.0 and float(beside) < 4.0:
+            return "green_never_lifted"
+        if float(beside) < 4.0:
+            return "green_not_right_of_red"
+        if abs(float(d.get("green_offset_cm") or 0.0)) > 2.5:
+            return "green_too_far_forward_or_back"
+        if float(d.get("red_shift_cm") or 0.0) > 1.0:
+            return "red_displaced"
+        return "placed_not_released_or_not_settled"
     return "timeout" if term == "timeout" else term or "failure"
 
 
@@ -520,7 +546,9 @@ def parse_args(argv=None) -> argparse.Namespace:
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--run-dir", type=Path, default=None, help="training output dir (with checkpoints/)")
     p.add_argument("--policy", default=None, help="'expert': evaluate the scripted expert instead (tests the sweep)")
-    p.add_argument("--task", required=True, help="flip | sort | pyramid | all (= multitask: every checkpoint on all three)")
+    p.add_argument("--task", required=True,
+                   help="flip | sort | pyramid | stack | green_right | all (= multitask: every checkpoint on flip, sort and "
+                        "pyramid)")
     p.add_argument("--checkpoints", nargs="*", default=None, help="steps to evaluate (default / 'all': every saved one)")
     p.add_argument("--episodes", type=int, default=25, help="per task and checkpoint (the first N frozen states)")
     p.add_argument("--workers", type=int, default=4)
@@ -533,7 +561,8 @@ def parse_args(argv=None) -> argparse.Namespace:
     p.add_argument("--summary-only", action="store_true", help="only print and rebuild the summaries from the results")
     p.add_argument("--eval-root", type=Path, default=None, help="default: <run-dir>/eval")
     p.add_argument("--results-dir", type=Path, default=None, help="default: $RESULTS_DIR or <project>/results")
-    p.add_argument("--results-name", default=None, help="results/<name>_eval.csv (default: flip|sort|pyramid|multitask)")
+    p.add_argument("--results-name", default=None,
+                   help="results/<name>_eval.csv (default: flip|sort|pyramid|stack|green_right|multitask)")
     p.add_argument("--torch-threads", type=int, default=2, help="CPU threads per worker")
     p.add_argument("--gpu-mem-per-worker", type=float, default=2.5, help="GB of GPU memory one SmolVLA worker needs")
     p.add_argument("--no-auto-workers", action="store_true", help="never lower --workers to fit the free GPU memory")

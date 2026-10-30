@@ -171,7 +171,7 @@ def write_outputs(out: Path, rows: list[dict], records: list[dict], extra: dict 
 def parse_args(argv=None):
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--robot", choices=("sim", "real"), default="sim")
-    p.add_argument("--task", required=True, help="flip | sort | pyramid (or a task id)")
+    p.add_argument("--task", required=True, help="flip | sort | pyramid | stack | green_right (or a task id)")
     p.add_argument("--checkpoint", default=None, help="a .../pretrained_model directory")
     p.add_argument("--policy", default=None, help="'expert' (simulation only): the scripted expert as the policy")
     p.add_argument("--episodes", type=int, default=1)

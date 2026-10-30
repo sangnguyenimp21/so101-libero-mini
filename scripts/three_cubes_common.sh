@@ -6,7 +6,9 @@
 #   flip       flip_red_cube  local/smolvla_flip_red           outputs/flip_red        results/flip_eval.csv
 #   sort       sort_ryg       local/smolvla_sort_ryg           outputs/sort_ryg        results/sort_eval.csv
 #   pyramid    build_pyramid  local/smolvla_pyramid            outputs/pyramid         results/pyramid_eval.csv
-#   multitask  (all three)    local/smolvla_multitask_300      outputs/multitask       results/multitask_eval.csv
+#   stack      stack_yellow_on_red    local/smolvla_stack_yr       outputs/stack_yr        results/stack_eval.csv
+#   green_right  green_right_of_red   local/smolvla_green_right    outputs/green_right     results/green_right_eval.csv
+#   multitask  (flip, sort, pyramid)  local/smolvla_multitask_300  outputs/multitask       results/multitask_eval.csv
 #
 # Datasets live in $HF_LEROBOT_HOME/<repo id> (default ~/so101lm/datasets/lerobot, set by scripts/local_env.sh).
 # Checkpoints: <run dir>/checkpoints/020000|040000|060000|080000/pretrained_model (LeRobot's naming).
@@ -26,10 +28,16 @@ three_cubes_task() {  # NAME -> TASK_NAME TASK_ID REPO_ID RUN_DIR DEMOS_PER_PLAC
         pyramid | build_pyramid)
             TASK_NAME=pyramid TASK_ID=build_pyramid REPO_ID=local/smolvla_pyramid RUN_DIR="$OUTPUTS_DIR/pyramid"
             DEMOS_PER_PLACEMENT=20 ;;
+        stack | stack_yellow_on_red)
+            TASK_NAME=stack TASK_ID=stack_yellow_on_red REPO_ID=local/smolvla_stack_yr RUN_DIR="$OUTPUTS_DIR/stack_yr"
+            DEMOS_PER_PLACEMENT=20 ;;
+        green_right | green_right_of_red)
+            TASK_NAME=green_right TASK_ID=green_right_of_red REPO_ID=local/smolvla_green_right
+            RUN_DIR="$OUTPUTS_DIR/green_right" DEMOS_PER_PLACEMENT=20 ;;
         multitask)
             TASK_NAME=multitask TASK_ID="flip_red_cube sort_ryg build_pyramid" REPO_ID=local/smolvla_multitask_300
             RUN_DIR="$OUTPUTS_DIR/multitask" DEMOS_PER_PLACEMENT= ;;
-        *) echo "unknown task '$1' (flip | sort | pyramid | multitask)" >&2; return 1 ;;
+        *) echo "unknown task '$1' (flip | sort | pyramid | stack | green_right | multitask)" >&2; return 1 ;;
     esac
     EVAL_CSV="$RESULTS_DIR/${TASK_NAME}_eval.csv"
     export TASK_NAME TASK_ID REPO_ID RUN_DIR DEMOS_PER_PLACEMENT EVAL_CSV

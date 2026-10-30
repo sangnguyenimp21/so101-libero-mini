@@ -1,7 +1,7 @@
 """``SO101ThreeCubeEnv``: the shared three-cube scene with one of its tasks (so101_libero/tasks/three_cubes.py).
 
     from so101_libero.three_cube_env import SO101ThreeCubeEnv
-    env = SO101ThreeCubeEnv("sort")                       # flip | sort | pyramid, or a task id
+    env = SO101ThreeCubeEnv("sort")                       # flip | sort | pyramid | stack | green_right, or a task id
     obs, info = env.reset(options={"placement_id": 7})    # sort: placement = 5 * layout + permutation
     env.task_info()                                       # layout, permutation, cube poses, targets (logs only)
 
@@ -23,7 +23,7 @@ class SO101ThreeCubeEnv(SO101TabletopEnv):
     def __init__(self, task: str = "flip", config: EnvConfig | None = None):
         super().__init__(resolve_task_id(task), config)
         if SUITE not in self.task.tags:
-            raise ValueError(f"{self.task.task_id} is not a three-cube task (flip | sort | pyramid)")
+            raise ValueError(f"{self.task.task_id} is not a three-cube task (flip | sort | pyramid | stack | green_right)")
 
     def task_info(self) -> dict:
         """Task id, instruction, layout and starting permutation of the current episode, the cubes' settled start poses

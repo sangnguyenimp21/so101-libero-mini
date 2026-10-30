@@ -15,10 +15,10 @@ from so101_libero.control.home import min_jerk_path, parse_pose, resolve_home
 from so101_libero.control.kinematics import fk, vertical_lift_path
 from so101_libero.control.robots import JOINT_LIMITS
 from so101_libero.tasks.registry import SEED_SLOTS, get_suite, seed_slot
-from so101_libero.tasks.three_cubes import (FLIP_INSTRUCTION, PYRAMID_INSTRUCTION, SCENE, SORT_INSTRUCTION,
-                                            THREE_CUBE_TASKS)
+from so101_libero.tasks.three_cubes import (FLIP_INSTRUCTION, PYRAMID_INSTRUCTION, RIGHT_INSTRUCTION, SCENE,
+                                            SORT_INSTRUCTION, STACK_INSTRUCTION, THREE_CUBE_TASKS)
 
-TASK_IDS = ("flip_red_cube", "sort_ryg", "build_pyramid")
+TASK_IDS = ("flip_red_cube", "sort_ryg", "build_pyramid", "stack_yellow_on_red", "green_right_of_red")
 
 
 @pytest.fixture(scope="module")
@@ -35,13 +35,22 @@ def envs():
 def test_suite_tasks_instructions_and_layouts():
     tasks = get_suite("so101_three_cubes")
     assert [t.task_id for t in tasks] == list(TASK_IDS)
-    assert [t.language for t in tasks] == [FLIP_INSTRUCTION, SORT_INSTRUCTION, PYRAMID_INSTRUCTION]
+    assert [t.language for t in tasks] == [FLIP_INSTRUCTION, SORT_INSTRUCTION, PYRAMID_INSTRUCTION, STACK_INSTRUCTION,
+                                           RIGHT_INSTRUCTION]
     assert FLIP_INSTRUCTION == "Flip the red cube and place it back at its original position."
     assert SORT_INSTRUCTION == "Arrange the cubes from left to right as red, yellow, green."
     assert PYRAMID_INSTRUCTION == "Place the green cube centered on top of the red and yellow cubes."
-    flip, sort, pyr = tasks
+    assert STACK_INSTRUCTION == "Put the yellow cube on top of the red cube."
+    assert RIGHT_INSTRUCTION == "Move the green cube to the right of the red cube."
+    flip, sort, pyr, stack, right = tasks
     assert flip.layout.num_placements == pyr.layout.num_placements == 5 == SCENE.num_layouts
+    assert stack.layout.num_placements == right.layout.num_placements == 5
     assert sort.layout.num_placements == 25
+    # stack and green_right start from the same row: green, yellow, red from the robot's left (red on its right, largest -y)
+    assert stack.layout.placements == right.layout.placements
+    for p in stack.layout.placements:
+        assert p["green_cube"][1] > p["yellow_cube"][1] > p["red_cube"][1]
+        assert p["green_cube"][0] == p["yellow_cube"][0] == p["red_cube"][0]  # one line across the robot's front
     # every permutation appears in every layout (no permutation tied to one layout), exactly once
     combos = {(sort.layout.placement_info(k)["layout_id"], sort.layout.placement_info(k)["permutation"])
               for k in range(25)}
@@ -164,6 +173,49 @@ def test_pyramid_predicate(envs):
     _place(env, "green_cube", (mid[0], mid[1] + 0.02, 0.0452))  # resting on red only
     _settle(env)
     assert not pred(env.world)
+
+
+def test_stack_rule(envs):
+    env = envs["stack_yellow_on_red"]
+    env.reset(options={"placement_id": 0})
+    env.data.qpos[env.h.joint_qpos_adr[1]] = math.radians(-90)
+    red = env.world.pos("red_cube")
+    _place(env, "yellow_cube", (red[0], red[1], 0.0452))
+    _settle(env)
+    assert env.task.check(env.world)
+    _place(env, "yellow_cube", (red[0] + 0.014, red[1], 0.0452))  # on red, but 1.4 cm off its centre
+    _settle(env)
+    assert not env.task.check(env.world)
+    _place(env, "yellow_cube", (red[0] + 0.035, red[1], 0.0152))  # on the table in front of red
+    _settle(env)
+    assert not env.task.check(env.world)
+
+
+def test_green_right_rule(envs):
+    env = envs["green_right_of_red"]
+    env.reset(options={"placement_id": 0})
+    env.data.qpos[env.h.joint_qpos_adr[1]] = math.radians(-90)
+    red = env.world.pos("red_cube")
+    for dx, dy, ok in ((0.0, -0.06, True), (0.02, -0.045, True), (0.04, -0.06, False), (0.0, -0.035, False),
+                       (0.0, 0.045, False)):  # right of red; slightly forward; too far forward; too close; left of red
+        _place(env, "green_cube", (red[0] + dx, red[1] + dy, 0.0152))
+        _settle(env)
+        assert env.task.check(env.world) == ok, (dx, dy)
+
+
+def test_suite_experts_only_inside_the_suite():
+    """StackOn / PlaceRelative also serve other suites: there they keep the pick-and-place expert."""
+    from so101_libero.env import EnvConfig, SO101TabletopEnv
+    from so101_libero.expert.pick_place import PickPlaceExpert
+    from so101_libero.expert.rollout import expert_rng, make_expert
+    from so101_libero.expert.three_cubes import PlaceRelativeExpert, StackExpert
+
+    for tid, cls in (("stack_yellow_on_red", StackExpert), ("green_right_of_red", PlaceRelativeExpert),
+                     ("stack_red_on_blue", PickPlaceExpert)):
+        env = SO101TabletopEnv(tid, EnvConfig(render=False))
+        env.reset(seed=1)
+        assert type(make_expert(env, env.task.plan, expert_rng(1))) is cls
+        env.close()
 
 
 # ------------------------------------------------------------------------------------------------ geometry

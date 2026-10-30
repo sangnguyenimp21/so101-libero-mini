@@ -509,6 +509,23 @@ def _released(ws: WorldState, obj: str, max_speed: float, min_tcp_distance: floa
 
 
 @dataclass(frozen=True)
+class Released:
+    """``obj`` was let go: no robot contact, at rest, the TCP at least ``min_tcp_distance`` from its centre (for goals
+    such as ``RelativeTo`` that do not check it themselves: an evaluation stops at success, so a placement whose open
+    jaws still hang around the object must not count yet)."""
+
+    obj: str
+    max_speed: float = 0.02
+    min_tcp_distance: float = 0.04
+
+    def __call__(self, ws: WorldState) -> bool:
+        return _released(ws, self.obj, self.max_speed, self.min_tcp_distance)
+
+    def describe(self) -> str:
+        return f"Released({self.obj})"
+
+
+@dataclass(frozen=True)
 class PushedBy:
     """``obj`` was pushed, not picked up (never carried in the jaws higher than ``max_lift``), by ``offset`` (world xy,
     m) from where it started: its displacement along the offset is within ``along_tol`` of the offset's length and at

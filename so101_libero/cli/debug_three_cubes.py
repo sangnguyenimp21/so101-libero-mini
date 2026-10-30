@@ -54,7 +54,8 @@ import numpy as np
 MODES = ("layouts", "expert", "replay", "controller", "all")
 # Default datasets (the naming of scripts/three_cubes_common.sh; scripts/debug_task.sh passes --repo-id explicitly).
 DEFAULT_REPOS = {"flip_red_cube": "local/smolvla_flip_red", "sort_ryg": "local/smolvla_sort_ryg",
-                 "build_pyramid": "local/smolvla_pyramid"}
+                 "build_pyramid": "local/smolvla_pyramid", "stack_yellow_on_red": "local/smolvla_stack_yr",
+                 "green_right_of_red": "local/smolvla_green_right"}
 LIST_NAMES = {"target_errors_cm": ("red", "yellow", "green"), "touching_robot": ("red", "yellow", "green"),
               "touch_red_yellow_table": ("red", "yellow", "table"), "base_shift_cm": ("red", "yellow")}
 OVERVIEW = {"lookat": (0.17, 0.0, 0.0), "distance": 0.62, "azimuth": 180.0, "elevation": -55.0}
@@ -604,7 +605,7 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("modes", nargs="*", default=None, metavar="MODE",
                     help=f"one or more of {', '.join(MODES)} (default all)")
-    ap.add_argument("--task", required=True, help="flip | sort | pyramid (or a task id)")
+    ap.add_argument("--task", required=True, help="flip | sort | pyramid | stack | green_right (or a task id)")
     ap.add_argument("--out", type=Path, default=None, help="default outputs/debug/<task>")
     ap.add_argument("--layout", type=int, default=0, help="expert / controller / viewer: layout 0-4")
     ap.add_argument("--perm", default=None, help="sort: starting permutation, letters (GRY) or index 0-4 (default 0)")

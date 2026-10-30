@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Fine-tune SmolVLA on one three-cube dataset, directly on this machine's GPU (no SLURM).
 #
-#   bash scripts/train_smolvla_task.sh flip | sort | pyramid | multitask
-#   (wrappers: scripts/train_flip_smolvla.sh, train_sort_smolvla.sh, train_pyramid_smolvla.sh, train_multitask_smolvla.sh)
+#   bash scripts/train_smolvla_task.sh flip | sort | pyramid | stack | green_right | multitask
+#   (wrappers: scripts/train_<task>_smolvla.sh, e.g. train_flip_smolvla.sh, train_stack_smolvla.sh, train_multitask_smolvla.sh)
 #   BATCH_SIZE=64 bash scripts/train_flip_smolvla.sh            # any setting below, from the environment
 #
 # Every run starts from the ORIGINAL base checkpoint (BASE_MODEL, lerobot/smolvla_base), never from another task's
@@ -27,7 +27,7 @@ _out="${OUTPUT_DIR:-}" _ds="${DATASET:-}"
 # settings given explicitly (a resume passes these on; see below)
 _set_batch="${BATCH_SIZE:-}" _set_save="${SAVE_FREQ:-}" _set_workers="${NUM_WORKERS:-}" _set_log="${LOG_FREQ:-}"
 _set_seed="${SEED:-}" _set_base="${BASE_MODEL:-}"
-three_cubes_task "${1:?usage: train_smolvla_task.sh flip|sort|pyramid|multitask}"
+three_cubes_task "${1:?usage: train_smolvla_task.sh flip|sort|pyramid|stack|green_right|multitask}"
 
 # ------------------------------------------------------------------------------------------------ configuration
 BASE_MODEL="${BASE_MODEL:-lerobot/smolvla_base}"   # hub id (cached in $HF_HOME by setup_conda_env.sh) or a local dir

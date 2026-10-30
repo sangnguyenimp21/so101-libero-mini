@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Collect exactly 100 scripted-expert demonstrations of one three-cube task into a LeRobot dataset, then validate it.
 #
-#   bash scripts/collect_task.sh flip | sort | pyramid      (or the wrappers scripts/collect_{flip,sort,pyramid}.sh)
+#   bash scripts/collect_task.sh flip | sort | pyramid | stack | green_right   (or the wrappers scripts/collect_<task>.sh)
 #
 # 20 demonstrations per layout (sort: 4 per layout x starting permutation, 25 combinations). Every attempt is executed in
 # the physics simulator and saved only if the expert succeeded (the goal predicate holds at the end); a failed attempt
@@ -14,7 +14,7 @@ cd "$(dirname "${BASH_SOURCE[0]}")/.."
 source scripts/local_env.sh
 source scripts/three_cubes_common.sh
 _repo="${REPO_ID:-}"
-three_cubes_task "${1:?usage: collect_task.sh flip|sort|pyramid}"
+three_cubes_task "${1:?usage: collect_task.sh flip|sort|pyramid|stack|green_right}"
 [ "$TASK_NAME" != multitask ] || { echo "the multitask dataset is merged: bash scripts/train_multitask_smolvla.sh" >&2; exit 1; }
 REPO_ID="${_repo:-$REPO_ID}"
 WORKERS="${WORKERS:-8}"

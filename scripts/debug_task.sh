@@ -19,8 +19,8 @@ set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
 source scripts/local_env.sh
 source scripts/three_cubes_common.sh
-three_cubes_task "${1:?usage: debug_task.sh flip|sort|pyramid [layouts|expert|replay|controller|all ...] [options]}"
-[ "$TASK_NAME" != multitask ] || { echo "debug one task at a time: flip, sort or pyramid" >&2; exit 1; }
+three_cubes_task "${1:?usage: debug_task.sh flip|sort|pyramid|stack|green_right [layouts|expert|replay|controller|all ...] [options]}"
+[ "$TASK_NAME" != multitask ] || { echo "debug one task at a time: flip, sort, pyramid, stack or green_right" >&2; exit 1; }
 shift
 MODES=()
 while [ $# -gt 0 ] && [[ "$1" != -* ]]; do MODES+=("$1"); shift; done

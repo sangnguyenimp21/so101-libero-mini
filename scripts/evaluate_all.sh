@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
-# Evaluate the 20k/40k/60k/80k checkpoints of every three-cube run that exists: flip, sort, pyramid, and the multitask
-# run if outputs/multitask/checkpoints exists. A missing run is reported and skipped; one failing evaluation never
-# stops the others. Ends with all summaries and best checkpoints again (from results/*_eval.json).
+# Evaluate the 20k/40k/60k/80k checkpoints of every three-cube run that exists: flip, sort, pyramid, stack, green_right,
+# and the multitask run if outputs/multitask/checkpoints exists. A missing run is reported and skipped; one failing
+# evaluation never stops the others. Ends with all summaries and best checkpoints again (from results/*_eval.json).
 #
 #   bash scripts/evaluate_all.sh                     # settings as in scripts/eval_task.sh (EPISODES, WORKERS, ...)
 set -uo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
 source scripts/local_env.sh
 source scripts/three_cubes_common.sh
-NAMES=(flip sort pyramid)
+NAMES=(flip sort pyramid stack green_right)
 [ -d "$OUTPUTS_DIR/multitask/checkpoints" ] && NAMES+=(multitask)
 STATUS=0
 DONE=()

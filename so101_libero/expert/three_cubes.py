@@ -14,6 +14,9 @@ finisher (so101_libero/control/) does it after the success detector has stopped 
   SortExpert     (SortIntoRow)  red, then yellow, then green: each picked with the jaws closing along the row (the moving
                                 jaw on the outer side, away from the other cubes) and put on its target with the jaws
                                 closing front-back (never reaching between neighbours in the row)
+  StackExpert    (StackOn)      PyramidExpert onto ONE base cube (yellow centred on red's top face)
+  PlaceRelativeExpert (PlaceRelative)  one sort step: the cube put on the table next to a reference cube (green to the
+                                right of red), then the final hold
 """
 
 from __future__ import annotations
@@ -28,7 +31,9 @@ from so101_libero.expert.ik import wrap_angle
 from so101_libero.expert.pick_place import DEG, ExpertConfig, PlanError
 from so101_libero.expert.tri_tasks import CubeFlipExpert, _TriExpert
 from so101_libero.sim.robot import HOME_QPOS, gripper_rad_to_lerobot, lerobot_to_sim
-from so101_libero.tasks.base import FlipInPlace, SortIntoRow, StackOnPair, row_targets
+from so101_libero.tasks.base import (SIDES, FlipInPlace, PlaceRelative, SortIntoRow, StackOn, StackOnPair,
+                                     row_targets)
+from so101_libero.tasks.three_cubes import SUITE
 
 FINAL_HOLD_S = 1.0  # every demonstration ends holding still this long after its retreat (the policy learns to stop)
 AT_HOME_TOL = 2 * DEG  # the arm counts as already at its start pose (no unfold move) within this
@@ -107,20 +112,30 @@ class PyramidExpert(_TriExpert):
         else:
             super()._advance()
 
+    def _bases(self) -> tuple[str, ...]:
+        return self.plan.bases
+
     def _plan_transport_pair(self) -> None:
         """Arc at carry height to over the bases' midpoint (+- stack_jitter), turning the jaws to ``place_yaw`` on the
         way; where the object sits in the jaws (measured after the lift) is carried over, so its centre lands on the
         goal."""
         held, yaw_now, self._held_z = self._held_offset()
-        b0, b1 = (self.ws.pos(b) for b in self.plan.bases)
-        self._base_top = float(max(b0[2] + self.env.h.objects[self.plan.bases[0]].half_height,
-                                   b1[2] + self.env.h.objects[self.plan.bases[1]].half_height))
-        goal = (b0[:2] + b1[:2]) / 2 + self.rng.uniform(-self.cfg.stack_jitter, self.cfg.stack_jitter, 2)
+        bases = self._bases()
+        pos = [self.ws.pos(b) for b in bases]
+        self._base_top = float(max(p[2] + self.env.h.objects[b].half_height for p, b in zip(pos, bases)))
+        goal = sum(p[:2] for p in pos) / len(pos) + self.rng.uniform(-self.cfg.stack_jitter, self.cfg.stack_jitter, 2)
         tgt = np.r_[self._tcp_for(goal, held, self.place_yaw), 0.0]
         self._place_target = tgt
         tcp = self.ws.tcp_pos()
         self._arc_yaw(tcp, np.r_[tgt[:2], tcp[2]], yaw_now, self.place_yaw, self._closed)
         self._yaw_offset = wrap_angle(self.place_yaw - self.ik.azimuth(tgt))  # lower / release / retreat keep it
+
+
+class StackExpert(PyramidExpert):
+    """``PyramidExpert`` onto one base (``StackOn``): ``plan.obj`` centred on ``plan.base``'s top face."""
+
+    def _bases(self) -> tuple[str, ...]:
+        return (self.plan.base,)
 
 
 @dataclasses.dataclass(frozen=True)
@@ -229,7 +244,7 @@ class SortExpert:
         self.env, self.plan, self.rng = env, plan, rng
         self.cfg = cfg or ExpertConfig()
         self.ws = env.world
-        self.targets = row_targets(env.world, plan.objs, plan.targets, plan.slot_centroid)
+        self.objs, self.targets = self._steps(plan)
         self.centre_y = float(np.mean(self.targets[:, 1]))
         self.log: list[tuple[int, str]] = []
         self.failure: str | None = None
@@ -243,9 +258,13 @@ class SortExpert:
         self._hold: list[np.ndarray] = []
         self._holding = False
 
+    def _steps(self, plan: SortIntoRow) -> tuple[tuple[str, ...], np.ndarray]:
+        """The cubes in the order they are handled and their table targets."""
+        return tuple(plan.objs), row_targets(self.ws, plan.objs, plan.targets, plan.slot_centroid)
+
     @property
     def active_obj(self) -> str | None:
-        return self.plan.objs[self._k] if self._k < len(self.plan.objs) else None
+        return self.objs[self._k] if self._k < len(self.objs) else None
 
     @property
     def phase(self) -> str:
@@ -255,8 +274,8 @@ class SortExpert:
 
     def act(self) -> np.ndarray | None:
         while not self.done:
-            if self._sub is None and self._k < len(self.plan.objs):
-                self._sub = _RowStepExpert(self.env, self.plan.objs[self._k], self.targets[self._k], self.centre_y,
+            if self._sub is None and self._k < len(self.objs):
+                self._sub = _RowStepExpert(self.env, self.objs[self._k], self.targets[self._k], self.centre_y,
                                            self._q, self.rng, self.cfg)
             if self._sub is not None:
                 n_log = len(self._sub.log)
@@ -286,6 +305,18 @@ class SortExpert:
         return None
 
 
+class PlaceRelativeExpert(SortExpert):
+    """Put ``plan.obj`` on the table ``plan.distance`` from ``plan.ref`` on ``plan.side`` (robot frame) as one sort step:
+    picked with the jaws closing along the row (the moving jaw on the side away from the target), set down with the jaws
+    closing front-back, then the final hold."""
+
+    def _steps(self, plan: PlaceRelative) -> tuple[tuple[str, ...], np.ndarray]:
+        axis, sign = SIDES[plan.side]
+        target = self.ws.pos(plan.ref)[:2].copy()
+        target[axis] += sign * plan.distance
+        return (plan.obj,), target[None, :]
+
+
 def make_three_cube_expert(env: SO101TabletopEnv, plan, rng: np.random.Generator, cfg: ExpertConfig | None = None):
     if isinstance(plan, FlipInPlace):
         return FlipRedExpert(env, plan, rng, cfg)
@@ -293,4 +324,9 @@ def make_three_cube_expert(env: SO101TabletopEnv, plan, rng: np.random.Generator
         return PyramidExpert(env, plan, rng, cfg)
     if isinstance(plan, SortIntoRow):
         return SortExpert(env, plan, rng, cfg)
+    if SUITE in env.task.tags:  # StackOn / PlaceRelative also serve other suites (with the pick-and-place expert)
+        if isinstance(plan, StackOn):
+            return StackExpert(env, plan, rng, cfg)
+        if isinstance(plan, PlaceRelative):
+            return PlaceRelativeExpert(env, plan, rng, cfg)
     return None

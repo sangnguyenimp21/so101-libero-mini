@@ -2,7 +2,7 @@
 # Evaluate every saved checkpoint (20k, 40k, 60k, 80k) of one three-cube run in the simulator, with the full episode
 # logic (HOME -> SmolVLA -> success detected -> policy stopped, queued actions discarded -> release -> retreat -> HOME).
 #
-#   bash scripts/eval_task.sh flip | sort | pyramid | multitask      (or scripts/eval_{flip,sort,pyramid,multitask}.sh)
+#   bash scripts/eval_task.sh flip | sort | pyramid | stack | green_right | multitask   (or scripts/eval_<task>.sh)
 #
 # 25 episodes per checkpoint and task: the frozen start states init_states/<task>.json (5 layouts x 5 trials; sort:
 # every layout x starting permutation once). Multitask: every checkpoint on all three tasks.
@@ -17,13 +17,13 @@ VIDEOS="${VIDEOS:-5}"             # videos of the first N episodes of each check
 CHECKPOINTS="${CHECKPOINTS:-all}" # "all" or steps, e.g. "060000 080000"
 DEVICE="${DEVICE:-cuda}"          # policy device
 FORCE="${FORCE:-0}"               # 1: re-run existing evaluations (old results moved aside, never deleted)
-#   RUN_DIR [outputs/<flip_red|sort_ryg|pyramid|multitask>]  RESULTS_DIR [results]  SO101_RENDER [auto: EGL]
+#   RUN_DIR [outputs/<flip_red|sort_ryg|pyramid|stack_yr|green_right|multitask>]  RESULTS_DIR [results]  SO101_RENDER [auto: EGL]
 set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
 source scripts/local_env.sh
 _run="${RUN_DIR:-}"
 source scripts/three_cubes_common.sh
-three_cubes_task "${1:?usage: eval_task.sh flip|sort|pyramid|multitask}"
+three_cubes_task "${1:?usage: eval_task.sh flip|sort|pyramid|stack|green_right|multitask}"
 RUN_DIR="${_run:-$RUN_DIR}"
 
 if [ ! -d "$RUN_DIR/checkpoints" ]; then

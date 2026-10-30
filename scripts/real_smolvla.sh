@@ -41,30 +41,30 @@ set -u
 
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
-RUN="${RUN:-smolvla_tri_cube_flip_100}"
-CKPT="${CKPT:-080000}"
-TASK="${TASK:-cube_flip}"
+RUN="${RUN:-multitask}"
+CKPT="${CKPT:-last}"
+TASK="${TASK:-build_pyramid}"
 
 # LAB Settings
-PORT="${PORT:-/dev/tty.usbmodem5B610366661}"
-ROBOT_ID="${ROBOT_ID:-my_follower_sim}"
-# ROBOT_ID="${ROBOT_ID:-my_follower}"
-FRONT_CAM="${FRONT_CAM:-2}"
-WRIST_CAM="${WRIST_CAM:-0}"
-FRONT_W="${FRONT_W:-1280}"
-FRONT_H="${FRONT_H:-720}"
-WRIST_W="${WRIST_W:-320}"
-WRIST_H="${WRIST_H:-240}"
-
-# HOME Settings
-# PORT="${PORT:-/dev/tty.usbmodem5C821064861}"
-# ROBOT_ID="${ROBOT_ID:-home_follower2}"
+# PORT="${PORT:-/dev/tty.usbmodem5B610366661}"
+# ROBOT_ID="${ROBOT_ID:-my_follower_sim}"
 # FRONT_CAM="${FRONT_CAM:-2}"
 # WRIST_CAM="${WRIST_CAM:-0}"
 # FRONT_W="${FRONT_W:-1280}"
 # FRONT_H="${FRONT_H:-720}"
 # WRIST_W="${WRIST_W:-320}"
 # WRIST_H="${WRIST_H:-240}"
+# ROBOT_ID="${ROBOT_ID:-my_follower}"
+
+# HOME Settings
+PORT="${PORT:-/dev/tty.usbmodem5C821064861}"
+ROBOT_ID="${ROBOT_ID:-home_follower2}"
+FRONT_CAM="${FRONT_CAM:-2}"
+WRIST_CAM="${WRIST_CAM:-0}"
+FRONT_W="${FRONT_W:-1280}"
+FRONT_H="${FRONT_H:-720}"
+WRIST_W="${WRIST_W:-320}"
+WRIST_H="${WRIST_H:-240}"
 
 FPS="${FPS:-30}"
 DURATION="${DURATION:-60}"
@@ -92,6 +92,8 @@ case "$TASK" in
     flip_red_cube) TASK="Flip the red cube and place it back at its original position." ;;
     sort_ryg) TASK="Arrange the cubes from left to right as red, yellow, green." ;;
     build_pyramid) TASK="Place the green cube centered on top of the red and yellow cubes." ;;
+    stack_yellow_on_red) TASK="Put the yellow cube on top of the red cube." ;;
+    green_right_of_red) TASK="Move the green cube to the right of the red cube." ;;
 esac
 
 POLICY="${POLICY:-}"

@@ -1,12 +1,17 @@
-"""Suite ``so101_three_cubes``: three tasks in ONE scene with three plain 3 cm cubes (red, yellow, green) and exactly five
+"""Suite ``so101_three_cubes``: five tasks in ONE scene with three plain 3 cm cubes (red, yellow, green) and exactly five
 global workspace layouts. Every task shows all three cubes; the tasks differ only in where the cubes start, the
 instruction and the success rule (docs/THREE_CUBES.md).
 
-  flip_red_cube   "Flip the red cube and place it back at its original position."
-  sort_ryg        "Arrange the cubes from left to right as red, yellow, green."
-  build_pyramid   "Place the green cube centered on top of the red and yellow cubes."
+  flip_red_cube          "Flip the red cube and place it back at its original position."
+  sort_ryg               "Arrange the cubes from left to right as red, yellow, green."
+  build_pyramid          "Place the green cube centered on top of the red and yellow cubes."
+  stack_yellow_on_red    "Put the yellow cube on top of the red cube."
+  green_right_of_red     "Move the green cube to the right of the red cube."
 
-Shared by all three tasks: the robot, the table, the cameras (front = the measured real camera, wrist), the 30 Hz
+The last two start from the same row (green, yellow, red from the robot's left: the sort's "GYR" start), so only the
+instruction tells them apart.
+
+Shared by all the tasks: the robot, the table, the cameras (front = the measured real camera, wrist), the 30 Hz
 joint-position action space, the observations, the three cube models and the HOME pose the episodes start from.
 
 Frame: robot frame of the world, metres. +x = FRONT (away from the robot base, towards the front camera), +y = the
@@ -20,8 +25,8 @@ hidden body orientation it tracks (``FlippedInPlace``), which no policy ever see
 
 Layouts: five predefined global offsets (``ThreeCubeScene.layout_offsets``) applied to everything a task places (and to
 its targets); nothing else is random at reset, the arm always starts at HOME. The sort task combines each layout with
-five starting permutations (25 placements, each permutation in every layout); the flip and pyramid tasks have one
-placement per layout. ``python -m so101_libero.cli.debug_three_cubes --task <task> layouts`` renders and checks them.
+five starting permutations (25 placements, each permutation in every layout); the other tasks have one placement per
+layout. ``python -m so101_libero.cli.debug_three_cubes --task <task> layouts`` renders and checks them.
 
 Flip. A 5-DoF SO-101 cannot turn a cube upside down with one grasp at table height (its approach can only lean in the
 vertical plane through the pan axis, and both grasp and release need >= ~40 degrees of downward tilt). The flip is the
@@ -42,8 +47,9 @@ import numpy as np
 
 from so101_libero.sim.objects import ObjectSpec
 from so101_libero.sim.robot import HOME_DEG as ROBOT_HOME_DEG
-from so101_libero.tasks.base import (FixedPlacementLayout, FlipInPlace, FlippedInPlace, OnTopOfPair, SortedRow,
-                                     SortIntoRow, StackOnPair, Task, Undisturbed)
+from so101_libero.tasks.base import (FixedPlacementLayout, FlipInPlace, FlippedInPlace, OnTopOfPair, PlaceRelative,
+                                     RelativeTo, Released, SortedRow, SortIntoRow, StackedOn, StackOn, StackOnPair,
+                                     Task, Undisturbed)
 
 PAN_AXIS_FRONT = 0.0388  # the shoulder's pan axis, along FRONT from the base origin (so101.xml)
 SUITE = "so101_three_cubes"
@@ -53,6 +59,8 @@ LETTER = {"R": "red_cube", "Y": "yellow_cube", "G": "green_cube"}
 FLIP_INSTRUCTION = "Flip the red cube and place it back at its original position."
 SORT_INSTRUCTION = "Arrange the cubes from left to right as red, yellow, green."
 PYRAMID_INSTRUCTION = "Place the green cube centered on top of the red and yellow cubes."
+STACK_INSTRUCTION = "Put the yellow cube on top of the red cube."
+RIGHT_INSTRUCTION = "Move the green cube to the right of the red cube."
 
 
 @dataclass(frozen=True)
@@ -71,6 +79,10 @@ class ThreeCubeTolerances:
     pyramid_tol: float = 0.01  # pyramid: green's centre within 1 cm of the red/yellow midpoint
     pyramid_max_gap: float = 0.004  # pyramid: green's bottom within 4 mm of the base tops
     pyramid_base_max_shift: float = 0.01  # pyramid: red and yellow each moved <= 1 cm
+    stack_tol: float = 0.012  # stack: yellow's centre over red's top face (within 1.2 cm of red's centre) ...
+    stack_max_gap: float = 0.004  # ... its bottom within 4 mm of red's top; red moved <= pyramid_base_max_shift
+    right_min_dist: float = 0.04  # green_right: green's centre >= 4 cm right of red's (1 cm between their faces) ...
+    right_max_lateral: float = 0.025  # ... and <= 2.5 cm in front of or behind it; red moved <= 1 cm
     others_max_shift: float = 0.02  # flip: yellow and green stay within 2 cm of their start ...
     others_max_tilt_deg: float = 20.0  # ... and within 20 deg of their start orientation
 
@@ -108,6 +120,10 @@ class ThreeCubeScene:
     pyramid_base_at: tuple[float, float] = (0.215, -0.04)  # midpoint between red and yellow
     pyramid_base_gap: float = 0.001
     pyramid_green_at: tuple[float, float] = (0.19, 0.09)
+    # stack_yellow_on_red and green_right_of_red: one start for both (only the instruction differs), the cubes in the
+    # sort's start slots in this order (robot's left, centre, right): green, yellow, red, i.e. red on the robot's right.
+    row_order: str = "GYR"
+    right_distance: float = 0.06  # green's expert target: 6 cm to the robot's right of red (3 cm between their faces)
     # HOME, in LeRobot so101_follower units (degrees x5, gripper 0..100): the pose every episode starts in and the
     # deterministic finisher returns to (so101_libero/control/home.py). The arm angles are the project's HOME_DEG
     # (sim/robot.py, the real runner's home): gripper 13 cm above the table over the workspace centre, tilted 30 deg
@@ -116,6 +132,8 @@ class ThreeCubeScene:
     flip_max_steps: int = 600  # policy horizons (control steps at 30 Hz)
     sort_max_steps: int = 1050
     pyramid_max_steps: int = 450
+    stack_max_steps: int = 450
+    right_max_steps: int = 450
     tolerances: ThreeCubeTolerances = field(default_factory=ThreeCubeTolerances)
 
     # ---------------------------------------------------------------------------------------------- helpers
@@ -167,6 +185,11 @@ class ThreeCubeScene:
                         "green_cube": (*map(float, np.asarray(self.pyramid_green_at) + o), 0.0)})
         return tuple(out)
 
+    def row_placements(self) -> tuple[dict, ...]:
+        """The shared start of stack_yellow_on_red and green_right_of_red: ``row_order`` in the sort slots."""
+        return tuple({LETTER[c]: (*map(float, np.asarray(s) + self.offset(k)), 0.0)
+                      for c, s in zip(self.row_order, self.sort_slots)} for k in range(self.num_layouts))
+
 
 @dataclass(frozen=True)
 class CubeLayout(FixedPlacementLayout):
@@ -210,6 +233,11 @@ SORT_LAYOUT = CubeLayout(
 PYRAMID_LAYOUT = CubeLayout(
     name="three_cubes_v1_pyramid", objects=OBJECTS, containers=(), regions={},
     placements=SCENE.pyramid_placements(), placement_names=SCENE.layout_names,
+    placement_layout_ids=_layout_ids, placement_permutations=(None,) * SCENE.num_layouts,
+    layout_names=SCENE.layout_names)
+ROW_LAYOUT = CubeLayout(
+    name="three_cubes_v1_row", objects=OBJECTS, containers=(), regions={},
+    placements=SCENE.row_placements(), placement_names=SCENE.layout_names,
     placement_layout_ids=_layout_ids, placement_permutations=(None,) * SCENE.num_layouts,
     layout_names=SCENE.layout_names)
 
@@ -257,11 +285,44 @@ BUILD_PYRAMID = Task(
     start_deg=HOME_DEG,
 )
 
-THREE_CUBE_TASKS = (FLIP_RED_CUBE, SORT_RYG, BUILD_PYRAMID)
+STACK_YELLOW_ON_RED = Task(
+    task_id="stack_yellow_on_red",
+    language=STACK_INSTRUCTION,
+    layout=ROW_LAYOUT,
+    goal=(StackedOn("yellow_cube", "red_cube", max_offset=_tol.stack_tol, max_gap=_tol.stack_max_gap,
+                    max_tilt_deg=_tol.flat_max_tilt_deg, max_speed=_tol.max_speed,
+                    min_tcp_distance=_tol.min_tcp_distance),
+          Undisturbed(("red_cube",), _tol.pyramid_base_max_shift, _tol.others_max_tilt_deg),
+          Undisturbed(("green_cube",), _tol.others_max_shift, _tol.others_max_tilt_deg)),
+    plan=StackOn("yellow_cube", "red_cube"),
+    max_steps=SCENE.stack_max_steps,
+    success_hold_steps=_tol.hold_steps,
+    tags=(SUITE,),
+    start_deg=HOME_DEG,
+)
+
+GREEN_RIGHT_OF_RED = Task(
+    task_id="green_right_of_red",
+    language=RIGHT_INSTRUCTION,
+    layout=ROW_LAYOUT,
+    goal=(RelativeTo("green_cube", "red_cube", "right", min_dist=_tol.right_min_dist,
+                     max_lateral=_tol.right_max_lateral, max_speed=_tol.max_speed,
+                     max_ref_shift=_tol.pyramid_base_max_shift),
+          Released("green_cube", _tol.max_speed, _tol.min_tcp_distance),
+          Undisturbed(("yellow_cube",), _tol.others_max_shift, _tol.others_max_tilt_deg)),
+    plan=PlaceRelative("green_cube", "red_cube", "right", distance=SCENE.right_distance),
+    max_steps=SCENE.right_max_steps,
+    success_hold_steps=_tol.hold_steps,
+    tags=(SUITE,),
+    start_deg=HOME_DEG,
+)
+
+THREE_CUBE_TASKS = (FLIP_RED_CUBE, SORT_RYG, BUILD_PYRAMID, STACK_YELLOW_ON_RED, GREEN_RIGHT_OF_RED)
 # Short names used by the scripts (bash scripts/train_flip_smolvla.sh, --task flip, ...)
-TASK_ALIASES = {"flip": "flip_red_cube", "sort": "sort_ryg", "pyramid": "build_pyramid"}
+TASK_ALIASES = {"flip": "flip_red_cube", "sort": "sort_ryg", "pyramid": "build_pyramid",
+                "stack": "stack_yellow_on_red", "green_right": "green_right_of_red"}
 
 
 def resolve_task_id(name: str) -> str:
-    """'flip' / 'sort' / 'pyramid' or a task id -> task id."""
+    """'flip' / 'sort' / 'pyramid' / 'stack' / 'green_right' or a task id -> task id."""
     return TASK_ALIASES.get(name, name)
