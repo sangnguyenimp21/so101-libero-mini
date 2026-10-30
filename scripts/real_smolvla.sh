@@ -7,10 +7,19 @@
 #   TASK="Pick up the red cylinder and place it inside the circular container." bash scripts/real_smolvla.sh
 #
 # TASK is a task id (red_cube_aside, red_cube_to_box [default], red_cube_to_black_box, stack_red_on_blue,
-# cylinder_to_tray, cylinder_to_container, cube_to_tray, cylinder_aside, cube_flip, green_push_forward) or a full
-# instruction; it must be the training instruction of RUN.
+# cylinder_to_tray, cylinder_to_container, cube_to_tray, cylinder_aside, cube_flip, green_push_forward, flip_red_cube,
+# sort_ryg, build_pyramid) or a full instruction; it must be the training instruction of RUN.
 #   RUN=smolvla_real_cube_black_box_100 CKPT=100000 TASK=red_cube_to_black_box bash scripts/real_smolvla.sh
 #   RUN=smolvla_real_stack_red_blue_100 CKPT=100000 TASK=stack_red_on_blue bash scripts/real_smolvla.sh
+#   RUN=sort_ryg CKPT=040000 TASK=sort_ryg bash scripts/real_smolvla.sh
+#   RUN=multitask CKPT=020000 TASK=build_pyramid bash scripts/real_smolvla.sh   # multitask: TASK = flip_red_cube,
+#                                                                                # sort_ryg or build_pyramid
+# POLICY: a pretrained_model directory or a Hub model id run instead of RUN/CKPT, with any instruction as TASK.
+# STATS_FROM: the normalization stats (per-joint mean/std): a run (its checkpoint CKPT), or any LeRobot dataset of this
+# arm, as a path or a repo id under ~/.cache/huggingface/lerobot (no training needed); lerobot/smolvla_base needs one (it has no
+# stats for this robot's joints and is refused without). Not fine-tuned: a zero-shot baseline, keep MAX_REL low.
+#   POLICY=lerobot/smolvla_base STATS_FROM=sort_ryg MAX_REL=3 TASK="Pick up the red cube." bash scripts/real_smolvla.sh
+#   POLICY=lerobot/smolvla_base STATS_FROM=local/so101_tri_green_push_100 MAX_REL=3 TASK="..." bash scripts/real_smolvla.sh
 # Environment overrides (defaults in brackets):
 # RUN [smolvla_real_cube_box_500] CKPT [040000]
 # PORT [/dev/tty.usbmodem5B610366661] ROBOT_ID [my_follower] FRONT_CAM [3: iPhone] WRIST_CAM [0]
@@ -32,9 +41,9 @@ set -u
 
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
-RUN="${RUN:-smolvla_tri_green_push_100}"
-CKPT="${CKPT:-last}"
-TASK="${TASK:-green_push_forward}"
+RUN="${RUN:-smolvla_tri_cube_flip_100}"
+CKPT="${CKPT:-080000}"
+TASK="${TASK:-cube_flip}"
 
 # LAB Settings
 PORT="${PORT:-/dev/tty.usbmodem5B610366661}"
@@ -79,10 +88,39 @@ case "$TASK" in
     cylinder_aside) TASK="Pick up the light gray cylinder and put it aside." ;;
     cube_flip) TASK="Pick up the red cube and flip it onto its side." ;;
     green_push_forward) TASK="Push the green semicircular block forward 5 cm." ;;
+    # three-cube suite (so101_libero/tasks/three_cubes.py): RUN=sort_ryg, or RUN=multitask with any of the three
+    flip_red_cube) TASK="Flip the red cube and place it back at its original position." ;;
+    sort_ryg) TASK="Arrange the cubes from left to right as red, yellow, green." ;;
+    build_pyramid) TASK="Place the green cube centered on top of the red and yellow cubes." ;;
 esac
 
-POLICY_PATH="$PROJECT_ROOT/outputs/train/$RUN/checkpoints/$CKPT/pretrained_model"
-[ -d "$POLICY_PATH" ] || { echo "no checkpoint at $POLICY_PATH" >&2; exit 1; }
+POLICY="${POLICY:-}"
+STATS_FROM="${STATS_FROM:-}"
+STATS_ARGS=()
+if [ -n "$STATS_FROM" ]; then
+    STATS_PATH=""  # a run (its checkpoint CKPT), a checkpoint directory, or a dataset (path or repo id, meta/stats.json)
+    for p in "$PROJECT_ROOT/outputs/train/$STATS_FROM/checkpoints/$CKPT/pretrained_model" "$STATS_FROM" \
+             "${HF_LEROBOT_HOME:-$HOME/.cache/huggingface/lerobot}/$STATS_FROM"; do
+        if [ -f "$p/policy_preprocessor.json" ] || [ -f "$p/meta/stats.json" ]; then STATS_PATH="$p"; break; fi
+    done
+    [ -n "$STATS_PATH" ] || { echo "STATS_FROM=$STATS_FROM: no run, checkpoint or dataset (meta/stats.json)" >&2; exit 1; }
+    [ "$CROP_RESIZE" = 1 ] || { echo "STATS_FROM needs CROP_RESIZE=1 (the stats are swapped in the deploy copy)" >&2; exit 1; }
+    STATS_ARGS=(--stats-from "$STATS_PATH")
+fi
+if [ -n "$POLICY" ]; then
+    if [ -d "$POLICY" ]; then
+        POLICY_PATH="$(cd "$POLICY" && pwd)"
+    else  # Hub model id -> local snapshot (Hugging Face cache)
+        POLICY_PATH="$(python -c 'import sys; from huggingface_hub import snapshot_download as d
+print(d(sys.argv[1], allow_patterns=["*.json", "*.safetensors"]))' "$POLICY")"
+    fi
+    RUN="$(basename "$POLICY")"
+    DEPLOY_NAME="$RUN${STATS_FROM:+_stats_$(basename "$STATS_FROM")}"
+else
+    POLICY_PATH="$PROJECT_ROOT/outputs/train/$RUN/checkpoints/$CKPT/pretrained_model"
+    [ -d "$POLICY_PATH" ] || { echo "no checkpoint at $POLICY_PATH" >&2; exit 1; }
+    DEPLOY_NAME="${RUN}_${CKPT}"
+fi
 ROLLOUT=(python "$PROJECT_ROOT/scripts/rollout_tolerant.py")
 if [ "$CROP_RESIZE" = 1 ]; then
     DEBUG_ARGS=()
@@ -93,8 +131,8 @@ if [ "$CROP_RESIZE" = 1 ]; then
         echo "debug frames and action log -> $DEBUG_DIR"
     fi
     POLICY_PATH="$(python "$PROJECT_ROOT/scripts/deploy_policy.py" "$POLICY_PATH" \
-        "$PROJECT_ROOT/outputs/deploy/${RUN}_${CKPT}" --crop front="$FRONT_CROP" --crop wrist="$WRIST_CROP" \
-        ${DEBUG_ARGS[@]+"${DEBUG_ARGS[@]}"})"
+        "$PROJECT_ROOT/outputs/deploy/$DEPLOY_NAME" --crop front="$FRONT_CROP" --crop wrist="$WRIST_CROP" \
+        ${DEBUG_ARGS[@]+"${DEBUG_ARGS[@]}"} ${STATS_ARGS[@]+"${STATS_ARGS[@]}"})"
     echo "crop front=$FRONT_CROP wrist=$WRIST_CROP -> 256x256"
 elif [ "$DEBUG" = 1 ]; then
     echo "DEBUG needs CROP_RESIZE=1 (the debug steps live in the deploy copy); running without debug output"
