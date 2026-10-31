@@ -253,16 +253,6 @@ full description, commands and limitations in [docs/TRI_TASKS.md](docs/TRI_TASKS
 | `cube_flip` | Pick up the red cube and flip it onto its side. | TurnedOnSide(red_cube): its top face turned sideways (tracked body orientation), resting flat ≤ 2 cm from its start, lifted, others undisturbed |
 | `green_push_forward` | Push the green semicircular block forward 5 cm. | PushedBy(green_block, 5 cm forward ± 1 cm, ≤ 1.5 cm sideways), still flat, never carried, others undisturbed |
 
-Suite `so101_three_cubes` (one scene: plain 3 cm red, yellow and green cubes; five global layouts; every episode starts at
-HOME and ends with the deterministic stop → release → retreat → HOME controller; registry indices 17, 18, 21; full
-description, commands, direct (no SLURM) scripts and limitations in [docs/THREE_CUBES.md](docs/THREE_CUBES.md)):
-
-| id | instruction | goal |
-|---|---|---|
-| `flip_red_cube` | Flip the red cube and place it back at its original position. | FlippedInPlace(red_cube): tracked orientation turned ≥ 150° (one-grasp 180° roll about the 45° approach), top face no longer up, flat, ≤ 2 cm from its start, released; yellow/green undisturbed |
-| `sort_ryg` | Arrange the cubes from left to right as red, yellow, green. | SortedRow: each cube ≤ 2 cm from its target in a 5 cm-spaced row (robot's left to right), released; 5 starting permutations × 5 layouts |
-| `build_pyramid` | Place the green cube centered on top of the red and yellow cubes. | OnTopOfPair(green; red, yellow): ≤ 1 cm from their midpoint, on both, off the table, released; the base moved ≤ 1 cm |
-
 Items and start regions (world frame, metres: x forward from the base origin, which lies 3.9 cm behind the shoulder's pan axis, y = the robot's left; uniform x, y, yaw; collision-free rejection sampling with 2 cm
 clearance; the arm starts at a fixed home pose):
 

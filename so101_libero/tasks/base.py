@@ -295,35 +295,6 @@ class WorldState:
     def touching_robot(self, item: str) -> bool:
         return any(self.contacts(item))
 
-    def touching(self, a: str, b: str) -> bool:
-        """Is item ``a`` in contact with item ``b`` (``b`` may also be "table")?"""
-        ga = self.h.item_geoms[a]
-        gb = frozenset((self.h.table_geom,)) if b == "table" else self.h.item_geoms[b]
-        for i in range(self.d.ncon):
-            c = self.d.contact[i]
-            if (c.geom1 in ga and c.geom2 in gb) or (c.geom2 in ga and c.geom1 in gb):
-                return True
-        return False
-
-    def flat(self, item: str, max_tilt_deg: float) -> bool:
-        """A box resting on one of its faces: some body axis within ``max_tilt_deg`` of vertical."""
-        return float(np.max(np.abs(self.rot(item)[2, :]))) >= math.cos(math.radians(max_tilt_deg))
-
-    def rotation_from_start(self, item: str) -> float:
-        """Angle (rad) of the rotation that takes the item's start orientation to its current one (0 if unknown)."""
-        if item not in self.init_rot:
-            return 0.0
-        r = self.rot(item) @ self.init_rot[item].T
-        return math.acos(float(np.clip((np.trace(r) - 1.0) / 2.0, -1.0, 1.0)))
-
-    def start_top_turn(self, item: str) -> float:
-        """Angle (rad) between world up and the face normal that pointed up at the start (0 if unknown): 0 = that face
-        is still on top, pi/2 = it faces sideways, pi = upside down."""
-        if item not in self.init_rot:
-            return 0.0
-        n = self.rot(item) @ (self.init_rot[item].T @ np.array([0.0, 0.0, 1.0]))
-        return math.acos(float(np.clip(n[2], -1.0, 1.0)))
-
     def grasped(self, item: str) -> bool:
         """Pinched between both jaws."""
         fixed, moving, _ = self.contacts(item)
@@ -509,23 +480,6 @@ def _released(ws: WorldState, obj: str, max_speed: float, min_tcp_distance: floa
 
 
 @dataclass(frozen=True)
-class Released:
-    """``obj`` was let go: no robot contact, at rest, the TCP at least ``min_tcp_distance`` from its centre (for goals
-    such as ``RelativeTo`` that do not check it themselves: an evaluation stops at success, so a placement whose open
-    jaws still hang around the object must not count yet)."""
-
-    obj: str
-    max_speed: float = 0.02
-    min_tcp_distance: float = 0.04
-
-    def __call__(self, ws: WorldState) -> bool:
-        return _released(ws, self.obj, self.max_speed, self.min_tcp_distance)
-
-    def describe(self) -> str:
-        return f"Released({self.obj})"
-
-
-@dataclass(frozen=True)
 class PushedBy:
     """``obj`` was pushed, not picked up (never carried in the jaws higher than ``max_lift``), by ``offset`` (world xy,
     m) from where it started: its displacement along the offset is within ``along_tol`` of the offset's length and at
@@ -615,128 +569,6 @@ class Undisturbed:
         return f"Undisturbed({', '.join(self.objs)})"
 
 
-@dataclass(frozen=True)
-class FlippedInPlace:
-    """``obj`` (a box) was picked up, turned over and put back where it started. Its orientation differs from the start
-    orientation by a rotation of at least ``min_rotation_deg`` (the flip is a 180 degree turn), and the face that started
-    on top no longer is (turned by at least ``min_top_turn_deg``: a 180 degree spin about the vertical axis is no flip).
-    The box rests flat on one of its faces (``max_flat_deg``) directly on the table within ``tol`` (horizontal) of its
-    start, was carried at least ``min_lift`` high, and is released: no robot contact, at rest, the TCP at least
-    ``min_tcp_distance`` from its centre. The environment tracks the body orientation, so this is the hidden ground
-    truth for a plain cube that looks the same before and after the flip; no policy ever sees it."""
-
-    obj: str
-    tol: float = 0.02
-    min_rotation_deg: float = 150.0
-    min_top_turn_deg: float = 60.0
-    max_flat_deg: float = 15.0
-    min_lift: float = 0.02
-    max_speed: float = 0.02
-    min_tcp_distance: float = 0.04
-
-    def __call__(self, ws: WorldState) -> bool:
-        if self.obj not in ws.init_pos:
-            return False
-        if ws.rotation_from_start(self.obj) < math.radians(self.min_rotation_deg):
-            return False
-        if ws.start_top_turn(self.obj) < math.radians(self.min_top_turn_deg) or not ws.flat(self.obj, self.max_flat_deg):
-            return False
-        if ws.shift_xy(self.obj) > self.tol or not OnTable(self.obj)(ws):
-            return False
-        return _released(ws, self.obj, self.max_speed, self.min_tcp_distance) and ws.lifted(self.obj, self.min_lift)
-
-    def describe(self) -> str:
-        return f"FlippedInPlace({self.obj})"
-
-
-def row_targets(ws: WorldState, objs: tuple[str, ...], targets, slot_centroid) -> np.ndarray:
-    """Target centres (k, 2) of a row goal in the current episode: the nominal ``targets`` shifted by the layout offset,
-    i.e. by how far the objects' common start centroid lies from the nominal ``slot_centroid``. The start slots are the
-    same set of points in every permutation, so the centroid moves only with the layout."""
-    start = np.mean([ws.init_pos[o][:2] for o in objs], axis=0)
-    return np.asarray(targets, dtype=float) + (start - np.asarray(slot_centroid, dtype=float))
-
-
-@dataclass(frozen=True)
-class SortedRow:
-    """``objs`` stand in a row at their targets (``objs[k]`` at target k; robot frame, ``targets`` listed left to right):
-    each one's centre within ``tol`` (horizontal) of its target, resting flat (``max_tilt_deg``) directly on the table
-    (not on another object), released (no robot contact), at rest, the TCP at least ``min_tcp_distance`` from every one.
-    Targets move with the layout (``row_targets``)."""
-
-    objs: tuple[str, ...]
-    targets: tuple[tuple[float, float], ...]  # nominal target centres (layout 0), same order as objs
-    slot_centroid: tuple[float, float]  # nominal centroid of the objects' start slots (layout 0)
-    tol: float = 0.02
-    max_tilt_deg: float = 20.0
-    max_speed: float = 0.02
-    min_tcp_distance: float = 0.04
-
-    def target_xy(self, ws: WorldState) -> np.ndarray:
-        return row_targets(ws, self.objs, self.targets, self.slot_centroid)
-
-    def errors(self, ws: WorldState) -> np.ndarray:
-        """Horizontal distance (m) of each object from its target."""
-        return np.array([float(np.linalg.norm(ws.pos(o)[:2] - t)) for o, t in zip(self.objs, self.target_xy(ws))])
-
-    def __call__(self, ws: WorldState) -> bool:
-        if any(o not in ws.init_pos for o in self.objs):
-            return False
-        if float(self.errors(ws).max()) > self.tol:
-            return False
-        for o in self.objs:
-            if not OnTable(o)(ws) or not ws.flat(o, self.max_tilt_deg):
-                return False
-            if not _released(ws, o, self.max_speed, self.min_tcp_distance):
-                return False
-        return True
-
-    def describe(self) -> str:
-        return f"SortedRow({', '.join(self.objs)})"
-
-
-@dataclass(frozen=True)
-class OnTopOfPair:
-    """``obj`` rests centred on top of two boxes standing side by side (``bases``): its centre within ``tol``
-    (horizontal) of the midpoint of their centres, its bottom within ``max_gap`` of their tops, touching both of them and
-    not the table, flat (``max_tilt_deg``). The bases still rest flat directly on the table, each at most
-    ``max_base_shift`` from its start. Everything is released and at rest, the TCP at least ``min_tcp_distance`` from
-    ``obj``."""
-
-    obj: str
-    bases: tuple[str, str]
-    tol: float = 0.01
-    max_gap: float = 0.004
-    max_tilt_deg: float = 15.0
-    max_base_shift: float = 0.01
-    max_speed: float = 0.02
-    min_tcp_distance: float = 0.04
-
-    def midpoint(self, ws: WorldState) -> np.ndarray:
-        return (ws.pos(self.bases[0]) + ws.pos(self.bases[1])) / 2.0
-
-    def __call__(self, ws: WorldState) -> bool:
-        po, mid = ws.pos(self.obj), self.midpoint(ws)
-        if float(np.linalg.norm(po[:2] - mid[:2])) > self.tol:
-            return False
-        tops = [ws.pos(b)[2] + ws.h.objects[b].half_height for b in self.bases]
-        if abs((po[2] - ws.h.objects[self.obj].half_height) - max(tops)) > self.max_gap:
-            return False
-        if not all(ws.touching(self.obj, b) for b in self.bases) or ws.touching(self.obj, "table"):
-            return False
-        if not ws.flat(self.obj, self.max_tilt_deg):
-            return False
-        for b in self.bases:
-            if not OnTable(b)(ws) or not ws.flat(b, self.max_tilt_deg) or ws.shift_xy(b) > self.max_base_shift:
-                return False
-            if ws.touching_robot(b) or not ws.at_rest(b, self.max_speed):
-                return False
-        return _released(ws, self.obj, self.max_speed, self.min_tcp_distance)
-
-    def describe(self) -> str:
-        return f"OnTopOf({self.obj}, {self.bases[0]}|{self.bases[1]})"
-
-
 # ------------------------------------------------------------------------------------------------- tasks
 @dataclass(frozen=True)
 class PickPlace:
@@ -808,50 +640,12 @@ class TipOver:
 
 
 @dataclass(frozen=True)
-class FlipInPlace:
-    """Expert plan: ``TipOver`` with ONE fixed motion for every demonstration (consistent data): the jaws always close
-    from the same side (``psi_deg``: closing direction relative to the arm's azimuth, +-90 = tangential) and the wrist
-    always rolls the same way (``roll_dir``). The rolled box turns 180 degrees about the tilted approach axis and is set
-    down where it started; the demonstration ends with a short retreat and hold (no return home). The defaults are the
-    combination that is feasible on the SO-101: closing direction at azimuth - 90 deg keeps the wrist-camera mount above
-    the jaws (at +90 deg it hangs below them and hits the table), rolling in the negative direction."""
-
-    obj: str
-    tilt_deg: float = 45.0
-    psi_deg: float = -90.0
-    roll_dir: int = -1
-
-
-@dataclass(frozen=True)
-class SortIntoRow:
-    """Expert plan: pick the objects one by one in row order (left to right) and put each on its row target (the rule
-    of ``SortedRow``, which this plan mirrors: ``targets`` and ``slot_centroid``)."""
-
-    objs: tuple[str, ...]
-    targets: tuple[tuple[float, float], ...]
-    slot_centroid: tuple[float, float]
-
-    @property
-    def obj(self) -> str:  # the first object handled (single-object diagnostics)
-        return self.objs[0]
-
-
-@dataclass(frozen=True)
-class StackOnPair:
-    """Expert plan: pick ``obj`` and put it on top of two boxes standing side by side, centred on their midpoint."""
-
-    obj: str
-    bases: tuple[str, str]
-
-
-@dataclass(frozen=True)
 class Task:
     task_id: str
     language: str
     layout: Layout
     goal: tuple  # predicates; all must hold
-    plan: (PickPlace | PlaceRelative | PlaceAt | StackOn | PlaceUprightAt | PushBy | TipOver | FlipInPlace | SortIntoRow
-           | StackOnPair | None) = None
+    plan: PickPlace | PlaceRelative | PlaceAt | StackOn | PlaceUprightAt | PushBy | TipOver | None = None
     max_steps: int = 450  # 15 s at 30 Hz
     success_hold_steps: int = 5  # goal must hold this many consecutive control steps
     tags: tuple[str, ...] = field(default_factory=tuple)

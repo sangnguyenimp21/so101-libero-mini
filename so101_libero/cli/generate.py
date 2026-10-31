@@ -243,12 +243,9 @@ def main() -> None:
                "rules_hashes": {t: rules_hash(TASKS[t]) for t in task_ids}}
     root = args.root or Path(os.environ.get("HF_LEROBOT_HOME", "data")) / args.repo_id
     fps = 30.0
-    # Layouts that describe their placements (so101_three_cubes: global layout + starting permutation) also store
-    # layout_id and permutation_id per frame (never policy inputs, like placement_id).
-    cube_layouts = per_placement is not None and all(hasattr(TASKS[t].layout, "placement_info") for t in task_ids)
     writer = DemoWriter(args.repo_id, root, fps=fps, image_size=tuple(args.image_size), overwrite=args.overwrite,
                         episode_meta=per_placement is not None, parallel_encoding=not args.encode_in_process,
-                        vcodec=args.vcodec, extra_meta=("layout_id", "permutation_id") if cube_layouts else ())
+                        vcodec=args.vcodec)
     import dataclasses
     import math as _math
 
@@ -305,8 +302,6 @@ def main() -> None:
                     record["task"] = task.language
                     if per_placement is not None:
                         record["placement_name"] = task.layout.placement_names[record["placement_id"]]
-                    if cube_layouts:
-                        record.update(task.layout.placement_info(record["placement_id"]))
                     idx = writer.add_episode(task.language, res["states"], res["actions"], res["images"], record)
                     where = f" placement {lane} [{schedule.saved[lane]}/{per_placement}]" if per_placement else ""
                     print(f"[{task_id}] seed {s['seed']}{where}: saved episode {idx} ({s['steps']} frames, "

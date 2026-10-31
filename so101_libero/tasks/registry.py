@@ -200,21 +200,3 @@ register(CYLINDER_ASIDE, suite="so101_tri")
 register(CUBE_FLIP, suite="so101_tri")
 retire("green_into_tray")
 register(GREEN_PUSH_FORWARD, suite="so101_tri")
-
-# Suite so101_three_cubes: ONE scene with three plain 3 cm cubes (red, yellow, green), five global layouts, three tasks
-# (so101_libero/tasks/three_cubes.py, docs/THREE_CUBES.md). Every episode starts at HOME. Slots: flip_red_cube 17,
-# sort_ryg 18, build_pyramid 21 (training seeds 1,700,000+, 1,800,000+, 2,100,000+). sort_ryg has 25 placements (5 layouts
-# x 5 starting permutations) and --demos-per-placement draws placement p's seeds from 1,800,000 + p * 10,000, i.e. up to
-# 2,049,999: slots 19 and 20 are reserved for that range, so no two tasks ever share a seed (merged datasets need unique
-# episode seeds).
-from so101_libero.tasks.three_cubes import (BUILD_PYRAMID, FLIP_RED_CUBE, GREEN_RIGHT_OF_RED,  # noqa: E402
-                                            SORT_RYG, STACK_YELLOW_ON_RED)
-
-register(FLIP_RED_CUBE, suite="so101_three_cubes")
-register(SORT_RYG, suite="so101_three_cubes")
-retire("sort_ryg_placements_10_19")
-retire("sort_ryg_placements_20_24")
-register(BUILD_PYRAMID, suite="so101_three_cubes")
-# Added 2026-10-31, both starting from the same row: stack_yellow_on_red 22, green_right_of_red 23.
-register(STACK_YELLOW_ON_RED, suite="so101_three_cubes")
-register(GREEN_RIGHT_OF_RED, suite="so101_three_cubes")

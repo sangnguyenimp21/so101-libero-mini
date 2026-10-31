@@ -28,7 +28,7 @@ EPISODE_META_FEATURES = ("placement_id", "collection_seed")
 
 
 def dataset_features(image_size: tuple[int, int], cameras: tuple[str, ...] = ("front", "wrist"),
-                     episode_meta: bool = False, extra_meta: tuple[str, ...] = ()) -> dict:
+                     episode_meta: bool = False) -> dict:
     h, w = image_size
     feats = {
         "observation.state": {"dtype": "float32", "shape": (6,), "names": list(MOTOR_NAMES)},
@@ -38,7 +38,7 @@ def dataset_features(image_size: tuple[int, int], cameras: tuple[str, ...] = ("f
         feats[f"observation.images.{cam}"] = {"dtype": "video", "shape": (h, w, 3),
                                               "names": ["height", "width", "channels"]}
     if episode_meta:
-        for key in (*EPISODE_META_FEATURES, *extra_meta):
+        for key in EPISODE_META_FEATURES:
             feats[key] = {"dtype": "int64", "shape": (1,), "names": None}
     return feats
 
@@ -48,7 +48,7 @@ class DemoWriter:
 
     def __init__(self, repo_id: str, root: Path, fps: float, image_size: tuple[int, int], overwrite: bool = False,
                  image_writer_threads: int = 8, episode_meta: bool = False, parallel_encoding: bool = True,
-                 vcodec: str = "libsvtav1", extra_meta: tuple[str, ...] = ()):
+                 vcodec: str = "libsvtav1"):
         from lerobot.datasets.lerobot_dataset import LeRobotDataset
 
         self.root = Path(root)
@@ -57,8 +57,6 @@ class DemoWriter:
                 raise FileExistsError(f"{self.root} exists (pass --overwrite to replace it)")
             shutil.rmtree(self.root)
         self.episode_meta = episode_meta
-        # more per-episode int64 features (three-cube suite: layout_id, permutation_id), constant within an episode
-        self.extra_meta = tuple(extra_meta)
         # False: encode each episode's videos in this process instead of LeRobot's per-episode process pool (two new
         # processes per episode); slower, but no memory spikes on small machines.
         self.parallel_encoding = parallel_encoding
@@ -75,8 +73,7 @@ class DemoWriter:
             lerobot_dataset.encode_video_frames = functools.partial(encode_video_frames, vcodec=vcodec)
             self.parallel_encoding = False
         self.ds = LeRobotDataset.create(repo_id, fps=int(round(fps)),
-                                        features=dataset_features(image_size, episode_meta=episode_meta,
-                                                                  extra_meta=self.extra_meta),
+                                        features=dataset_features(image_size, episode_meta=episode_meta),
                                         root=self.root, robot_type="so101_follower", use_videos=True,
                                         image_writer_threads=image_writer_threads, video_backend="pyav")
         self.meta_dir = self.root / "meta"
@@ -89,8 +86,7 @@ class DemoWriter:
         meta = {}
         if self.episode_meta:  # constant per episode (EPISODE_META_FEATURES)
             meta = {"placement_id": np.array([record["placement_id"]], dtype=np.int64),
-                    "collection_seed": np.array([record["seed"]], dtype=np.int64),
-                    **{k: np.array([record[k]], dtype=np.int64) for k in self.extra_meta}}
+                    "collection_seed": np.array([record["seed"]], dtype=np.int64)}
         for t in range(len(actions)):
             frame = {"observation.state": states[t].astype(np.float32), "action": actions[t].astype(np.float32),
                      "task": task, **meta}

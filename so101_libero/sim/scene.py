@@ -29,9 +29,22 @@ TCP_POS = (0.005, 0.0, -0.089)
 MOVING_JAW_BODY = "moving_jaw_so101_v1"
 
 
-# CameraSpec and FRONT_CAMERA (the measured real front camera) live in sim/cameras.py, which needs no MuJoCo (the
-# real-robot completion checks project with them); re-exported here.
-from so101_libero.sim.cameras import FRONT_CAMERA, CameraSpec  # noqa: E402,F401
+@dataclass(frozen=True)
+class CameraSpec:
+    """A fixed world camera defined by position, look-at target and vertical field of view (degrees)."""
+
+    name: str
+    pos: tuple[float, float, float]
+    lookat: tuple[float, float, float]
+    fovy: float = 45.0
+    roll: float = 0.0  # degrees about the viewing axis, applied after the look-at orientation
+
+
+# The real front camera (docs/real_setup/PROMPT.md, measured on the physical setup): 67 cm from the base, looking
+# down ~56 deg at the base from the front, so the robot stands in the upper middle of the square image and the
+# workspace fills its lower part. The real policy image is the centre square of the camera frame resized to
+# 256x256, which this camera renders directly (fovy = vertical field of view of that square).
+FRONT_CAMERA = CameraSpec("front", pos=(0.374, 0.009, 0.557), lookat=(0.005, 0.003, 0.0), fovy=45.0, roll=2.3)
 
 
 @dataclass(frozen=True)
