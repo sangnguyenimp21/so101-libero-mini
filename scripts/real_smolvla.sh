@@ -7,18 +7,16 @@
 #   TASK="Pick up the red cylinder and place it inside the circular container." bash scripts/real_smolvla.sh
 #
 # TASK is a task id (red_cube_aside, red_cube_to_box [default], red_cube_to_black_box, stack_red_on_blue,
-# cylinder_to_tray, cylinder_to_container, cube_to_tray, cylinder_aside, cube_flip, green_push_forward, flip_red_cube,
-# sort_ryg, build_pyramid) or a full instruction; it must be the training instruction of RUN.
+# cylinder_to_tray, cylinder_to_container, cube_to_tray, cylinder_aside, cube_flip, green_push_forward,
+# cylinder_right_of_cube, stack_yellow_on_red, green_right_of_red) or a full instruction; it must be the training instruction of RUN.
 #   RUN=smolvla_real_cube_black_box_100 CKPT=100000 TASK=red_cube_to_black_box bash scripts/real_smolvla.sh
 #   RUN=smolvla_real_stack_red_blue_100 CKPT=100000 TASK=stack_red_on_blue bash scripts/real_smolvla.sh
-#   RUN=sort_ryg CKPT=040000 TASK=sort_ryg bash scripts/real_smolvla.sh
-#   RUN=multitask CKPT=020000 TASK=build_pyramid bash scripts/real_smolvla.sh   # multitask: TASK = flip_red_cube,
-#                                                                                # sort_ryg or build_pyramid
+#   RUN=smolvla_cubes_stack_100 CKPT=080000 TASK=stack_yellow_on_red bash scripts/real_smolvla.sh
 # POLICY: a pretrained_model directory or a Hub model id run instead of RUN/CKPT, with any instruction as TASK.
 # STATS_FROM: the normalization stats (per-joint mean/std): a run (its checkpoint CKPT), or any LeRobot dataset of this
 # arm, as a path or a repo id under ~/.cache/huggingface/lerobot (no training needed); lerobot/smolvla_base needs one (it has no
 # stats for this robot's joints and is refused without). Not fine-tuned: a zero-shot baseline, keep MAX_REL low.
-#   POLICY=lerobot/smolvla_base STATS_FROM=sort_ryg MAX_REL=3 TASK="Pick up the red cube." bash scripts/real_smolvla.sh
+#   POLICY=lerobot/smolvla_base STATS_FROM=smolvla_tri_cube_flip_100 MAX_REL=3 TASK="Pick up the red cube." bash scripts/real_smolvla.sh
 #   POLICY=lerobot/smolvla_base STATS_FROM=local/so101_tri_green_push_100 MAX_REL=3 TASK="..." bash scripts/real_smolvla.sh
 # Environment overrides (defaults in brackets):
 # RUN [smolvla_real_cube_box_500] CKPT [040000]
@@ -41,30 +39,30 @@ set -u
 
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
-RUN="${RUN:-multitask}"
-CKPT="${CKPT:-last}"
-TASK="${TASK:-build_pyramid}"
+RUN="${RUN:-smolvla_tri_cube_flip_100}"
+CKPT="${CKPT:-080000}"
+TASK="${TASK:-cube_flip}"
 
 # LAB Settings
-# PORT="${PORT:-/dev/tty.usbmodem5B610366661}"
-# ROBOT_ID="${ROBOT_ID:-my_follower_sim}"
-# FRONT_CAM="${FRONT_CAM:-2}"
-# WRIST_CAM="${WRIST_CAM:-0}"
-# FRONT_W="${FRONT_W:-1280}"
-# FRONT_H="${FRONT_H:-720}"
-# WRIST_W="${WRIST_W:-320}"
-# WRIST_H="${WRIST_H:-240}"
-# ROBOT_ID="${ROBOT_ID:-my_follower}"
-
-# HOME Settings
-PORT="${PORT:-/dev/tty.usbmodem5C821064861}"
-ROBOT_ID="${ROBOT_ID:-home_follower2}"
+PORT="${PORT:-/dev/tty.usbmodem5B610366661}"
+ROBOT_ID="${ROBOT_ID:-my_follower_sim}"
 FRONT_CAM="${FRONT_CAM:-2}"
 WRIST_CAM="${WRIST_CAM:-0}"
 FRONT_W="${FRONT_W:-1280}"
 FRONT_H="${FRONT_H:-720}"
 WRIST_W="${WRIST_W:-320}"
 WRIST_H="${WRIST_H:-240}"
+# ROBOT_ID="${ROBOT_ID:-my_follower}"
+
+# HOME Settings
+# PORT="${PORT:-/dev/tty.usbmodem5C821064861}"
+# ROBOT_ID="${ROBOT_ID:-home_follower2}"
+# FRONT_CAM="${FRONT_CAM:-2}"
+# WRIST_CAM="${WRIST_CAM:-0}"
+# FRONT_W="${FRONT_W:-1280}"
+# FRONT_H="${FRONT_H:-720}"
+# WRIST_W="${WRIST_W:-320}"
+# WRIST_H="${WRIST_H:-240}"
 
 FPS="${FPS:-30}"
 DURATION="${DURATION:-60}"
@@ -88,10 +86,8 @@ case "$TASK" in
     cylinder_aside) TASK="Pick up the light gray cylinder and put it aside." ;;
     cube_flip) TASK="Pick up the red cube and flip it onto its side." ;;
     green_push_forward) TASK="Push the green semicircular block forward 5 cm." ;;
-    # three-cube suite (so101_libero/tasks/three_cubes.py): RUN=sort_ryg, or RUN=multitask with any of the three
-    flip_red_cube) TASK="Flip the red cube and place it back at its original position." ;;
-    sort_ryg) TASK="Arrange the cubes from left to right as red, yellow, green." ;;
-    build_pyramid) TASK="Place the green cube centered on top of the red and yellow cubes." ;;
+    cylinder_right_of_cube) TASK="Put the light gray cylinder to the right of the red cube." ;;
+    # so101_cubes suite (so101_libero/tasks/cube_tasks.py): RUN=smolvla_cubes_stack_100 / smolvla_cubes_green_right_100
     stack_yellow_on_red) TASK="Put the yellow cube on top of the red cube." ;;
     green_right_of_red) TASK="Move the green cube to the right of the red cube." ;;
 esac

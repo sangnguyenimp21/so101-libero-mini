@@ -1,6 +1,7 @@
 """Suite ``so101_tri``: three language-conditioned tasks in ONE tabletop scene (a fixed white tray on the robot's right,
 an all-red cube, a green half-cylinder, a light gray cylinder) with exactly five predefined initial
-placements.
+placements. A fourth task, cylinder_right_of_cube (2026-10-31), uses the same scene with the cylinder's start spread
+over a 4 x 6 cm rectangle instead (``TRI_CYLINDER_SPREAD_LAYOUT``, at the end of this file).
 
 Directions. Every placement and goal below is built from ``Directions`` (robot frame, never from the table edges):
   FRONT = +x  away from the robot base, towards the front camera (lower in the front image)
@@ -49,8 +50,8 @@ import numpy as np
 
 from so101_libero.sim.objects import ContainerSpec, ObjectSpec
 from so101_libero.sim.robot import REST_DEG
-from so101_libero.tasks.base import (FixedPlacementLayout, OnTableInRegion, PlaceUprightAt, PushBy, PushedBy, Region,
-                                     Task, TipOver, TurnedOnSide, Undisturbed)
+from so101_libero.tasks.base import (FixedPlacementLayout, GridRegion, Layout, OnTableInRegion, PlaceUprightAt, PushBy,
+                                     PushedBy, Region, RelativeTo, Task, TipOver, TurnedOnSide, Undisturbed)
 
 PAN_AXIS_FRONT = 0.0388  # the shoulder's pan axis, along FRONT from the base origin (so101.xml)
 
@@ -104,6 +105,9 @@ class TriTolerances:
     push_max_speed: float = 0.05
     others_max_shift: float = 0.02  # the other objects stay within 2 cm of their start ...
     others_max_tilt_deg: float = 20.0  # ... and within 20 deg of their start orientation
+    right_min_dist: float = 0.04  # cylinder_right_of_cube: its centre >= 4 cm to the robot's right of the cube's ...
+    right_max_lateral: float = 0.03  # ... <= 3 cm in front of or behind it ...
+    right_max_ref_shift: float = 0.01  # ... and the cube moved <= 1 cm
 
 
 @dataclass(frozen=True)
@@ -130,6 +134,14 @@ class TriSceneConfig:
     aside_front: tuple[float, float] = (0.06, 0.13)  # aside zone (the cylinder's centre must end inside it)
     aside_left: tuple[float, float] = (0.16, 0.22)
     push_distance: float = 0.05  # green_push_forward: along FRONT
+    # cylinder_right_of_cube: the cylinder starts anywhere in this rectangle (2 x 3 cells of 2 cm, consecutive seeds
+    # cover every cell; the cube and green block at their default placement). Nearer the pan axis than ~18.5 cm the side
+    # grasp does not reach the table; from 24 cm FRONT on the cylinder leaves the front image.
+    cylinder_start_front: tuple[float, float] = (0.19, 0.23)
+    cylinder_start_left: tuple[float, float] = (0.11, 0.17)
+    cylinder_start_cells: tuple[int, int] = (2, 3)  # along FRONT, along LEFT
+    right_front: tuple[float, float] = (0.20, 0.26)  # the zone to the robot's right of the cube (the cylinder's centre)
+    right_left: tuple[float, float] = (-0.18, -0.115)
     placement_step: float = 0.01
     tolerances: TriTolerances = field(default_factory=TriTolerances)
 
@@ -166,11 +178,28 @@ class TriSceneConfig:
                         for n, p in self.default_positions().items()})
         return tuple(out)
 
-    def aside_zone(self) -> Region:
-        """The aside zone as an axis-aligned world region (default directions; mirrored ones mirror it)."""
-        corners = np.array([self.directions.xy(f, l) for f in self.aside_front for l in self.aside_left])
+    def zone(self, front: tuple[float, float], left: tuple[float, float]) -> Region:
+        """A FRONT x LEFT rectangle as an axis-aligned world region (default directions; mirrored ones mirror it)."""
+        corners = np.array([self.directions.xy(f, l) for f in front for l in left])
         return Region(x=(float(corners[:, 0].min()), float(corners[:, 0].max())),
                       y=(float(corners[:, 1].min()), float(corners[:, 1].max())))
+
+    def aside_zone(self) -> Region:
+        return self.zone(self.aside_front, self.aside_left)
+
+    def right_zone(self) -> Region:
+        return self.zone(self.right_front, self.right_left)
+
+    def cylinder_spread_regions(self) -> dict:
+        """Start regions of cylinder_right_of_cube: the cylinder anywhere in its start rectangle, the cube and the green
+        block fixed at their default placement."""
+        r = self.zone(self.cylinder_start_front, self.cylinder_start_left)
+        default = self.placements()[0]
+        cyl_yaw = default["gray_cylinder"][2]
+        regions = {n: Region(x=(x, x), y=(y, y), yaw=(yaw, yaw)) for n, (x, y, yaw) in default.items()}
+        regions["gray_cylinder"] = GridRegion(x=r.x, y=r.y, nx=self.cylinder_start_cells[0],
+                                              ny=self.cylinder_start_cells[1], yaw=(cyl_yaw, cyl_yaw))
+        return regions
 
 
 TRI_SCENE = TriSceneConfig()
@@ -259,3 +288,34 @@ GREEN_PUSH_FORWARD = Task(
 )
 
 TRI_TASKS = (CYLINDER_ASIDE, CUBE_FLIP, GREEN_PUSH_FORWARD)
+
+# cylinder_right_of_cube (2026-10-31): the same scene (identical compiled MJCF, so the other tasks' data stay valid), but
+# the cylinder starts anywhere in a 4 x 6 cm rectangle instead of the five fixed placements, so the policy has to look
+# where it is (the cylinder_aside policy, trained on +-1 cm, starts on the real arm only near its one trained spot).
+# Same side grasp as cylinder_aside, carried over the green block and the cube and stood upright beside the cube.
+RIGHT_ZONE = _c.right_zone()
+TRI_CYLINDER_SPREAD_LAYOUT = Layout(
+    name="tri_tabletop_v2_cylinder_spread",
+    objects=TRI_LAYOUT.objects,
+    containers=TRI_LAYOUT.containers,
+    regions=_c.cylinder_spread_regions(),
+)
+CYLINDER_RIGHT_OF_CUBE = Task(
+    task_id="cylinder_right_of_cube",
+    language="Put the light gray cylinder to the right of the red cube.",
+    layout=TRI_CYLINDER_SPREAD_LAYOUT,
+    goal=(OnTableInRegion("gray_cylinder", RIGHT_ZONE, region_name="right_of_cube", min_lift=_tol.min_lift,
+                          min_shift=_tol.aside_min_shift, max_speed=_tol.max_speed,
+                          max_tilt_deg=_tol.aside_max_tilt_deg, max_release_offset=_tol.aside_max_release_offset,
+                          min_tcp_distance=_tol.min_tcp_distance),
+          RelativeTo("gray_cylinder", "red_cube", "right", min_dist=_tol.right_min_dist,
+                     max_lateral=_tol.right_max_lateral, max_speed=_tol.max_speed,
+                     max_ref_shift=_tol.right_max_ref_shift),
+          _undisturbed("gray_cylinder")),
+    plan=PlaceUprightAt("gray_cylinder", RIGHT_ZONE),
+    max_steps=600,  # 20 s: the expert reaches the goal at steps ~270-310 (cylinder_aside ~230 of 450)
+    success_hold_steps=_tol.hold_steps,
+    tags=("so101_tri",),
+    start_deg=REST_START,
+    return_to_start=True,
+)

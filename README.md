@@ -252,6 +252,17 @@ full description, commands and limitations in [docs/TRI_TASKS.md](docs/TRI_TASKS
 | `cylinder_aside` | Pick up the light gray cylinder and put it aside. | OnTableIn(gray_cylinder, aside_zone: the robot's left, beside the base), upright, carried ≥ 2 cm high, others undisturbed; side-grasp demonstrations (wrist camera on top, 45° approach) |
 | `cube_flip` | Pick up the red cube and flip it onto its side. | TurnedOnSide(red_cube): its top face turned sideways (tracked body orientation), resting flat ≤ 2 cm from its start, lifted, others undisturbed |
 | `green_push_forward` | Push the green semicircular block forward 5 cm. | PushedBy(green_block, 5 cm forward ± 1 cm, ≤ 1.5 cm sideways), still flat, never carried, others undisturbed |
+| `cylinder_right_of_cube` | Put the light gray cylinder to the right of the red cube. | OnTableIn(gray_cylinder, right_of_cube zone) upright, carried; RightOf(cylinder, red_cube) ≥ 4 cm, cube moved ≤ 1 cm; others undisturbed. Registry index 24; the cylinder starts anywhere in a 4 × 6 cm rectangle (not the 5 placements) |
+
+Suite `so101_cubes` (the so101_tri recipe on a second scene: three plain 3 cm cubes in one row 18.6 cm in front of the
+shoulder's pan axis, 10 cm apart, green on the robot's left, yellow on the centre line, red on the robot's right; five
+placements moving the row by 0 or 1 cm; rest start, demonstrations park at rest; registry indices 22, 23; geometry in
+[so101_libero/tasks/cube_tasks.py](so101_libero/tasks/cube_tasks.py); jobs `slurm/train_smolvla_{stack,green_right}.slurm`):
+
+| id | instruction | goal |
+|---|---|---|
+| `stack_yellow_on_red` | Put the yellow cube on top of the red cube. | On(yellow_cube, red_cube): centre ≤ 1.2 cm from red's, bottom ≤ 4 mm above red's top, flat, released; red moved ≤ 1 cm, green undisturbed |
+| `green_right_of_red` | Move the green cube to the right of the red cube. | RightOf(green_cube, red_cube): ≥ 4 cm to the robot's right, ≤ 2.5 cm in front of or behind it, released; red moved ≤ 1 cm, yellow undisturbed |
 
 Items and start regions (world frame, metres: x forward from the base origin, which lies 3.9 cm behind the shoulder's pan axis, y = the robot's left; uniform x, y, yaw; collision-free rejection sampling with 2 cm
 clearance; the arm starts at a fixed home pose):

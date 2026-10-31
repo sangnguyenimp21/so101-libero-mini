@@ -119,15 +119,19 @@ class Layout:
     def sample(self, rng: np.random.Generator, sizes: dict[str, list[float]] | None = None,
                seed: int | None = None, placement_id: int | None = None) -> dict[str, tuple[float, float, float]]:
         """Sample a collision-free start pose (x, y, yaw) for every item (containers first: they are larger), with
-        object footprints at the episode's ``sizes``. ``seed`` (the episode seed) picks the cell of a GridRegion."""
+        object footprints at the episode's ``sizes``. ``seed`` (the episode seed) picks the cell of a GridRegion.
+        Containers with a ``fixed_pose`` (welded to the table) are obstacles at that pose, never sampled or returned."""
         if placement_id is not None:
             raise ValueError(f"layout {self.name} has no predefined placements")
         sizes = sizes or {}
         items = [*self.containers, *(o.with_size(sizes[o.name]) if o.name in sizes else o for o in self.objects)]
+        fixed = {c.name: tuple(c.fixed_pose) for c in self.containers if c.fixed_pose is not None}
         for _ in range(self.max_tries):
-            poses: dict[str, tuple[float, float, float]] = {}
+            poses: dict[str, tuple[float, float, float]] = dict(fixed)
             ok = True
             for it in items:
+                if it.name in fixed:
+                    continue
                 region = self.regions[it.name]
                 if isinstance(region, RelativeRegion):
                     if region.ref not in poses:
@@ -150,7 +154,7 @@ class Layout:
                     break
                 poses[it.name] = (x, y, yaw)
             if ok:
-                return poses
+                return {k: v for k, v in poses.items() if k not in fixed}
         raise RuntimeError(f"layout {self.name}: no collision-free placement in {self.max_tries} tries")
 
 
@@ -477,6 +481,23 @@ def _released(ws: WorldState, obj: str, max_speed: float, min_tcp_distance: floa
     if ws.touching_robot(obj) or not ws.at_rest(obj, max_speed):
         return False
     return float(np.linalg.norm(ws.tcp_pos() - ws.pos(obj))) >= min_tcp_distance
+
+
+@dataclass(frozen=True)
+class Released:
+    """``obj`` was let go: no robot contact, at rest, the TCP at least ``min_tcp_distance`` from its centre (for goals
+    such as ``RelativeTo`` that do not check it themselves: an evaluation stops at success, so a placement whose open
+    jaws still hang around the object must not count yet)."""
+
+    obj: str
+    max_speed: float = 0.02
+    min_tcp_distance: float = 0.04
+
+    def __call__(self, ws: WorldState) -> bool:
+        return _released(ws, self.obj, self.max_speed, self.min_tcp_distance)
+
+    def describe(self) -> str:
+        return f"Released({self.obj})"
 
 
 @dataclass(frozen=True)

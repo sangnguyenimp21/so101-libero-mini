@@ -99,6 +99,23 @@ goal predicate holds for 10 consecutive control steps (0.33 s, settled). Toleran
 The environment tracks each object's orientation from the start of the episode, so the cube's turn is measured on
 the body, not guessed from the image.
 
+### `cylinder_right_of_cube` (added 2026-10-31, registry index 24)
+
+| task id | instruction | goal | horizon |
+|---|---|---|---|
+| `cylinder_right_of_cube` | Put the light gray cylinder to the right of the red cube. | `OnTableInRegion(right_of_cube)`: centre in the zone 20-26 cm FRONT, 11.5-18 cm RIGHT, upright, ≥ 6 cm from its start, carried ≥ 2 cm high, released where it rests, TCP ≥ 4 cm away. `RightOf(cylinder, cube)`: ≥ 4 cm to the robot's right of the cube, ≤ 3 cm in front of or behind it, the cube moved ≤ 1 cm. `Undisturbed(cube, green)` | 600 steps (20 s) |
+
+Same compiled scene (identical scene hash, so every other dataset and model stays valid), but its own start layout
+(`TRI_CYLINDER_SPREAD_LAYOUT`): the cube and the green block at their default placement, the cylinder ANYWHERE in a
+4 x 6 cm rectangle (19-23 cm FRONT, 11-17 cm LEFT; 2 x 3 cells of 2 cm that consecutive seeds cycle through) instead
+of the five 1 cm placements. Why: the cylinder_aside policy, trained on +-1 cm, starts on the real arm only when the
+cylinder lies within ~3 cm of its one trained image spot. The rectangle is as large as the side grasp allows: nearer
+the pan axis than ~18.5 cm it does not reach the table, and from 24 cm FRONT on the cylinder leaves the front image.
+The expert is cylinder_aside's side grasp (`PlaceUprightAt`), carried over the green block and the cube; it succeeded
+60/60 (goal reached at steps 270-310, demonstrations 380-425 steps with the return to rest). Expert renders from six
+starts: `outputs/debug/cylinder_right_of_cube/expert_starts.png`. Dataset `local/so101_tri_cylinder_right_100`
+(100 plain demonstrations, seeds 2,400,000+), job `slurm/train_smolvla_cylinder_right.slurm` (80k steps).
+
 ## Demonstration controllers (`so101_libero/expert/tri_tasks.py`)
 
 The expert stack is the project's: damped-least-squares IK at every control step with checked convergence, min-jerk
@@ -260,6 +277,7 @@ account/partition) are in `slurm/tri_tasks.env`. Nothing is submitted automatica
 sbatch --account=<account> --partition=<partition> slurm/train_smolvla_cylinder_side.slurm
 sbatch --account=<account> --partition=<partition> slurm/train_smolvla_green_push.slurm
 sbatch --account=<account> --partition=<partition> slurm/train_smolvla_multitask.slurm
+sbatch --account=<account> --partition=<partition> slurm/train_smolvla_cylinder_right.slurm   # not in the multitask
 # larger batch (fits in 96 GB; give it more time):  BATCH_SIZE=64 sbatch --time=20:00:00 slurm/train_smolvla_green_push.slurm
 ```
 
@@ -290,6 +308,7 @@ RUN=smolvla_tri_cylinder_side_100 CKPT=080000 TASK=cylinder_aside bash scripts/r
 RUN=smolvla_tri_cube_flip_100 CKPT=100000 TASK=cube_flip bash scripts/real_smolvla.sh
 RUN=smolvla_tri_green_push_100 CKPT=080000 TASK=green_push_forward bash scripts/real_smolvla.sh
 RUN=smolvla_tri_v3_multitask_300 CKPT=080000 TASK=cube_flip bash scripts/real_smolvla.sh   # one model, any of the three
+RUN=smolvla_tri_cylinder_right_100 CKPT=080000 TASK=cylinder_right_of_cube bash scripts/real_smolvla.sh
 ```
 
 The script sends the exact training instruction for each task id (any other `TASK` text is sent as is). Set up the

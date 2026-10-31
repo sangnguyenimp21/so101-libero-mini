@@ -157,10 +157,12 @@ def main() -> None:
     overview.distance, overview.azimuth, overview.elevation = 0.70, 200.0, -60.0
     m, d, h = env.model, env.data, env.h
 
-    tri = None
+    tri, check_spacing = None, False
     try:
+        from so101_libero.tasks.cube_tasks import CUBES_LAYOUT
         from so101_libero.tasks.tri_tasks import TRI_LAYOUT, TRI_SCENE
         tri = TRI_SCENE if layout is TRI_LAYOUT else None
+        check_spacing = layout is TRI_LAYOUT or layout is CUBES_LAYOUT
     except ImportError:
         pass
     rows, report = [], {"task": args.task, "layout": layout.name, "image_size": args.size, "placements": []}
@@ -192,9 +194,10 @@ def main() -> None:
                        and abs(p[2] - h.objects[name].half_height) < 0.0015 and inside and pixels > 30)
             ok &= o["ok"]
             r["objects"][name] = o
-        if tri is not None:
+        if check_spacing:
             r["layout_cm"], layout_ok = layout_report(env, tri)
             ok &= layout_ok
+        if tri is not None:
             zone = tri.aside_zone()
             zc = np.array([(x, y, z) for x in zone.x for y in zone.y for z in (0.0, 0.06)])
             uv = project(m, d, "front", zc, args.size)

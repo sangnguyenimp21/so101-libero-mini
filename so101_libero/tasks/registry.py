@@ -200,3 +200,23 @@ register(CYLINDER_ASIDE, suite="so101_tri")
 register(CUBE_FLIP, suite="so101_tri")
 retire("green_into_tray")
 register(GREEN_PUSH_FORWARD, suite="so101_tri")
+
+# Suite so101_three_cubes (flip_red_cube 17, sort_ryg 18 with 19-20 reserved for its seed range, build_pyramid 21;
+# HOME start, episode controller) was removed on 2026-10-31; its seed slots stay reserved.
+for _retired in ("flip_red_cube", "sort_ryg", "sort_ryg_placements_10_19", "sort_ryg_placements_20_24", "build_pyramid"):
+    retire(_retired)
+
+# Suite so101_cubes: one scene (three plain 3 cm cubes in a row: green, yellow, red from the robot's left), five fixed
+# placements, the so101_tri recipe (rest start, demonstrations park at rest; so101_libero/tasks/cube_tasks.py). Slots
+# 22, 23 (the ids of the removed suite's last two tasks, which had no data yet): training seeds 2,200,000+
+# (stack_yellow_on_red), 2,300,000+ (green_right_of_red).
+from so101_libero.tasks.cube_tasks import GREEN_RIGHT_OF_RED, STACK_YELLOW_ON_RED  # noqa: E402
+
+register(STACK_YELLOW_ON_RED, suite="so101_cubes")
+register(GREEN_RIGHT_OF_RED, suite="so101_cubes")
+
+# so101_tri, added 2026-10-31: cylinder_right_of_cube, slot 24 (training seeds 2,400,000+). Same scene, but the cylinder
+# starts anywhere in a 4 x 6 cm rectangle (tri_tasks.TRI_CYLINDER_SPREAD_LAYOUT), not in the five placements.
+from so101_libero.tasks.tri_tasks import CYLINDER_RIGHT_OF_CUBE  # noqa: E402
+
+register(CYLINDER_RIGHT_OF_CUBE, suite="so101_tri")
