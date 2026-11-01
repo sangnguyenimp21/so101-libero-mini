@@ -39,9 +39,9 @@ set -u
 
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
-RUN="${RUN:-smolvla_tri_cube_flip_100}"
-CKPT="${CKPT:-080000}"
-TASK="${TASK:-cube_flip}"
+RUN="${RUN:-smolvla_tri_cylinder_right_100}"
+CKPT="${CKPT:-060000}"
+TASK="${TASK:-cylinder_right_of_cube}"
 
 # LAB Settings
 PORT="${PORT:-/dev/tty.usbmodem5B610366661}"
