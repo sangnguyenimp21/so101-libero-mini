@@ -3,9 +3,9 @@
 <!-- RESIDUAL_CURRENT_SUMMARY_START -->
 ## Current summary
 
-- Calm and kickstart PPO training/evaluation chains remain untouched. A separate read-only audit job measures first-50-step residual magnitudes and three stochastic 20-episode trials per current best checkpoint.
-- The PPO selection set is 20 validation episodes: the first 10 states each from `shift_2cm_axis` (31,000,000-series seeds) and `shift_1p5cm_diagonal` (31,300,000-series seeds). It is a subset of the frozen 140 shifted test-state file, **not independent validation states**. This is an evaluation-selection leakage risk; keep the 9/20 result labelled accordingly.
-- Diverse-demo pipeline prepared: regenerate 100 original-placement demonstrations plus 200 new continuous-offset demonstrations with reserved 21M training seeds, then fine-tune the 100k SmolVLA checkpoint and evaluate on the same 190 frozen states. The original 100-demo dataset is unavailable on this cluster; these 100 are regenerated, not byte-identical copies.
+- **Calibration-offset experiment in progress.** Added a wrapper that applies an episode-fixed arm-joint target bias and returns true measured joint positions. Original five cube-flip placements only; gripper bias is zero.
+- Frozen three disjoint new seed ranges: validation 32M (50 states), checkpoint selection 33M (20 states), test 34M (100 states). Each state stores full initial pose and precomputed offsets for L = 0, 2, 4, 6, 8 degrees. Training will use 22M seeds.
+- L* is not selected yet. The validation sweep must finish, and the selected level and sweep must be committed before PPO training. The named kickstart, audit, and diverse-demo jobs are untouched.
 <!-- RESIDUAL_CURRENT_SUMMARY_END -->
 
 ## Step 1 — Understand the code (2026-11-05)
@@ -505,3 +505,13 @@ Complete. The shifted baseline leaves substantial headroom for residual RL, espe
 - Fine-tuning: `qsub -W depend=afterok:1523909.stdct-mgmt-02 scripts/residual/diverse_train.pbs` -> `1523914.stdct-mgmt-02` (held), 20k optimization steps from the 100k checkpoint, 24-hour cap.
 - Evaluation: `qsub -W depend=afterok:1523914.stdct-mgmt-02 scripts/residual/diverse_eval.pbs` -> `1523915.stdct-mgmt-02` (held), original 50 plus all shifted 140, paired fixed/broken summary, 12-hour cap.
 - Outputs: `docs/residual/results/ppo_action_audit.json`, `/scratch/e1638612/datasets/lerobot/local/so101_cube_flip_diverse_300`, `outputs/train/smolvla_cube_flip_diverse_300`, and `docs/residual/results/diverse_demo/`. Monitor with `qstat -awn1` and the corresponding PBS logs.
+
+## Calibration-offset experiment (2026-11-05)
+
+### Phase A: wrapper and frozen sets
+
+- Added `so101_libero/residual/calibration.py`: each reset samples five independent arm-joint biases from uniform [-L,L] using an independent deterministic seed stream; gripper bias always zero. `step` sends `clip(command+b)` to the unchanged simulator. Cameras and measured joint positions are returned unchanged. Bias and commanded/executed targets are recorded in info.
+- Added `make_calibration_states.py`: generated validation (50, seeds 32,000,000-32,000,049), selection (20, 33,000,000-33,000,019), and test (100, 34,000,000-34,000,099). Each uses only the original five placements and saves full initial states plus biases for all sweep levels. These ranges are disjoint from training (22M) and old frozen states (11M/31M).
+- Added baseline evaluator and PBS sweep script. Failure categories: stalled if max absolute arm movement <5 degrees and never lifted; moved-but-missed if >=5 degrees and never lifted; lifted-not-flipped if lifted but unsuccessful. Wilson 95% intervals use the existing repository function.
+- Added separate PPO environment with 31-value observation (true joints, current base action, previous executed target, target-minus-state error, chunk index, previous residual). It exposes no cube pose or expert target; reward is only first-lift 0.2 plus success 1.0. Residual scale is L+2 degrees for arms, 2 native gripper units.
+- The L=0 ten-episode comparison was launched on the interactive GPU; result pending at this log entry. Static `py_compile` passed for new files.
