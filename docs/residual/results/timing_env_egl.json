@@ -1,0 +1,19 @@
+{
+  "backend": "egl",
+  "env_step_no_render": {
+    "render": false,
+    "steps": 100,
+    "mean_ms": 1.004,
+    "median_ms": 1.002,
+    "min_ms": 0.99,
+    "max_ms": 1.101
+  },
+  "env_step_render": {
+    "render": true,
+    "steps": 100,
+    "mean_ms": 2.524,
+    "median_ms": 2.499,
+    "min_ms": 2.396,
+    "max_ms": 3.577
+  }
+}
