@@ -3,9 +3,9 @@
 <!-- RESIDUAL_CURRENT_SUMMARY_START -->
 ## Current summary
 
-- **Calibration-offset experiment in progress.** Added a wrapper that applies an episode-fixed arm-joint target bias and returns true measured joint positions. Original five cube-flip placements only; gripper bias is zero.
-- Frozen three disjoint new seed ranges: validation 32M (50 states), checkpoint selection 33M (20 states), test 34M (100 states). Each state stores full initial pose and precomputed offsets for L = 0, 2, 4, 6, 8 degrees. Training will use 22M seeds.
-- L* is not selected yet. The validation sweep must finish, and the selected level and sweep must be committed before PPO training. The named kickstart, audit, and diverse-demo jobs are untouched.
+- At Valentin's request, calm PPO job `1523669` and dependent evaluation `1523673` were cancelled. Kickstart, action audit, diverse-demo, and calibration jobs were left untouched.
+- Calibration sweep `1523945` is running. If validation finds an L* in the preregistered 30%-70% range, the selection job commits it before PPO training; final evaluation uses the frozen 100-state test and original 50 normal states.
+- A new non-learning calibration baseline is prepared: detect the first steady command/position window, estimate `bias = measured position - command`, then subtract that estimate from later SmolVLA targets. It will run after the PPO final evaluation on the same frozen 100 test episodes, with paired counts and failure types.
 <!-- RESIDUAL_CURRENT_SUMMARY_END -->
 
 ## Step 1 — Understand the code (2026-11-05)
@@ -531,3 +531,11 @@ Complete. The shifted baseline leaves substantial headroom for residual RL, espe
 - `qsub -W depend=afterok:1523970.stdct-mgmt-02 scripts/residual/calibration_train.pbs` -> `1523971.stdct-mgmt-02` (held). It runs the ten-state zero-residual gate, 2-env 2048-step smoke test, then eight-worker 500k-step PPO; wall-time cap 24 h. The exact model is saved at each 100k selection evaluation.
 - `qsub -W depend=afterok:1523971.stdct-mgmt-02 scripts/residual/calibration_eval.pbs` -> `1523972.stdct-mgmt-02` (held). It performs the untouched frozen test and original-50 L=0 comparisons; wall-time cap 16 h.
 - The separately running kickstart PPO and its evaluation, action audit, and diverse-demo pipeline were not cancelled, modified, or resubmitted.
+
+## Calm cancellation and non-learning calibration comparator (2026-11-05)
+
+- User requested `qdel 1523669 1523673` because calm PPO plateaued at baseline. Ran exactly that command. A subsequent `qstat -awn1` no longer listed either job, confirming cancellation. No kickstart, audit, diverse-demo, or calibration job was modified.
+- Added `FirstStillCalibrator` in `so101_libero/residual/still_calibration.py`. It observes only the controller's commanded target and the following true measured joint positions. The **first** ten-step window with all five arm-joint command spans <=0.5 degrees and position spans <=0.3 degrees triggers one fixed estimate: per-joint median(position - command), clipped to [-L*,L*]. All later SmolVLA targets subtract that estimate before the existing calibration-offset wrapper applies the hidden bias. It never reads the wrapper's true bias or `executed_target` diagnostic when choosing actions. Gripper remains uncorrected.
+- Added `evaluate_still_calibration.py`: uses exactly the frozen 100 calibration test states, seeds, and biases at L*, and compares episode by episode against SmolVLA-alone results saved by the calibration final-evaluation job. Reports successes, Wilson CI, three failure types, fixed/broken, exact two-sided McNemar p, estimation coverage, and per-joint bias estimation error. Saves episode details including true and estimated biases for post-hoc analysis.
+- A synthetic unit check passed: a steady +2/-1/+0.5/-3/+4 degree bias was estimated at step 10 with the correct sign, and the later compensation target was its negative. Python compilation passed.
+- New `still_calibration_eval.pbs` is intended to depend on calibration evaluation `1523972`, so test results cannot influence L* or PPO checkpoint choice. It appends measured results to this file and commits the result JSON when complete. Estimated runtime 1-3 h; PBS wall-time cap 6 h.
