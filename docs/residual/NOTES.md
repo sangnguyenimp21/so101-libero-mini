@@ -457,4 +457,5 @@ Complete. The shifted baseline leaves substantial headroom for residual RL, espe
 - Smoke-tested with the Phase C model on two original frozen states: both residual results matched the two saved baseline successes. Empty-set aggregation in limited smoke mode is handled explicitly.
 - The full command will be run only after PBS training produces `docs/residual/results/ppo_main/best_model.zip`:
   `MUJOCO_GL=egl python -u scripts/residual/evaluate_residual.py`.
-- PBS job `1523564.stdct-mgmt-02` was still queued when the evaluator smoke test completed.
+- Training PBS job `1523564.stdct-mgmt-02` started successfully on `GN-A40-018` at 16:23 Singapore time.
+- Submitted dependent evaluation job **`1523590.stdct-mgmt-02`** with `afterok:1523564.stdct-mgmt-02`. It is held until training succeeds, then automatically runs all 190 states, writes plots/videos, calls `finalize_results.py` to replace the short summary at the top of this file and append the measured Phase E results, and commits only the final result paths.
