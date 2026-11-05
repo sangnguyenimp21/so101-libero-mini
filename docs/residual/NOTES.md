@@ -427,3 +427,15 @@ Complete. The shifted baseline leaves substantial headroom for residual RL, espe
 - Saved `docs/residual/results/ppo_smoke/final_model.zip` and a TensorBoard event under `ppo_smoke/tb/PPO_1/`.
 - Post-run check: actor parameters are finite; mean absolute output-layer weight changed from exactly zero to 0.00165, and six log standard deviations remained near -1.0. The smoke rollout was only 256 steps per worker, so no worker completed a full 450-step failure episode; an empty monitor body is expected.
 - At 21 steps/s, 1,000,000 total transitions project to about 13.2 hours of rollout, plus PPO updates and periodic evaluation. The full job should fit within the 24-hour limit but is too long for an interactive session.
+
+## Phase D / Step 9 — Full PBS training submission (2026-11-05)
+
+### Batch job
+
+- Added `scripts/residual/train_ppo.pbs` with project `personal-e1638612`, one GPU, 36 CPUs, 24-hour wall time, `MUJOCO_GL=egl`, eight environments, 1,000,000 target transitions, 20 frozen evaluation episodes every 100,000 steps, checkpoints every 100,000 steps, and TensorBoard logs.
+- The script is resumable: it finds the latest `ppo_residual_*_steps.zip`, extracts completed steps, and trains only the difference to the 1,000,000-step target. It exits without duplicating training if the target checkpoint already exists.
+- Estimated runtime from the successful smoke throughput: 14--18 hours including PPO updates and ten periodic evaluations.
+- Submission command: `mkdir -p docs/residual/results/ppo_main && qsub scripts/residual/train_ppo.pbs`.
+- PBS job: **`1523564.stdct-mgmt-02`**, name `so101_residual_ppo`, queue `batch_gpu`.
+- State immediately after submission: `Q` (queued), scheduler comment `Insufficient amount of resource: node_pool`. This means no matching GPU node was free at that moment; submission itself succeeded.
+- Batch log path: `docs/residual/results/ppo_main/pbs.log`.

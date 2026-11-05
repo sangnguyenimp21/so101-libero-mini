@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+#PBS -N so101_residual_ppo
+#PBS -P personal-e1638612
+#PBS -l select=1:ncpus=36:mpiprocs=1:ompthreads=36:ngpus=1
+#PBS -l walltime=24:00:00
+#PBS -j oe
+#PBS -o /scratch/e1638612/so101-libero-mini/docs/residual/results/ppo_main/pbs.log
+
+set -euo pipefail
+
+RESIDUAL_REPO=/scratch/e1638612/so101-libero-mini
+RESIDUAL_RUN_DIR="$RESIDUAL_REPO/docs/residual/results/ppo_main"
+RESIDUAL_TARGET_STEPS=1000000
+
+cd "$RESIDUAL_REPO"
+source /scratch/e1638612/miniforge3/bin/activate
+conda activate so101lm
+
+export MUJOCO_GL=egl
+export PYTHONUNBUFFERED=1
+export SO101_TORCH_THREADS=2
+export OMP_NUM_THREADS=2
+
+mkdir -p "$RESIDUAL_RUN_DIR/checkpoints" "$RESIDUAL_RUN_DIR/tb"
+
+RESIDUAL_COMPLETED_STEPS=0
+RESIDUAL_RESUME_ARGS=()
+RESIDUAL_LATEST_CHECKPOINT=$(find "$RESIDUAL_RUN_DIR/checkpoints" -maxdepth 1 -type f \
+    -name 'ppo_residual_*_steps.zip' -print | sort -V | tail -n 1 || true)
+if [[ -n "$RESIDUAL_LATEST_CHECKPOINT" ]]; then
+    RESIDUAL_COMPLETED_STEPS=$(basename "$RESIDUAL_LATEST_CHECKPOINT" | \
+        sed -E 's/^ppo_residual_([0-9]+)_steps\.zip$/\1/')
+    RESIDUAL_RESUME_ARGS=(--resume "$RESIDUAL_LATEST_CHECKPOINT")
+fi
+
+RESIDUAL_REMAINING_STEPS=$((RESIDUAL_TARGET_STEPS - RESIDUAL_COMPLETED_STEPS))
+if (( RESIDUAL_REMAINING_STEPS <= 0 )); then
+    echo "Training target already reached at checkpoint step $RESIDUAL_COMPLETED_STEPS"
+    exit 0
+fi
+
+echo "Starting residual PPO: completed=$RESIDUAL_COMPLETED_STEPS remaining=$RESIDUAL_REMAINING_STEPS"
+python -u scripts/residual/train_ppo.py \
+    --run-dir "$RESIDUAL_RUN_DIR" \
+    --total-timesteps "$RESIDUAL_REMAINING_STEPS" \
+    --num-envs 8 \
+    --n-steps 256 \
+    --batch-size 256 \
+    --eval-episodes 20 \
+    --eval-freq 100000 \
+    --checkpoint-freq 100000 \
+    "${RESIDUAL_RESUME_ARGS[@]}"
