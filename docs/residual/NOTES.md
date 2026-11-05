@@ -3,12 +3,9 @@
 <!-- RESIDUAL_CURRENT_SUMMARY_START -->
 ## Current summary
 
-- The original PPO run was cancelled at 231,424 transitions because its frozen evaluation was 5/20 at both 100k and 200k, below the 9/20 SmolVLA baseline.
-- Replacement variants are prepared: **calm** (late scale 1.5 degrees) and **kickstart** (late scale zero); both use log-std -2, learning rate 1e-4, target KL 0.02, and a 5-degree first-chunk scale.
-- Each run saves the exact model at every evaluation. Timestep zero is the initial 9/20 incumbent, so an inferior learned model cannot become `best_model`.
-- Each training run has its own dependent matched evaluation of the best-eval and final checkpoints, including paired fixed/broken counts and exact McNemar tests on the 80 target states.
-- PBS chains: calm training `1523669` -> evaluation `1523673`; kickstart training `1523671` -> evaluation `1523674`. Both training jobs are queued; both evaluation jobs are dependency-held.
-- The residual uses privileged cube pose and is simulation-only.
+- Calm and kickstart PPO training/evaluation chains remain untouched. A separate read-only audit job measures first-50-step residual magnitudes and three stochastic 20-episode trials per current best checkpoint.
+- The PPO selection set is 20 validation episodes: the first 10 states each from `shift_2cm_axis` (31,000,000-series seeds) and `shift_1p5cm_diagonal` (31,300,000-series seeds). It is a subset of the frozen 140 shifted test-state file, **not independent validation states**. This is an evaluation-selection leakage risk; keep the 9/20 result labelled accordingly.
+- Diverse-demo pipeline prepared: regenerate 100 original-placement demonstrations plus 200 new continuous-offset demonstrations with reserved 21M training seeds, then fine-tune the 100k SmolVLA checkpoint and evaluate on the same 190 frozen states. The original 100-demo dataset is unavailable on this cluster; these 100 are regenerated, not byte-identical copies.
 <!-- RESIDUAL_CURRENT_SUMMARY_END -->
 
 ## Step 1 — Understand the code (2026-11-05)
@@ -491,3 +488,12 @@ Complete. The shifted baseline leaves substantial headroom for residual RL, espe
 - Kickstart training: **`1523671.stdct-mgmt-02`**; dependent kickstart evaluation: **`1523674.stdct-mgmt-02`**.
 - Both training jobs entered `batch_gpu` in queued state because no node was immediately free. Both evaluation jobs are correctly held with their respective `afterok` dependency.
 - Each evaluation automatically runs both the selected best-eval checkpoint and the final checkpoint, updates this file, and commits its scoped result files. A Git lock serializes finalization if both evaluations finish close together.
+
+## Diverse-demo follow-up (2026-11-05)
+
+- Confirmed `residual-rl` branch and preserved the running calm `1523669` and kickstart `1523671` jobs and their held evaluations. No files in those run directories were edited.
+- Read `train_ppo.py`: the 20 selection episodes are a balanced prefix of two files from the 140 frozen shifted test states. Their 31M-series seeds are disjoint from 20M-series training seeds, but they are **not a separate validation set**. Corrected the short summary above.
+- The 100 original LeRobot demonstrations were not found at the README's `/scratch/e1583535/datasets/lerobot/local/so101_tri_cube_flip_100` nor under the current user's scratch. The pipeline regenerates 100 from the five original placements and records that provenance. The 200 additional episodes use `training_offset` and new 21M-series training seeds only; expert failures are rejected and logged.
+- Added `generate_diverse_demos.py`, separate generation/fine-tune/evaluation PBS scripts, paired-summary generator, and the read-only PPO action audit script. Generation uses the repository `DemoWriter`, and fine-tuning uses `scripts/train.sh` with the existing 100k checkpoint as `--policy.path`; frozen original 50 and shifted 140 evaluations reuse the existing scripts and start-state files.
+- Note correction: kickstart `config.json` records late arm scale zero but late gripper scale 5.0, so the gripper can still receive later residual corrections. The audit loads the actual saved scales.
+- Static verification: all new Python scripts compiled with `py_compile`. Runtime results are pending PBS jobs.

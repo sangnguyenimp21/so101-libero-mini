@@ -1,0 +1,16 @@
+#!/bin/bash
+#PBS -N diverse_eval
+#PBS -P personal-e1638612
+#PBS -l select=1:ncpus=16:mpiprocs=1:ompthreads=16:ngpus=1
+#PBS -l walltime=12:00:00
+#PBS -j oe
+#PBS -o /scratch/e1638612/so101-libero-mini/docs/residual/results/diverse_demo/eval.log
+set -euo pipefail
+cd /scratch/e1638612/so101-libero-mini
+source /scratch/e1638612/miniforge3/bin/activate
+conda activate so101lm
+export MUJOCO_GL=egl
+MODEL=outputs/train/smolvla_cube_flip_diverse_300/checkpoints/last/pretrained_model
+python -m so101_libero.cli.evaluate --policy "$MODEL" --tasks cube_flip --episodes 50 --videos 0 --workers 2 --out docs/residual/results/diverse_demo/original_50
+python -u scripts/residual/evaluate_shifted_baseline.py --policy "$MODEL" --workers 2 --failure-videos 0 --out docs/residual/results/diverse_demo/shifted_140
+python -u scripts/residual/summarize_diverse.py
