@@ -1,0 +1,26 @@
+#!/bin/bash
+#PBS -N calibration_select
+#PBS -P personal-e1638612
+#PBS -l select=1:ncpus=1:mpiprocs=1:ompthreads=1
+#PBS -l walltime=00:30:00
+#PBS -j oe
+#PBS -o /scratch/e1638612/so101-libero-mini/docs/residual/results/calibration/select.log
+set -euo pipefail
+cd /scratch/e1638612/so101-libero-mini
+source /scratch/e1638612/miniforge3/bin/activate
+conda activate so101lm
+python -u scripts/residual/select_calibration_level.py
+python - <<'PY'
+import json
+from pathlib import Path
+root=Path('docs/residual/results/calibration')
+s=json.loads((root/'selection.json').read_text())
+sweep=json.loads((root/'validation_sweep.json').read_text())['levels']
+p=Path('docs/residual/NOTES.md')
+with p.open('a') as f:
+ f.write('\n### Calibration validation sweep and locked choice\n\n')
+ for L,r in sweep.items():
+  f.write(f"- L={L} degrees: {r['successes']}/{r['n']}, Wilson 95% {r['wilson95']}; failures {r['failures']}.\n")
+ f.write(f"- Predeclared rule selected **L*={s['chosen_L_deg']} degrees**, before any PPO training. The frozen test set was not read for this choice.\n")
+PY
+flock /tmp/so101_residual_git.lock bash -c 'git add docs/residual/NOTES.md docs/residual/results/calibration/zero_test.json docs/residual/results/calibration/validation_sweep.json docs/residual/results/calibration/selection.json && git commit -m "residual: lock calibration offset from validation sweep"'

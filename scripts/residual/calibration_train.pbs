@@ -1,0 +1,15 @@
+#!/bin/bash
+#PBS -N calibration_ppo
+#PBS -P personal-e1638612
+#PBS -l select=1:ncpus=36:mpiprocs=1:ompthreads=36:ngpus=1
+#PBS -l walltime=24:00:00
+#PBS -j oe
+#PBS -o /scratch/e1638612/so101-libero-mini/docs/residual/results/calibration/train.log
+set -euo pipefail
+cd /scratch/e1638612/so101-libero-mini
+source /scratch/e1638612/miniforge3/bin/activate
+conda activate so101lm
+export MUJOCO_GL=egl PYTHONPATH=. OMP_NUM_THREADS=2
+python -u scripts/residual/test_calibration_zero.py
+python -u scripts/residual/train_calibration_ppo.py --smoke --num-envs 2 --total-timesteps 2048 --eval-freq 1000000 --out docs/residual/results/calibration/smoke
+python -u scripts/residual/train_calibration_ppo.py --num-envs 8 --total-timesteps 500000 --eval-freq 100000 --out docs/residual/results/calibration/ppo
