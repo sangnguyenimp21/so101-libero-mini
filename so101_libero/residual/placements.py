@@ -18,6 +18,7 @@ TRAIN_SEED_MAX = 29_999_999
 TRAIN_X_RANGE_M = (-0.015, 0.03)
 TRAIN_Y_RANGE_M = (-0.02, 0.02)
 _TRAIN_STREAM = 5_731
+_WEIGHTED_TRAIN_STREAM = 8_119
 
 
 @dataclass(frozen=True)
@@ -113,6 +114,28 @@ def training_offset(seed: int) -> tuple[float, float]:
 def training_init_state(seed: int) -> dict:
     """Return the reproducible continuous-offset state for one training episode."""
     return shifted_init_state(*training_offset(seed))
+
+
+def weighted_training_offset(seed: int, focus_probability: float = 0.75) -> tuple[float, float]:
+    """Sample the training rectangle, weighted toward 1.5--2.5 cm radial shifts.
+
+    The remaining samples are uniform over the full approved rectangle.  The
+    focused component is rejection-sampled so it never crosses that rectangle.
+    """
+    if not TRAIN_SEED_MIN <= seed <= TRAIN_SEED_MAX:
+        raise ValueError(f"training seed {seed} is outside [{TRAIN_SEED_MIN}, {TRAIN_SEED_MAX}]")
+    if not 0.0 <= focus_probability <= 1.0:
+        raise ValueError("focus_probability must be in [0, 1]")
+    rng = np.random.default_rng([int(seed), _WEIGHTED_TRAIN_STREAM])
+    if rng.random() >= focus_probability:
+        return float(rng.uniform(*TRAIN_X_RANGE_M)), float(rng.uniform(*TRAIN_Y_RANGE_M))
+    for _ in range(10_000):
+        radius = rng.uniform(0.015, 0.025)
+        angle = rng.uniform(-np.pi, np.pi)
+        dx, dy = radius * np.cos(angle), radius * np.sin(angle)
+        if TRAIN_X_RANGE_M[0] <= dx <= TRAIN_X_RANGE_M[1] and TRAIN_Y_RANGE_M[0] <= dy <= TRAIN_Y_RANGE_M[1]:
+            return float(dx), float(dy)
+    raise RuntimeError("failed to sample a focused training offset")
 
 
 def training_region_tag(dx: float, dy: float, atol: float = 1e-12) -> str:

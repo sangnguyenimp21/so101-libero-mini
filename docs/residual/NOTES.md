@@ -380,3 +380,25 @@ Complete. The shifted baseline leaves substantial headroom for residual RL, espe
 ### Decision for Phase B
 
 - Use an early arm scale of 5 degrees for steps 0--49 and a later arm scale in the requested 2--3 degree range. Keep the gripper scale separately configurable in its native 0--100 units.
+
+## Phase B / Step 7 — Residual environment (2026-11-05)
+
+### Implementation
+
+- Added `so101_libero/residual/residual_env.py` without changing the existing simulator, policy runner, task, expert, or training code.
+- `ResidualSO101Env` loads SmolVLA once, sets evaluation mode, disables gradients on every parameter, and calls it only through the existing inference-only runner. SmolVLA remains frozen.
+- Residual action space is `[-1, 1]^6`. The final absolute target is clipped to the simulator's joint limits after `base_action + scale * residual_action`.
+- Time-dependent scale uses the Phase A winner: 5 degrees per arm joint for steps 0--49, then 2.5 degrees. Gripper scale is separately configurable and defaults to 5 native units both early and late.
+- The 20-value residual observation is: normalized measured joints (6), normalized current SmolVLA action (6), step within the 50-action chunk (1), cube world position (3), and cube world quaternion (4).
+- **The cube pose and expert-derived grasp point are privileged simulator signals. This environment is sim-only.** `use_cube_pose=False` is supported for a future ablation, reducing the observation to 13 values.
+- Dense reward is potential progress toward the expert's collision-checked grasp point: `previous_distance - current_distance` in metres (scale 1.0), plus 0.2 once on the first 2 cm lift and 1.0 on task success. Progress shaping avoids rewarding the agent for merely waiting near the target.
+- Training resets use only reserved training seeds and remain inside the approved rectangle. Added deterministic `weighted_training_offset()` to `placements.py`: 75% focused sampling at radial shifts 1.5--2.5 cm, 25% uniform over the full rectangle. Rejection sampling enforces the asymmetric approved bounds.
+- A 1,000-seed probe gave 1,000/1,000 inside-region offsets and 858/1,000 at 1.5--2.5 cm radial distance (the total exceeds 75% because part of the uniform component also falls in that band).
+
+### Mandatory zero-residual test
+
+- Added `scripts/residual/test_zero_residual.py` and ran it on the first ten frozen original states against the saved reproduced baseline.
+- Command: `MUJOCO_GL=egl python -u scripts/residual/test_zero_residual.py`.
+- Result: **10/10 zero-residual successes, exactly matching 10/10 saved SmolVLA-alone successes.** Success steps were 247, 264, 252, 248, 249, 251, 256, 244, 250, and 247.
+- Output: `docs/residual/results/zero_residual_test.json`, with `matches_saved_baseline=true`.
+- Step 7 mandatory condition passes; it is safe to proceed to PPO smoke testing.
