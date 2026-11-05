@@ -184,3 +184,99 @@ Wait for Valentin's review. Step 5 must first propose the continuous training of
 - Persisted `MUJOCO_GL=egl` in the `so101lm` conda environment with `conda env config vars set -n so101lm MUJOCO_GL=egl`. Reactivating the environment now sets both `MUJOCO_GL=egl` and `HF_HOME=/scratch/e1638612/hf_cache`.
 - Added `os.environ.setdefault("MUJOCO_GL", "egl")` before MuJoCo-related imports in every current residual Python script (`debug_episode.py`, `timing.py`). Explicit commands can still override it with `MUJOCO_GL=osmesa` for backend comparisons.
 - No residual shell or PBS job scripts exist yet. Future residual job scripts must explicitly export `MUJOCO_GL=egl` as well as relying on the conda environment default.
+
+## Step 5 — New placements (stopped on expert failure, 2026-11-05)
+
+### Approved design and implementation
+
+- Added `so101_libero/residual/placements.py`. It copies the original default cube-flip initial state and translates all three movable objects together, preserving the robot pose, object spacing, and every yaw. The existing task and `init_states/cube_flip.json` are unchanged.
+- Continuous training offsets use independent uniform `dx, dy` samples in `[-0.03, 0.03]` m, deterministically generated from training-only seeds `20,000,000` through `29,999,999`.
+- Defined four proposed frozen evaluation sets, each with four interleaved offsets and ten seeds per offset (40 states): axis-aligned 2 cm, axis-aligned 3 cm, axis-aligned 4 cm, and diagonals `(±2, ±2)` cm. Their disjoint seed bases are 31,000,000, 31,100,000, 31,200,000, and 31,300,000.
+- Added `scripts/residual/make_placements.py`. It requires a visible NVIDIA GPU and `MUJOCO_GL=egl`, checks representative training placements and all unique evaluation layouts, then runs the scripted expert sequentially. It deliberately stops at the first failure and has no seed rejection or replacement path. Frozen JSON files and render sheets are written only if every expert check passes.
+- Geometry checks cover settling, yaw, table-only contacts, table bounds, object/tray separation, and actual front-camera visibility. A conservative three-pixel full-bounding-box margin is recorded but is not a safety failure when an object still has sufficient rendered pixels. This distinction was needed at the `(forward 3 cm, right 3 cm)` training corner: all physical checks passed and the objects had 354–413 visible pixels, but their bounding boxes crossed that margin.
+
+### GPU-node validation and stopping condition
+
+- Node check: `GN-A40-035`, NVIDIA A40. All placement validation and rendering commands used `MUJOCO_GL=egl` on this node.
+- A preliminary timing/smoke check of the first 4 cm forward state (seed 31,200,000) succeeded in 375 steps and took 2.36 s. This was used only to estimate the full sequential command at 7–8 minutes.
+- Approved full command:
+  `source /scratch/e1638612/miniforge3/bin/activate && conda activate so101lm && MUJOCO_GL=egl python -u scripts/residual/make_placements.py`
+- The initial launch exposed a script import-path bug before validation began; the script was fixed to add the repository root to `sys.path`.
+- Training geometry probes passed after treating the image margin as informational rather than a collision/safety condition.
+- **Axis-aligned 2 cm: 40/40 scripted-expert checks passed.**
+- Axis-aligned 3 cm: the forward state at seed 31,100,000 passed, then the first backward state at seed **31,100,001 failed** after 18 steps. Exact failure:
+  `plan:no feasible grasp (unreachable pos=[0.204, -0.067, 0.016])`.
+- Validation stopped immediately as requested. The remaining 38 axis-aligned 3 cm states, all 4 cm states in the full run, and all diagonal states were not run. Renders were not generated, and none of the four frozen evaluation JSON files were finalized.
+- Partial machine-readable results are in `docs/residual/placements/validation_report.json`: `all_ok=false`, 40/40 passes for `shift_2cm_axis`, and 1/2 passes for the attempted `shift_3cm_axis` states.
+
+### Status / decision needed
+
+Step 5 is incomplete and paused for Valentin's decision. Do not replace the failing seed, change the expert, shrink the requested shift, or continue validation without explicit approval.
+
+## Step 5 follow-up — Reach diagnosis and feasibility map (2026-11-05)
+
+### Why the 3 cm-backward expert failed
+
+- Diagnosed the unchanged state at offset `dx=-0.03 m, dy=0`, seed 31,100,001. The settled cube centre is `(0.202, -0.072)` m, only **17.83 cm from the shoulder pan axis**.
+- Both permitted cube-grasp orientations have a reachable pre-grasp at 8 cm TCP height, but the low grasp at 1.65 cm TCP height is outside the expert's conservative endpoint limits.
+- With the expert's 4-degree endpoint margin, the elbow saturates at **86.0 degrees** and the best IK solution remains about **14.5 mm** from the target. With the path solver's smaller 1.15-degree margin, IK succeeds at approximately **88.85 degrees**; the physical joint limit is 90 degrees.
+- Therefore this is a near-base reach/elbow-limit problem caused by the expert's deliberate safety margin, not a bad reset, collision, or random seed. The physical arm can mathematically reach the pose only very close to its elbow limit, where the expert refuses to place a segment endpoint because it would leave no path slack.
+
+### Expert-only feasibility grid
+
+- Added `scripts/residual/check_feasibility_grid.py`. It does not create frozen evaluation states. It translates the full movable-object group over a 17 x 17 grid: `dx,dy = -4.0 ... +4.0 cm` in 0.5 cm increments.
+- Each of the 289 cells uses one unique recorded seed, 32,000,000 through 32,000,288. It runs a complete physics-only scripted-expert episode and saves the CSV after every cell so the run is resumable.
+- Approved command, run on `GN-A40-035` with the NVIDIA A40 and EGL:
+  `source /scratch/e1638612/miniforge3/bin/activate && conda activate so101lm && MUJOCO_GL=egl python -u scripts/residual/check_feasibility_grid.py`
+- Result: **211/289 expert successes; 78 failures**.
+  - 56 failures: low grasp unreachable near the base.
+  - 21 failures: gripper or moving jaw would collide with the fixed white tray, mostly in the backward-right part of the grid.
+  - 1 isolated failure at `(dx=0, dy=-2.5 cm)`: `blocked`. Its surrounding cells pass, so this is likely rollout/seed sensitivity rather than a geometric boundary. The one-seed grid is a screening map, not proof that every green point succeeds for every seed.
+- Minimum successful grid `dx` changes with `dy`: `-2.0 cm` for `dy <= +1.0 cm`, `-1.5 cm` for `dy=+1.5...+2.5 cm`, and `-1.0 cm` for `dy>=+3.0 cm`. Every tested point from those boundaries through `dx=+4 cm` passed except the isolated blocked cell.
+- Outputs:
+  - `docs/residual/placements/expert_feasibility_grid.csv`
+  - `docs/residual/placements/expert_feasibility_grid.png`
+  - `docs/residual/placements/expert_feasibility_grid_summary.json`
+
+### Proposed replacement design — waiting for approval
+
+- **Training region:** sample continuously and uniformly from the conservative rectangle `dx in [-1.5, +3.0] cm`, `dy in [-2.0, +2.0] cm`. All 90 tested grid cells in this rectangle passed. It retains shifts beyond the original +/-1 cm data while staying 0.5 cm inside most of the observed backward reach boundary. Use the existing training-only 20,000,000-series seeds.
+- **Frozen evaluation A — axis 2 cm:** four directions x 10 seeds = 40 states. These already passed 40/40 in the earlier strict validation.
+- **Frozen evaluation B — diagonal 1.5 cm:** `(±1.5, ±1.5) cm`, four corners x 10 seeds = 40 states. All four grid-screening cells passed. This replaces `(±2, ±2) cm`, whose backward-left corner failed the feasibility screen.
+- **Frozen evaluation C — feasible axis 3 cm:** forward, left, and right only x 10 seeds = 30 states. Do not include backward 3 cm; it is outside the expert-feasible area.
+- **Frozen evaluation D — feasible axis 4 cm:** forward, left, and right only x 10 seeds = 30 states. This is the beyond-training test. Do not include backward 4 cm.
+- Report the direction omission explicitly rather than pretending the feasible workspace is symmetric. After approval, every proposed frozen state must again pass the scripted expert; stop and report the first failure, with no silent seed replacement. Generate render sheets only after all checks pass, on the GPU node.
+
+No replacement frozen JSON files have been created. The earlier proposed set definitions in code are not finalized and must be revised only after Valentin approves this replacement design.
+
+## Step 5 completion — Approved frozen sets (2026-11-05)
+
+### Final design
+
+- Valentin approved the replacement design with one addition: every state is tagged `in-training-region` or `out-of-training-region`, and later policy results must be reported separately for those groups.
+- The continuous training rectangle is inclusive: `dx in [-1.5, +3.0] cm`, `dy in [-2.0, +2.0] cm`. `so101_libero/residual/placements.py` is the single source of truth for these bounds, the seeded training sampler, and state classification.
+- Final frozen sets:
+  - `shift_2cm_axis`: 40 states, four directions. 30 in-region and 10 out-of-region; the ten 2 cm-backward states are out-of-region.
+  - `shift_1p5cm_diagonal`: 40 states, four diagonal corners. All 40 are in-region.
+  - `shift_3cm_axis_feasible`: 30 states, forward/left/right only. The ten forward states are in-region; the 20 left/right states are out-of-region.
+  - `shift_4cm_axis_feasible`: 30 states, forward/left/right only. All 30 are out-of-region and beyond training.
+- Total: **140 states: 80 in-training-region, 60 out-of-training-region**. Each state stores `training_region_tag`; each file and the validation report store normalized per-tag counts, including explicit zero counts.
+- Backward 3 cm and 4 cm remain explicitly omitted because the feasibility map showed that the scripted expert cannot safely reach them. There is no silent seed rejection or replacement.
+
+### Final GPU-node validation
+
+- Approved and ran on `GN-A40-035` / NVIDIA A40 with EGL:
+  `source /scratch/e1638612/miniforge3/bin/activate && conda activate so101lm && MUJOCO_GL=egl python -u scripts/residual/make_placements.py`
+- All geometry probes and **all 140/140 scripted-expert episodes passed**. The separate group result is **80/80 in-training-region** and **60/60 out-of-training-region**.
+- All JSON files were re-read and checked for state count, tag count, and expert success. The 4 cm montage was visually inspected; front, wrist, and overview panels correctly show the three approved directions.
+- Frozen files and render sheets:
+  - `docs/residual/placements/shift_2cm_axis.{json,png}`
+  - `docs/residual/placements/shift_1p5cm_diagonal.{json,png}`
+  - `docs/residual/placements/shift_3cm_axis_feasible.{json,png}`
+  - `docs/residual/placements/shift_4cm_axis_feasible.{json,png}`
+  - `docs/residual/placements/validation_report.json`
+- `validation_report.json` has `all_ok=true` and an `evaluation_group_summary` with the two required groups.
+
+### Step 5 status
+
+Complete. Do not start Step 6 until Valentin reviews these results. Step 6 must evaluate the frozen SmolVLA baseline on exactly these saved states and report both per-set results and the aggregate in-training-region versus out-of-training-region split.

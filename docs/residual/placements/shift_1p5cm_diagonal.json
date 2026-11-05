@@ -1,0 +1,1790 @@
+{
+ "task_id": "cube_flip",
+ "language": "Pick up the red cube and flip it onto its side.",
+ "layout": "tri_tabletop_v2",
+ "scene_hash": "ed247767175798ad",
+ "rules_hash": "77d46ce94323e9a5",
+ "set_id": "shift_1p5cm_diagonal",
+ "description": "Diagonal group shifts at all (plus/minus 1.5 cm, plus/minus 1.5 cm) combinations.",
+ "seed_base": 31300000,
+ "num": 40,
+ "repeats_per_offset": 10,
+ "training_region": {
+  "dx_m": [
+   -0.015,
+   0.03
+  ],
+  "dy_m": [
+   -0.02,
+   0.02
+  ],
+  "inclusive": true
+ },
+ "training_region_counts": {
+  "in-training-region": 40,
+  "out-of-training-region": 0
+ },
+ "rejected_candidates": [],
+ "states": [
+  {
+   "seed": 31300000,
+   "init_state": {
+    "robot_qpos": [
+     0.0,
+     -1.6406094968746698,
+     1.4311699866353502,
+     1.1868238913561442,
+     0.0,
+     -0.116937134
+    ],
+    "items": {
+     "gray_cylinder": [
+      0.21500000000000002,
+      0.14500000000000002,
+      0.0
+     ],
+     "green_block": [
+      0.24,
+      0.045,
+      0.0
+     ],
+     "red_cube": [
+      0.247,
+      -0.056999999999999995,
+      -0.3567270763852024
+     ]
+    }
+   },
+   "offset_label": "forward_left",
+   "offset_m": [
+    0.015,
+    0.015
+   ],
+   "training_region_tag": "in-training-region",
+   "repeat": 0,
+   "index": 0,
+   "expert": {
+    "success": true,
+    "failure": null,
+    "steps": 359,
+    "success_step": 241
+   }
+  },
+  {
+   "seed": 31300001,
+   "init_state": {
+    "robot_qpos": [
+     0.0,
+     -1.6406094968746698,
+     1.4311699866353502,
+     1.1868238913561442,
+     0.0,
+     -0.116937134
+    ],
+    "items": {
+     "gray_cylinder": [
+      0.21500000000000002,
+      0.115,
+      0.0
+     ],
+     "green_block": [
+      0.24,
+      0.015,
+      0.0
+     ],
+     "red_cube": [
+      0.247,
+      -0.087,
+      -0.3567270763852024
+     ]
+    }
+   },
+   "offset_label": "forward_right",
+   "offset_m": [
+    0.015,
+    -0.015
+   ],
+   "training_region_tag": "in-training-region",
+   "repeat": 0,
+   "index": 1,
+   "expert": {
+    "success": true,
+    "failure": null,
+    "steps": 369,
+    "success_step": 250
+   }
+  },
+  {
+   "seed": 31300002,
+   "init_state": {
+    "robot_qpos": [
+     0.0,
+     -1.6406094968746698,
+     1.4311699866353502,
+     1.1868238913561442,
+     0.0,
+     -0.116937134
+    ],
+    "items": {
+     "gray_cylinder": [
+      0.185,
+      0.14500000000000002,
+      0.0
+     ],
+     "green_block": [
+      0.21000000000000002,
+      0.045,
+      0.0
+     ],
+     "red_cube": [
+      0.21700000000000003,
+      -0.056999999999999995,
+      -0.3567270763852024
+     ]
+    }
+   },
+   "offset_label": "backward_left",
+   "offset_m": [
+    -0.015,
+    0.015
+   ],
+   "training_region_tag": "in-training-region",
+   "repeat": 0,
+   "index": 2,
+   "expert": {
+    "success": true,
+    "failure": null,
+    "steps": 365,
+    "success_step": 243
+   }
+  },
+  {
+   "seed": 31300003,
+   "init_state": {
+    "robot_qpos": [
+     0.0,
+     -1.6406094968746698,
+     1.4311699866353502,
+     1.1868238913561442,
+     0.0,
+     -0.116937134
+    ],
+    "items": {
+     "gray_cylinder": [
+      0.185,
+      0.115,
+      0.0
+     ],
+     "green_block": [
+      0.21000000000000002,
+      0.015,
+      0.0
+     ],
+     "red_cube": [
+      0.21700000000000003,
+      -0.087,
+      -0.3567270763852024
+     ]
+    }
+   },
+   "offset_label": "backward_right",
+   "offset_m": [
+    -0.015,
+    -0.015
+   ],
+   "training_region_tag": "in-training-region",
+   "repeat": 0,
+   "index": 3,
+   "expert": {
+    "success": true,
+    "failure": null,
+    "steps": 358,
+    "success_step": 238
+   }
+  },
+  {
+   "seed": 31300004,
+   "init_state": {
+    "robot_qpos": [
+     0.0,
+     -1.6406094968746698,
+     1.4311699866353502,
+     1.1868238913561442,
+     0.0,
+     -0.116937134
+    ],
+    "items": {
+     "gray_cylinder": [
+      0.21500000000000002,
+      0.14500000000000002,
+      0.0
+     ],
+     "green_block": [
+      0.24,
+      0.045,
+      0.0
+     ],
+     "red_cube": [
+      0.247,
+      -0.056999999999999995,
+      -0.3567270763852024
+     ]
+    }
+   },
+   "offset_label": "forward_left",
+   "offset_m": [
+    0.015,
+    0.015
+   ],
+   "training_region_tag": "in-training-region",
+   "repeat": 1,
+   "index": 4,
+   "expert": {
+    "success": true,
+    "failure": null,
+    "steps": 377,
+    "success_step": 249
+   }
+  },
+  {
+   "seed": 31300005,
+   "init_state": {
+    "robot_qpos": [
+     0.0,
+     -1.6406094968746698,
+     1.4311699866353502,
+     1.1868238913561442,
+     0.0,
+     -0.116937134
+    ],
+    "items": {
+     "gray_cylinder": [
+      0.21500000000000002,
+      0.115,
+      0.0
+     ],
+     "green_block": [
+      0.24,
+      0.015,
+      0.0
+     ],
+     "red_cube": [
+      0.247,
+      -0.087,
+      -0.3567270763852024
+     ]
+    }
+   },
+   "offset_label": "forward_right",
+   "offset_m": [
+    0.015,
+    -0.015
+   ],
+   "training_region_tag": "in-training-region",
+   "repeat": 1,
+   "index": 5,
+   "expert": {
+    "success": true,
+    "failure": null,
+    "steps": 363,
+    "success_step": 244
+   }
+  },
+  {
+   "seed": 31300006,
+   "init_state": {
+    "robot_qpos": [
+     0.0,
+     -1.6406094968746698,
+     1.4311699866353502,
+     1.1868238913561442,
+     0.0,
+     -0.116937134
+    ],
+    "items": {
+     "gray_cylinder": [
+      0.185,
+      0.14500000000000002,
+      0.0
+     ],
+     "green_block": [
+      0.21000000000000002,
+      0.045,
+      0.0
+     ],
+     "red_cube": [
+      0.21700000000000003,
+      -0.056999999999999995,
+      -0.3567270763852024
+     ]
+    }
+   },
+   "offset_label": "backward_left",
+   "offset_m": [
+    -0.015,
+    0.015
+   ],
+   "training_region_tag": "in-training-region",
+   "repeat": 1,
+   "index": 6,
+   "expert": {
+    "success": true,
+    "failure": null,
+    "steps": 370,
+    "success_step": 249
+   }
+  },
+  {
+   "seed": 31300007,
+   "init_state": {
+    "robot_qpos": [
+     0.0,
+     -1.6406094968746698,
+     1.4311699866353502,
+     1.1868238913561442,
+     0.0,
+     -0.116937134
+    ],
+    "items": {
+     "gray_cylinder": [
+      0.185,
+      0.115,
+      0.0
+     ],
+     "green_block": [
+      0.21000000000000002,
+      0.015,
+      0.0
+     ],
+     "red_cube": [
+      0.21700000000000003,
+      -0.087,
+      -0.3567270763852024
+     ]
+    }
+   },
+   "offset_label": "backward_right",
+   "offset_m": [
+    -0.015,
+    -0.015
+   ],
+   "training_region_tag": "in-training-region",
+   "repeat": 1,
+   "index": 7,
+   "expert": {
+    "success": true,
+    "failure": null,
+    "steps": 372,
+    "success_step": 244
+   }
+  },
+  {
+   "seed": 31300008,
+   "init_state": {
+    "robot_qpos": [
+     0.0,
+     -1.6406094968746698,
+     1.4311699866353502,
+     1.1868238913561442,
+     0.0,
+     -0.116937134
+    ],
+    "items": {
+     "gray_cylinder": [
+      0.21500000000000002,
+      0.14500000000000002,
+      0.0
+     ],
+     "green_block": [
+      0.24,
+      0.045,
+      0.0
+     ],
+     "red_cube": [
+      0.247,
+      -0.056999999999999995,
+      -0.3567270763852024
+     ]
+    }
+   },
+   "offset_label": "forward_left",
+   "offset_m": [
+    0.015,
+    0.015
+   ],
+   "training_region_tag": "in-training-region",
+   "repeat": 2,
+   "index": 8,
+   "expert": {
+    "success": true,
+    "failure": null,
+    "steps": 368,
+    "success_step": 250
+   }
+  },
+  {
+   "seed": 31300009,
+   "init_state": {
+    "robot_qpos": [
+     0.0,
+     -1.6406094968746698,
+     1.4311699866353502,
+     1.1868238913561442,
+     0.0,
+     -0.116937134
+    ],
+    "items": {
+     "gray_cylinder": [
+      0.21500000000000002,
+      0.115,
+      0.0
+     ],
+     "green_block": [
+      0.24,
+      0.015,
+      0.0
+     ],
+     "red_cube": [
+      0.247,
+      -0.087,
+      -0.3567270763852024
+     ]
+    }
+   },
+   "offset_label": "forward_right",
+   "offset_m": [
+    0.015,
+    -0.015
+   ],
+   "training_region_tag": "in-training-region",
+   "repeat": 2,
+   "index": 9,
+   "expert": {
+    "success": true,
+    "failure": null,
+    "steps": 371,
+    "success_step": 250
+   }
+  },
+  {
+   "seed": 31300010,
+   "init_state": {
+    "robot_qpos": [
+     0.0,
+     -1.6406094968746698,
+     1.4311699866353502,
+     1.1868238913561442,
+     0.0,
+     -0.116937134
+    ],
+    "items": {
+     "gray_cylinder": [
+      0.185,
+      0.14500000000000002,
+      0.0
+     ],
+     "green_block": [
+      0.21000000000000002,
+      0.045,
+      0.0
+     ],
+     "red_cube": [
+      0.21700000000000003,
+      -0.056999999999999995,
+      -0.3567270763852024
+     ]
+    }
+   },
+   "offset_label": "backward_left",
+   "offset_m": [
+    -0.015,
+    0.015
+   ],
+   "training_region_tag": "in-training-region",
+   "repeat": 2,
+   "index": 10,
+   "expert": {
+    "success": true,
+    "failure": null,
+    "steps": 363,
+    "success_step": 237
+   }
+  },
+  {
+   "seed": 31300011,
+   "init_state": {
+    "robot_qpos": [
+     0.0,
+     -1.6406094968746698,
+     1.4311699866353502,
+     1.1868238913561442,
+     0.0,
+     -0.116937134
+    ],
+    "items": {
+     "gray_cylinder": [
+      0.185,
+      0.115,
+      0.0
+     ],
+     "green_block": [
+      0.21000000000000002,
+      0.015,
+      0.0
+     ],
+     "red_cube": [
+      0.21700000000000003,
+      -0.087,
+      -0.3567270763852024
+     ]
+    }
+   },
+   "offset_label": "backward_right",
+   "offset_m": [
+    -0.015,
+    -0.015
+   ],
+   "training_region_tag": "in-training-region",
+   "repeat": 2,
+   "index": 11,
+   "expert": {
+    "success": true,
+    "failure": null,
+    "steps": 370,
+    "success_step": 245
+   }
+  },
+  {
+   "seed": 31300012,
+   "init_state": {
+    "robot_qpos": [
+     0.0,
+     -1.6406094968746698,
+     1.4311699866353502,
+     1.1868238913561442,
+     0.0,
+     -0.116937134
+    ],
+    "items": {
+     "gray_cylinder": [
+      0.21500000000000002,
+      0.14500000000000002,
+      0.0
+     ],
+     "green_block": [
+      0.24,
+      0.045,
+      0.0
+     ],
+     "red_cube": [
+      0.247,
+      -0.056999999999999995,
+      -0.3567270763852024
+     ]
+    }
+   },
+   "offset_label": "forward_left",
+   "offset_m": [
+    0.015,
+    0.015
+   ],
+   "training_region_tag": "in-training-region",
+   "repeat": 3,
+   "index": 12,
+   "expert": {
+    "success": true,
+    "failure": null,
+    "steps": 367,
+    "success_step": 247
+   }
+  },
+  {
+   "seed": 31300013,
+   "init_state": {
+    "robot_qpos": [
+     0.0,
+     -1.6406094968746698,
+     1.4311699866353502,
+     1.1868238913561442,
+     0.0,
+     -0.116937134
+    ],
+    "items": {
+     "gray_cylinder": [
+      0.21500000000000002,
+      0.115,
+      0.0
+     ],
+     "green_block": [
+      0.24,
+      0.015,
+      0.0
+     ],
+     "red_cube": [
+      0.247,
+      -0.087,
+      -0.3567270763852024
+     ]
+    }
+   },
+   "offset_label": "forward_right",
+   "offset_m": [
+    0.015,
+    -0.015
+   ],
+   "training_region_tag": "in-training-region",
+   "repeat": 3,
+   "index": 13,
+   "expert": {
+    "success": true,
+    "failure": null,
+    "steps": 376,
+    "success_step": 254
+   }
+  },
+  {
+   "seed": 31300014,
+   "init_state": {
+    "robot_qpos": [
+     0.0,
+     -1.6406094968746698,
+     1.4311699866353502,
+     1.1868238913561442,
+     0.0,
+     -0.116937134
+    ],
+    "items": {
+     "gray_cylinder": [
+      0.185,
+      0.14500000000000002,
+      0.0
+     ],
+     "green_block": [
+      0.21000000000000002,
+      0.045,
+      0.0
+     ],
+     "red_cube": [
+      0.21700000000000003,
+      -0.056999999999999995,
+      -0.3567270763852024
+     ]
+    }
+   },
+   "offset_label": "backward_left",
+   "offset_m": [
+    -0.015,
+    0.015
+   ],
+   "training_region_tag": "in-training-region",
+   "repeat": 3,
+   "index": 14,
+   "expert": {
+    "success": true,
+    "failure": null,
+    "steps": 370,
+    "success_step": 242
+   }
+  },
+  {
+   "seed": 31300015,
+   "init_state": {
+    "robot_qpos": [
+     0.0,
+     -1.6406094968746698,
+     1.4311699866353502,
+     1.1868238913561442,
+     0.0,
+     -0.116937134
+    ],
+    "items": {
+     "gray_cylinder": [
+      0.185,
+      0.115,
+      0.0
+     ],
+     "green_block": [
+      0.21000000000000002,
+      0.015,
+      0.0
+     ],
+     "red_cube": [
+      0.21700000000000003,
+      -0.087,
+      -0.3567270763852024
+     ]
+    }
+   },
+   "offset_label": "backward_right",
+   "offset_m": [
+    -0.015,
+    -0.015
+   ],
+   "training_region_tag": "in-training-region",
+   "repeat": 3,
+   "index": 15,
+   "expert": {
+    "success": true,
+    "failure": null,
+    "steps": 361,
+    "success_step": 239
+   }
+  },
+  {
+   "seed": 31300016,
+   "init_state": {
+    "robot_qpos": [
+     0.0,
+     -1.6406094968746698,
+     1.4311699866353502,
+     1.1868238913561442,
+     0.0,
+     -0.116937134
+    ],
+    "items": {
+     "gray_cylinder": [
+      0.21500000000000002,
+      0.14500000000000002,
+      0.0
+     ],
+     "green_block": [
+      0.24,
+      0.045,
+      0.0
+     ],
+     "red_cube": [
+      0.247,
+      -0.056999999999999995,
+      -0.3567270763852024
+     ]
+    }
+   },
+   "offset_label": "forward_left",
+   "offset_m": [
+    0.015,
+    0.015
+   ],
+   "training_region_tag": "in-training-region",
+   "repeat": 4,
+   "index": 16,
+   "expert": {
+    "success": true,
+    "failure": null,
+    "steps": 375,
+    "success_step": 252
+   }
+  },
+  {
+   "seed": 31300017,
+   "init_state": {
+    "robot_qpos": [
+     0.0,
+     -1.6406094968746698,
+     1.4311699866353502,
+     1.1868238913561442,
+     0.0,
+     -0.116937134
+    ],
+    "items": {
+     "gray_cylinder": [
+      0.21500000000000002,
+      0.115,
+      0.0
+     ],
+     "green_block": [
+      0.24,
+      0.015,
+      0.0
+     ],
+     "red_cube": [
+      0.247,
+      -0.087,
+      -0.3567270763852024
+     ]
+    }
+   },
+   "offset_label": "forward_right",
+   "offset_m": [
+    0.015,
+    -0.015
+   ],
+   "training_region_tag": "in-training-region",
+   "repeat": 4,
+   "index": 17,
+   "expert": {
+    "success": true,
+    "failure": null,
+    "steps": 365,
+    "success_step": 240
+   }
+  },
+  {
+   "seed": 31300018,
+   "init_state": {
+    "robot_qpos": [
+     0.0,
+     -1.6406094968746698,
+     1.4311699866353502,
+     1.1868238913561442,
+     0.0,
+     -0.116937134
+    ],
+    "items": {
+     "gray_cylinder": [
+      0.185,
+      0.14500000000000002,
+      0.0
+     ],
+     "green_block": [
+      0.21000000000000002,
+      0.045,
+      0.0
+     ],
+     "red_cube": [
+      0.21700000000000003,
+      -0.056999999999999995,
+      -0.3567270763852024
+     ]
+    }
+   },
+   "offset_label": "backward_left",
+   "offset_m": [
+    -0.015,
+    0.015
+   ],
+   "training_region_tag": "in-training-region",
+   "repeat": 4,
+   "index": 18,
+   "expert": {
+    "success": true,
+    "failure": null,
+    "steps": 362,
+    "success_step": 240
+   }
+  },
+  {
+   "seed": 31300019,
+   "init_state": {
+    "robot_qpos": [
+     0.0,
+     -1.6406094968746698,
+     1.4311699866353502,
+     1.1868238913561442,
+     0.0,
+     -0.116937134
+    ],
+    "items": {
+     "gray_cylinder": [
+      0.185,
+      0.115,
+      0.0
+     ],
+     "green_block": [
+      0.21000000000000002,
+      0.015,
+      0.0
+     ],
+     "red_cube": [
+      0.21700000000000003,
+      -0.087,
+      -0.3567270763852024
+     ]
+    }
+   },
+   "offset_label": "backward_right",
+   "offset_m": [
+    -0.015,
+    -0.015
+   ],
+   "training_region_tag": "in-training-region",
+   "repeat": 4,
+   "index": 19,
+   "expert": {
+    "success": true,
+    "failure": null,
+    "steps": 363,
+    "success_step": 244
+   }
+  },
+  {
+   "seed": 31300020,
+   "init_state": {
+    "robot_qpos": [
+     0.0,
+     -1.6406094968746698,
+     1.4311699866353502,
+     1.1868238913561442,
+     0.0,
+     -0.116937134
+    ],
+    "items": {
+     "gray_cylinder": [
+      0.21500000000000002,
+      0.14500000000000002,
+      0.0
+     ],
+     "green_block": [
+      0.24,
+      0.045,
+      0.0
+     ],
+     "red_cube": [
+      0.247,
+      -0.056999999999999995,
+      -0.3567270763852024
+     ]
+    }
+   },
+   "offset_label": "forward_left",
+   "offset_m": [
+    0.015,
+    0.015
+   ],
+   "training_region_tag": "in-training-region",
+   "repeat": 5,
+   "index": 20,
+   "expert": {
+    "success": true,
+    "failure": null,
+    "steps": 371,
+    "success_step": 250
+   }
+  },
+  {
+   "seed": 31300021,
+   "init_state": {
+    "robot_qpos": [
+     0.0,
+     -1.6406094968746698,
+     1.4311699866353502,
+     1.1868238913561442,
+     0.0,
+     -0.116937134
+    ],
+    "items": {
+     "gray_cylinder": [
+      0.21500000000000002,
+      0.115,
+      0.0
+     ],
+     "green_block": [
+      0.24,
+      0.015,
+      0.0
+     ],
+     "red_cube": [
+      0.247,
+      -0.087,
+      -0.3567270763852024
+     ]
+    }
+   },
+   "offset_label": "forward_right",
+   "offset_m": [
+    0.015,
+    -0.015
+   ],
+   "training_region_tag": "in-training-region",
+   "repeat": 5,
+   "index": 21,
+   "expert": {
+    "success": true,
+    "failure": null,
+    "steps": 377,
+    "success_step": 254
+   }
+  },
+  {
+   "seed": 31300022,
+   "init_state": {
+    "robot_qpos": [
+     0.0,
+     -1.6406094968746698,
+     1.4311699866353502,
+     1.1868238913561442,
+     0.0,
+     -0.116937134
+    ],
+    "items": {
+     "gray_cylinder": [
+      0.185,
+      0.14500000000000002,
+      0.0
+     ],
+     "green_block": [
+      0.21000000000000002,
+      0.045,
+      0.0
+     ],
+     "red_cube": [
+      0.21700000000000003,
+      -0.056999999999999995,
+      -0.3567270763852024
+     ]
+    }
+   },
+   "offset_label": "backward_left",
+   "offset_m": [
+    -0.015,
+    0.015
+   ],
+   "training_region_tag": "in-training-region",
+   "repeat": 5,
+   "index": 22,
+   "expert": {
+    "success": true,
+    "failure": null,
+    "steps": 380,
+    "success_step": 259
+   }
+  },
+  {
+   "seed": 31300023,
+   "init_state": {
+    "robot_qpos": [
+     0.0,
+     -1.6406094968746698,
+     1.4311699866353502,
+     1.1868238913561442,
+     0.0,
+     -0.116937134
+    ],
+    "items": {
+     "gray_cylinder": [
+      0.185,
+      0.115,
+      0.0
+     ],
+     "green_block": [
+      0.21000000000000002,
+      0.015,
+      0.0
+     ],
+     "red_cube": [
+      0.21700000000000003,
+      -0.087,
+      -0.3567270763852024
+     ]
+    }
+   },
+   "offset_label": "backward_right",
+   "offset_m": [
+    -0.015,
+    -0.015
+   ],
+   "training_region_tag": "in-training-region",
+   "repeat": 5,
+   "index": 23,
+   "expert": {
+    "success": true,
+    "failure": null,
+    "steps": 376,
+    "success_step": 255
+   }
+  },
+  {
+   "seed": 31300024,
+   "init_state": {
+    "robot_qpos": [
+     0.0,
+     -1.6406094968746698,
+     1.4311699866353502,
+     1.1868238913561442,
+     0.0,
+     -0.116937134
+    ],
+    "items": {
+     "gray_cylinder": [
+      0.21500000000000002,
+      0.14500000000000002,
+      0.0
+     ],
+     "green_block": [
+      0.24,
+      0.045,
+      0.0
+     ],
+     "red_cube": [
+      0.247,
+      -0.056999999999999995,
+      -0.3567270763852024
+     ]
+    }
+   },
+   "offset_label": "forward_left",
+   "offset_m": [
+    0.015,
+    0.015
+   ],
+   "training_region_tag": "in-training-region",
+   "repeat": 6,
+   "index": 24,
+   "expert": {
+    "success": true,
+    "failure": null,
+    "steps": 368,
+    "success_step": 246
+   }
+  },
+  {
+   "seed": 31300025,
+   "init_state": {
+    "robot_qpos": [
+     0.0,
+     -1.6406094968746698,
+     1.4311699866353502,
+     1.1868238913561442,
+     0.0,
+     -0.116937134
+    ],
+    "items": {
+     "gray_cylinder": [
+      0.21500000000000002,
+      0.115,
+      0.0
+     ],
+     "green_block": [
+      0.24,
+      0.015,
+      0.0
+     ],
+     "red_cube": [
+      0.247,
+      -0.087,
+      -0.3567270763852024
+     ]
+    }
+   },
+   "offset_label": "forward_right",
+   "offset_m": [
+    0.015,
+    -0.015
+   ],
+   "training_region_tag": "in-training-region",
+   "repeat": 6,
+   "index": 25,
+   "expert": {
+    "success": true,
+    "failure": null,
+    "steps": 361,
+    "success_step": 241
+   }
+  },
+  {
+   "seed": 31300026,
+   "init_state": {
+    "robot_qpos": [
+     0.0,
+     -1.6406094968746698,
+     1.4311699866353502,
+     1.1868238913561442,
+     0.0,
+     -0.116937134
+    ],
+    "items": {
+     "gray_cylinder": [
+      0.185,
+      0.14500000000000002,
+      0.0
+     ],
+     "green_block": [
+      0.21000000000000002,
+      0.045,
+      0.0
+     ],
+     "red_cube": [
+      0.21700000000000003,
+      -0.056999999999999995,
+      -0.3567270763852024
+     ]
+    }
+   },
+   "offset_label": "backward_left",
+   "offset_m": [
+    -0.015,
+    0.015
+   ],
+   "training_region_tag": "in-training-region",
+   "repeat": 6,
+   "index": 26,
+   "expert": {
+    "success": true,
+    "failure": null,
+    "steps": 378,
+    "success_step": 253
+   }
+  },
+  {
+   "seed": 31300027,
+   "init_state": {
+    "robot_qpos": [
+     0.0,
+     -1.6406094968746698,
+     1.4311699866353502,
+     1.1868238913561442,
+     0.0,
+     -0.116937134
+    ],
+    "items": {
+     "gray_cylinder": [
+      0.185,
+      0.115,
+      0.0
+     ],
+     "green_block": [
+      0.21000000000000002,
+      0.015,
+      0.0
+     ],
+     "red_cube": [
+      0.21700000000000003,
+      -0.087,
+      -0.3567270763852024
+     ]
+    }
+   },
+   "offset_label": "backward_right",
+   "offset_m": [
+    -0.015,
+    -0.015
+   ],
+   "training_region_tag": "in-training-region",
+   "repeat": 6,
+   "index": 27,
+   "expert": {
+    "success": true,
+    "failure": null,
+    "steps": 379,
+    "success_step": 256
+   }
+  },
+  {
+   "seed": 31300028,
+   "init_state": {
+    "robot_qpos": [
+     0.0,
+     -1.6406094968746698,
+     1.4311699866353502,
+     1.1868238913561442,
+     0.0,
+     -0.116937134
+    ],
+    "items": {
+     "gray_cylinder": [
+      0.21500000000000002,
+      0.14500000000000002,
+      0.0
+     ],
+     "green_block": [
+      0.24,
+      0.045,
+      0.0
+     ],
+     "red_cube": [
+      0.247,
+      -0.056999999999999995,
+      -0.3567270763852024
+     ]
+    }
+   },
+   "offset_label": "forward_left",
+   "offset_m": [
+    0.015,
+    0.015
+   ],
+   "training_region_tag": "in-training-region",
+   "repeat": 7,
+   "index": 28,
+   "expert": {
+    "success": true,
+    "failure": null,
+    "steps": 359,
+    "success_step": 241
+   }
+  },
+  {
+   "seed": 31300029,
+   "init_state": {
+    "robot_qpos": [
+     0.0,
+     -1.6406094968746698,
+     1.4311699866353502,
+     1.1868238913561442,
+     0.0,
+     -0.116937134
+    ],
+    "items": {
+     "gray_cylinder": [
+      0.21500000000000002,
+      0.115,
+      0.0
+     ],
+     "green_block": [
+      0.24,
+      0.015,
+      0.0
+     ],
+     "red_cube": [
+      0.247,
+      -0.087,
+      -0.3567270763852024
+     ]
+    }
+   },
+   "offset_label": "forward_right",
+   "offset_m": [
+    0.015,
+    -0.015
+   ],
+   "training_region_tag": "in-training-region",
+   "repeat": 7,
+   "index": 29,
+   "expert": {
+    "success": true,
+    "failure": null,
+    "steps": 366,
+    "success_step": 243
+   }
+  },
+  {
+   "seed": 31300030,
+   "init_state": {
+    "robot_qpos": [
+     0.0,
+     -1.6406094968746698,
+     1.4311699866353502,
+     1.1868238913561442,
+     0.0,
+     -0.116937134
+    ],
+    "items": {
+     "gray_cylinder": [
+      0.185,
+      0.14500000000000002,
+      0.0
+     ],
+     "green_block": [
+      0.21000000000000002,
+      0.045,
+      0.0
+     ],
+     "red_cube": [
+      0.21700000000000003,
+      -0.056999999999999995,
+      -0.3567270763852024
+     ]
+    }
+   },
+   "offset_label": "backward_left",
+   "offset_m": [
+    -0.015,
+    0.015
+   ],
+   "training_region_tag": "in-training-region",
+   "repeat": 7,
+   "index": 30,
+   "expert": {
+    "success": true,
+    "failure": null,
+    "steps": 372,
+    "success_step": 250
+   }
+  },
+  {
+   "seed": 31300031,
+   "init_state": {
+    "robot_qpos": [
+     0.0,
+     -1.6406094968746698,
+     1.4311699866353502,
+     1.1868238913561442,
+     0.0,
+     -0.116937134
+    ],
+    "items": {
+     "gray_cylinder": [
+      0.185,
+      0.115,
+      0.0
+     ],
+     "green_block": [
+      0.21000000000000002,
+      0.015,
+      0.0
+     ],
+     "red_cube": [
+      0.21700000000000003,
+      -0.087,
+      -0.3567270763852024
+     ]
+    }
+   },
+   "offset_label": "backward_right",
+   "offset_m": [
+    -0.015,
+    -0.015
+   ],
+   "training_region_tag": "in-training-region",
+   "repeat": 7,
+   "index": 31,
+   "expert": {
+    "success": true,
+    "failure": null,
+    "steps": 379,
+    "success_step": 255
+   }
+  },
+  {
+   "seed": 31300032,
+   "init_state": {
+    "robot_qpos": [
+     0.0,
+     -1.6406094968746698,
+     1.4311699866353502,
+     1.1868238913561442,
+     0.0,
+     -0.116937134
+    ],
+    "items": {
+     "gray_cylinder": [
+      0.21500000000000002,
+      0.14500000000000002,
+      0.0
+     ],
+     "green_block": [
+      0.24,
+      0.045,
+      0.0
+     ],
+     "red_cube": [
+      0.247,
+      -0.056999999999999995,
+      -0.3567270763852024
+     ]
+    }
+   },
+   "offset_label": "forward_left",
+   "offset_m": [
+    0.015,
+    0.015
+   ],
+   "training_region_tag": "in-training-region",
+   "repeat": 8,
+   "index": 32,
+   "expert": {
+    "success": true,
+    "failure": null,
+    "steps": 368,
+    "success_step": 250
+   }
+  },
+  {
+   "seed": 31300033,
+   "init_state": {
+    "robot_qpos": [
+     0.0,
+     -1.6406094968746698,
+     1.4311699866353502,
+     1.1868238913561442,
+     0.0,
+     -0.116937134
+    ],
+    "items": {
+     "gray_cylinder": [
+      0.21500000000000002,
+      0.115,
+      0.0
+     ],
+     "green_block": [
+      0.24,
+      0.015,
+      0.0
+     ],
+     "red_cube": [
+      0.247,
+      -0.087,
+      -0.3567270763852024
+     ]
+    }
+   },
+   "offset_label": "forward_right",
+   "offset_m": [
+    0.015,
+    -0.015
+   ],
+   "training_region_tag": "in-training-region",
+   "repeat": 8,
+   "index": 33,
+   "expert": {
+    "success": true,
+    "failure": null,
+    "steps": 369,
+    "success_step": 247
+   }
+  },
+  {
+   "seed": 31300034,
+   "init_state": {
+    "robot_qpos": [
+     0.0,
+     -1.6406094968746698,
+     1.4311699866353502,
+     1.1868238913561442,
+     0.0,
+     -0.116937134
+    ],
+    "items": {
+     "gray_cylinder": [
+      0.185,
+      0.14500000000000002,
+      0.0
+     ],
+     "green_block": [
+      0.21000000000000002,
+      0.045,
+      0.0
+     ],
+     "red_cube": [
+      0.21700000000000003,
+      -0.056999999999999995,
+      -0.3567270763852024
+     ]
+    }
+   },
+   "offset_label": "backward_left",
+   "offset_m": [
+    -0.015,
+    0.015
+   ],
+   "training_region_tag": "in-training-region",
+   "repeat": 8,
+   "index": 34,
+   "expert": {
+    "success": true,
+    "failure": null,
+    "steps": 379,
+    "success_step": 256
+   }
+  },
+  {
+   "seed": 31300035,
+   "init_state": {
+    "robot_qpos": [
+     0.0,
+     -1.6406094968746698,
+     1.4311699866353502,
+     1.1868238913561442,
+     0.0,
+     -0.116937134
+    ],
+    "items": {
+     "gray_cylinder": [
+      0.185,
+      0.115,
+      0.0
+     ],
+     "green_block": [
+      0.21000000000000002,
+      0.015,
+      0.0
+     ],
+     "red_cube": [
+      0.21700000000000003,
+      -0.087,
+      -0.3567270763852024
+     ]
+    }
+   },
+   "offset_label": "backward_right",
+   "offset_m": [
+    -0.015,
+    -0.015
+   ],
+   "training_region_tag": "in-training-region",
+   "repeat": 8,
+   "index": 35,
+   "expert": {
+    "success": true,
+    "failure": null,
+    "steps": 377,
+    "success_step": 253
+   }
+  },
+  {
+   "seed": 31300036,
+   "init_state": {
+    "robot_qpos": [
+     0.0,
+     -1.6406094968746698,
+     1.4311699866353502,
+     1.1868238913561442,
+     0.0,
+     -0.116937134
+    ],
+    "items": {
+     "gray_cylinder": [
+      0.21500000000000002,
+      0.14500000000000002,
+      0.0
+     ],
+     "green_block": [
+      0.24,
+      0.045,
+      0.0
+     ],
+     "red_cube": [
+      0.247,
+      -0.056999999999999995,
+      -0.3567270763852024
+     ]
+    }
+   },
+   "offset_label": "forward_left",
+   "offset_m": [
+    0.015,
+    0.015
+   ],
+   "training_region_tag": "in-training-region",
+   "repeat": 9,
+   "index": 36,
+   "expert": {
+    "success": true,
+    "failure": null,
+    "steps": 377,
+    "success_step": 254
+   }
+  },
+  {
+   "seed": 31300037,
+   "init_state": {
+    "robot_qpos": [
+     0.0,
+     -1.6406094968746698,
+     1.4311699866353502,
+     1.1868238913561442,
+     0.0,
+     -0.116937134
+    ],
+    "items": {
+     "gray_cylinder": [
+      0.21500000000000002,
+      0.115,
+      0.0
+     ],
+     "green_block": [
+      0.24,
+      0.015,
+      0.0
+     ],
+     "red_cube": [
+      0.247,
+      -0.087,
+      -0.3567270763852024
+     ]
+    }
+   },
+   "offset_label": "forward_right",
+   "offset_m": [
+    0.015,
+    -0.015
+   ],
+   "training_region_tag": "in-training-region",
+   "repeat": 9,
+   "index": 37,
+   "expert": {
+    "success": true,
+    "failure": null,
+    "steps": 372,
+    "success_step": 249
+   }
+  },
+  {
+   "seed": 31300038,
+   "init_state": {
+    "robot_qpos": [
+     0.0,
+     -1.6406094968746698,
+     1.4311699866353502,
+     1.1868238913561442,
+     0.0,
+     -0.116937134
+    ],
+    "items": {
+     "gray_cylinder": [
+      0.185,
+      0.14500000000000002,
+      0.0
+     ],
+     "green_block": [
+      0.21000000000000002,
+      0.045,
+      0.0
+     ],
+     "red_cube": [
+      0.21700000000000003,
+      -0.056999999999999995,
+      -0.3567270763852024
+     ]
+    }
+   },
+   "offset_label": "backward_left",
+   "offset_m": [
+    -0.015,
+    0.015
+   ],
+   "training_region_tag": "in-training-region",
+   "repeat": 9,
+   "index": 38,
+   "expert": {
+    "success": true,
+    "failure": null,
+    "steps": 362,
+    "success_step": 240
+   }
+  },
+  {
+   "seed": 31300039,
+   "init_state": {
+    "robot_qpos": [
+     0.0,
+     -1.6406094968746698,
+     1.4311699866353502,
+     1.1868238913561442,
+     0.0,
+     -0.116937134
+    ],
+    "items": {
+     "gray_cylinder": [
+      0.185,
+      0.115,
+      0.0
+     ],
+     "green_block": [
+      0.21000000000000002,
+      0.015,
+      0.0
+     ],
+     "red_cube": [
+      0.21700000000000003,
+      -0.087,
+      -0.3567270763852024
+     ]
+    }
+   },
+   "offset_label": "backward_right",
+   "offset_m": [
+    -0.015,
+    -0.015
+   ],
+   "training_region_tag": "in-training-region",
+   "repeat": 9,
+   "index": 39,
+   "expert": {
+    "success": true,
+    "failure": null,
+    "steps": 373,
+    "success_step": 252
+   }
+  }
+ ]
+}
