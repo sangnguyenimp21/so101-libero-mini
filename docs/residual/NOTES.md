@@ -475,7 +475,7 @@ Complete. The shifted baseline leaves substantial headroom for residual RL, espe
 - Added PPO `--target-kl`; both replacement runs use 0.02, learning rate 1e-4, and initial log-standard-deviation -2.0.
 - Every frozen evaluation now saves its exact model under `eval_checkpoints/eval_*_steps.zip`. The timestep-zero model is saved as an evaluated checkpoint and starts as `best_model` with its 9/20 baseline-equivalent result. A periodic checkpoint replaces it only on a **strictly higher** success count. `best_evaluation.json` records why the selected checkpoint won.
 - **calm:** residual arm scale 5 degrees for steps 0--49, then 1.5 degrees.
-- **kickstart:** residual arm scale 5 degrees for steps 0--49, then exactly zero. The residual therefore cannot alter SmolVLA after the first chunk.
+- **kickstart:** residual scale is active for steps 0--49 (5 degrees for arm joints, 5 native gripper units), then exactly zero for all six action dimensions. The residual therefore cannot alter SmolVLA after the first chunk.
 - Both retain eight workers, 1,000,000 target transitions, evaluation/checkpointing every 100,000 transitions, and the same 20 frozen selection states.
 
 ### Expanded matched evaluation

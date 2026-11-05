@@ -32,5 +32,6 @@ python -u scripts/residual/train_ppo.py \
     --num-envs 8 --n-steps 256 --batch-size 256 \
     --log-std -2.0 --learning-rate 1e-4 --target-kl 0.02 \
     --early-arm-scale 5.0 --late-arm-scale 0.0 \
+    --early-gripper-scale 5.0 --late-gripper-scale 0.0 \
     --eval-episodes 20 --eval-freq 100000 --checkpoint-freq 100000 \
     "${RESIDUAL_RESUME_ARGS[@]}"

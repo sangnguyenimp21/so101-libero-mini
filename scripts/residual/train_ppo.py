@@ -162,8 +162,8 @@ def env_factory(rank: int, args) -> callable:
                 use_cube_pose=not args.no_cube_pose,
                 early_arm_scale_deg=args.early_arm_scale,
                 late_arm_scale_deg=args.late_arm_scale,
-                early_gripper_scale=args.gripper_scale,
-                late_gripper_scale=args.gripper_scale,
+                early_gripper_scale=args.early_gripper_scale,
+                late_gripper_scale=args.late_gripper_scale,
                 distance_progress_scale=args.distance_progress_scale,
                 focus_probability=args.focus_probability,
             )
@@ -204,6 +204,8 @@ def parse_args():
     parser.add_argument("--early-arm-scale", type=float, default=5.0)
     parser.add_argument("--late-arm-scale", type=float, default=2.5)
     parser.add_argument("--gripper-scale", type=float, default=5.0)
+    parser.add_argument("--early-gripper-scale", type=float, default=None)
+    parser.add_argument("--late-gripper-scale", type=float, default=None)
     parser.add_argument("--distance-progress-scale", type=float, default=1.0)
     parser.add_argument("--focus-probability", type=float, default=0.75)
     parser.add_argument("--no-cube-pose", action="store_true")
@@ -216,6 +218,10 @@ def parse_args():
 
 def main() -> None:
     args = parse_args()
+    if args.early_gripper_scale is None:
+        args.early_gripper_scale = args.gripper_scale
+    if args.late_gripper_scale is None:
+        args.late_gripper_scale = args.gripper_scale
     if os.environ.get("MUJOCO_GL") != "egl":
         raise SystemExit("run on a GPU node with MUJOCO_GL=egl")
     if args.n_steps * args.num_envs % args.batch_size:
@@ -239,8 +245,8 @@ def main() -> None:
             use_cube_pose=not args.no_cube_pose,
             early_arm_scale_deg=args.early_arm_scale,
             late_arm_scale_deg=args.late_arm_scale,
-            early_gripper_scale=args.gripper_scale,
-            late_gripper_scale=args.gripper_scale,
+            early_gripper_scale=args.early_gripper_scale,
+            late_gripper_scale=args.late_gripper_scale,
             distance_progress_scale=args.distance_progress_scale,
             focus_probability=args.focus_probability,
         )
