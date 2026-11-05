@@ -7,6 +7,7 @@
 - Replacement variants are prepared: **calm** (late scale 1.5 degrees) and **kickstart** (late scale zero); both use log-std -2, learning rate 1e-4, target KL 0.02, and a 5-degree first-chunk scale.
 - Each run saves the exact model at every evaluation. Timestep zero is the initial 9/20 incumbent, so an inferior learned model cannot become `best_model`.
 - Each training run has its own dependent matched evaluation of the best-eval and final checkpoints, including paired fixed/broken counts and exact McNemar tests on the 80 target states.
+- PBS chains: calm training `1523669` -> evaluation `1523673`; kickstart training `1523671` -> evaluation `1523674`. Both training jobs are queued; both evaluation jobs are dependency-held.
 - The residual uses privileged cube pose and is simulation-only.
 <!-- RESIDUAL_CURRENT_SUMMARY_END -->
 
@@ -483,3 +484,10 @@ Complete. The shifted baseline leaves substantial headroom for residual RL, espe
 - On the 80 requested target states (axis 2 cm + diagonal 1.5 cm), it reports paired `fixed` (baseline failed, residual succeeded), `broken` (baseline succeeded, residual failed), both-success, and both-failed counts.
 - It computes the exact two-sided McNemar binomial p-value and the continuity-corrected McNemar chi-square statistic for both best-eval and final checkpoints.
 - The dual-model integration smoke test passed on two original frozen states: baseline, best, and final all succeeded.
+
+### Replacement PBS submissions
+
+- Calm training: **`1523669.stdct-mgmt-02`**; dependent calm evaluation: **`1523673.stdct-mgmt-02`**.
+- Kickstart training: **`1523671.stdct-mgmt-02`**; dependent kickstart evaluation: **`1523674.stdct-mgmt-02`**.
+- Both training jobs entered `batch_gpu` in queued state because no node was immediately free. Both evaluation jobs are correctly held with their respective `afterok` dependency.
+- Each evaluation automatically runs both the selected best-eval checkpoint and the final checkpoint, updates this file, and commits its scoped result files. A Git lock serializes finalization if both evaluations finish close together.
