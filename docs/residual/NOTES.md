@@ -280,3 +280,47 @@ No replacement frozen JSON files have been created. The earlier proposed set def
 ### Step 5 status
 
 Complete. Do not start Step 6 until Valentin reviews these results. Step 6 must evaluate the frozen SmolVLA baseline on exactly these saved states and report both per-set results and the aggregate in-training-region versus out-of-training-region split.
+
+## Step 6 — SmolVLA baseline on shifted states (2026-11-05)
+
+### Implementation and protocol
+
+- Added `scripts/residual/evaluate_shifted_baseline.py`. It reads the four frozen Step 5 JSON files directly, verifies scene/rules hashes, preserves exact initial states/seeds/tags, and uses the repository's existing policy runner, cube-flip diagnostics, and Wilson interval calculation.
+- Settings match the reproduced original baseline: final 100k cube-flip checkpoint, CUDA, EGL, 256 x 256 images, one worker, deterministic Torch seed per state, 450-step horizon, and no appearance randomization.
+- The first pass evaluates all states without video. A second deterministic pass reruns up to two actual failures per set with video. Video reruns must match the original outcome before being attached to the report.
+- Broad failure mapping requested for this experiment:
+  - `never_grasped`: detailed outcome `never_lifted` (cube never carried at least 1 cm in the gripper).
+  - `dropped`: fell off table or an explicit dropped outcome.
+  - `lifted_but_not_flipped`: lifted but still held, not turned, turned but not flat/in place/settled, or another lifted failure.
+  - `timeout`: reached the 450-step horizon without a more specific diagnostic.
+  - `other`: remaining outcomes and runtime errors.
+- A four-state smoke run (one per set) completed before the full command; all four happened to be `never_lifted`, and the output format/tag aggregation passed.
+- Approved full command:
+  `source /scratch/e1638612/miniforge3/bin/activate && conda activate so101lm && MUJOCO_GL=egl python -u scripts/residual/evaluate_shifted_baseline.py --out docs/residual/results/baseline_shifted_140 --failure-videos 2 --workers 1`
+
+### Results
+
+- **Overall: 36/140 = 25.7%, Wilson 95% CI [19.2%, 33.5%].** Mean success step: 265.5.
+- Per set:
+  - Axis 2 cm: **19/40 = 47.5%**, CI [32.9%, 62.5%]; failures = 20 never grasped, 0 dropped, 1 lifted/not flipped, 0 timeout, 0 other; mean success step 263.9.
+  - Diagonal 1.5 cm: **17/40 = 42.5%**, CI [28.5%, 57.8%]; failures = 20 never grasped, 0 dropped, 3 lifted/not flipped, 0 timeout, 0 other; mean success step 267.3.
+  - Feasible axes 3 cm: **0/30 = 0%**, CI [0%, 11.4%]; failures = 20 never grasped, 0 dropped, 10 lifted/not flipped, 0 timeout, 0 other; no success-step mean.
+  - Feasible axes 4 cm: **0/30 = 0%**, CI [0%, 11.4%]; failures = 29 never grasped, 0 dropped, 1 lifted/not flipped, 0 timeout, 0 other; no success-step mean.
+- By proposed residual training region:
+  - In-training-region: **27/80 = 33.8%**, CI [24.4%, 44.6%]; failures = 50 never grasped, 0 dropped, 3 lifted/not flipped, 0 timeout, 0 other; mean success step 267.2.
+  - Out-of-training-region: **9/60 = 15.0%**, CI [8.1%, 26.1%]; failures = 39 never grasped, 0 dropped, 12 lifted/not flipped, 0 timeout, 0 other; mean success step 260.3.
+- Raw failure outcomes across all sets: 89 `never_lifted`, 12 `still_held`, 2 `turned_but_not_in_place_or_not_settled`, and 1 `not_turned`. All failures reached the horizon, but each had a more specific cause, hence zero timeout-only failures.
+- Directional behavior is strong rather than random seed noise: for the 2 cm and diagonal sets, some directions consistently succeeded while others consistently missed the cube. At 3 cm, SmolVLA had no successes; it sometimes lifted in one direction but did not finish/release the flip. At 4 cm it almost always failed to lift.
+- Important terminology: `in-training-region` means inside the **proposed future residual-RL training rectangle**, not inside SmolVLA's demonstration distribution. SmolVLA's original data still covered only the default and axis-1-cm placements.
+
+### Outputs and verification
+
+- `docs/residual/results/baseline_shifted_140/results.json`: complete 140-episode report, per-set and per-region summaries, mapping, raw outcomes, and episode records.
+- `docs/residual/results/baseline_shifted_140/episodes.csv`: one row per state.
+- `docs/residual/results/baseline_shifted_140/summary.md`: compact human-readable tables and video links.
+- Eight failure videos (two per set) are under `docs/residual/results/baseline_shifted_140/videos/`. Every video has 451 frames / 15.03 s and reproduced its original failure outcome exactly.
+- Verification: `complete=true`, 140 episode rows, exactly 80 in-region and 60 out-of-region, eight videos, no warnings or runtime errors.
+
+### Step 6 status
+
+Complete. The shifted baseline leaves substantial headroom for residual RL, especially at 3 cm and 4 cm. Do not start Step 7 until Valentin reviews the results.
