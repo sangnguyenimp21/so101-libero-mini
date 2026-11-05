@@ -402,3 +402,28 @@ Complete. The shifted baseline leaves substantial headroom for residual RL, espe
 - Result: **10/10 zero-residual successes, exactly matching 10/10 saved SmolVLA-alone successes.** Success steps were 247, 264, 252, 248, 249, 251, 256, 244, 250, and 247.
 - Output: `docs/residual/results/zero_residual_test.json`, with `matches_saved_baseline=true`.
 - Step 7 mandatory condition passes; it is safe to proceed to PPO smoke testing.
+
+## Phase C / Step 8 — PPO implementation and smoke run (2026-11-05)
+
+### Implementation
+
+- Added `scripts/residual/train_ppo.py` using Stable-Baselines3 PPO and eight `SubprocVecEnv` workers.
+- Actor and critic MLPs are `[256, 256]`. After SB3 constructs the policy, the actor mean output layer's weights and bias are explicitly zeroed, so deterministic initial residual actions are exactly zero. Initial `log_std` is set to -1.0.
+- Default rollout settings: 8 environments, 256 steps per environment (2,048 transitions/update), batch size 256, 10 epochs, learning rate 3e-4, gamma 0.99, GAE lambda 0.95. SmolVLA copies run on CUDA; the small PPO network runs on CPU.
+- Frozen periodic evaluation uses only the saved axis-2-cm and diagonal-1.5-cm states, whose 31M-series seeds are disjoint from the 20M-series training seeds. Checkpoints, best model, final model, JSONL evaluations, monitor CSV, and TensorBoard logs are supported.
+- Resume is supported with `--resume CHECKPOINT.zip`; actor initialization is not repeated on resume.
+
+### Smoke-run problems and fixes
+
+1. The first launch passed initial evaluation but SB3 supplied model seeds 73--80 on its first vector reset. The wrapper mistakenly treated them as placement seeds and correctly rejected them as outside the reserved training range. Fixed the wrapper so all non-frozen training resets always use each worker's disjoint 20M-series sequence; SB3's optimizer seed cannot leak into placement selection.
+2. The second launch stopped before rollout because TensorBoard was absent from the conda environment. Installed `tensorboard==2.21.0` (plus its pip dependencies) into `so101lm`, as TensorBoard logging is a Phase D requirement.
+3. The third launch succeeded. These were two different blocking conditions; neither repeated three times.
+
+### Successful smoke run
+
+- Command: `MUJOCO_GL=egl python -u scripts/residual/train_ppo.py --run-dir docs/residual/results/ppo_smoke --total-timesteps 2048 --eval-episodes 8 --eval-freq 0 --checkpoint-freq 10000`.
+- Initial deterministic evaluation: **4/8 residual successes versus 4/8 saved baseline successes**, with the same per-state outcomes. This confirms the zero actor mean starts at baseline behavior on the target shifted states.
+- PPO collected and optimized 2,048 transitions with eight environments at 21 aggregate steps/s; rollout time was 93 seconds after initialization.
+- Saved `docs/residual/results/ppo_smoke/final_model.zip` and a TensorBoard event under `ppo_smoke/tb/PPO_1/`.
+- Post-run check: actor parameters are finite; mean absolute output-layer weight changed from exactly zero to 0.00165, and six log standard deviations remained near -1.0. The smoke rollout was only 256 steps per worker, so no worker completed a full 450-step failure episode; an empty monitor body is expected.
+- At 21 steps/s, 1,000,000 total transitions project to about 13.2 hours of rollout, plus PPO updates and periodic evaluation. The full job should fit within the 24-hour limit but is too long for an interactive session.

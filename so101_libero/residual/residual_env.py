@@ -92,7 +92,6 @@ class ResidualSO101Env(gym.Env):
         self._base_half = np.maximum((self._base_hi - self._base_lo) / 2.0, 1e-6)
 
         self._episode_number = 0
-        self._seed_rng = np.random.default_rng(config.train_seed_start + config.worker_id)
         self._obs: dict[str, np.ndarray] | None = None
         self._base_action: np.ndarray | None = None
         self._episode_step = 0
@@ -158,7 +157,10 @@ class ResidualSO101Env(gym.Env):
             init_state = options["init_state"]
             self._offset_m = tuple(options.get("offset_m", (np.nan, np.nan)))
         else:
-            episode_seed = int(seed if seed is not None else self._next_training_seed())
+            # VecEnv passes the PPO/model seed into the first reset.  It is not
+            # a placement seed: all training placements must come from the
+            # reserved, evaluation-disjoint 20M series owned by this worker.
+            episode_seed = self._next_training_seed()
             dx, dy = weighted_training_offset(episode_seed, self.cfg.focus_probability)
             init_state = shifted_init_state(dx, dy)
             self._offset_m = (dx, dy)
