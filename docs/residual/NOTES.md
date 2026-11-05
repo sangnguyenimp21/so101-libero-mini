@@ -541,3 +541,9 @@ Complete. The shifted baseline leaves substantial headroom for residual RL, espe
 - New `still_calibration_eval.pbs` is intended to depend on calibration evaluation `1523972`, so test results cannot influence L* or PPO checkpoint choice. It appends measured results to this file and commits the result JSON when complete. Estimated runtime 1-3 h; PBS wall-time cap 6 h.
 
 - Submitted `qsub -W depend=afterok:1523972.stdct-mgmt-02 scripts/residual/still_calibration_eval.pbs` -> **`1523981.stdct-mgmt-02`**. PBS shows it held until the PPO final evaluation succeeds. Output paths: `docs/residual/results/calibration/still_calibration_results.json` and `still_calibration.log`. After submission, `qstat -awn1` listed kickstart and calibration jobs, while neither cancelled calm job appeared.
+
+### Non-learning comparator dependency correction (2026-11-05)
+
+- At Valentin's request, changed only job `1523981` with `qalter -W depend=afterok:1523970.stdct-mgmt-02 1523981`. `qstat -f 1523981` now confirms `depend = afterok:1523970.stdct-mgmt-02`; the `Submit_arguments` field still shows the original submission command, but the active `depend` field is the scheduler's current dependency. The job remains held until L* selection succeeds.
+- Removed the comparator's data dependency on PPO evaluation. It now re-runs frozen SmolVLA alone on the same 100 test seeds, initial states, and L* biases, saves those paired baseline episodes, then runs the first-still calibration controller. Thus PPO training or evaluation failure does not prevent this result.
+- Static `py_compile` passed for the updated comparator. No kickstart, audit, fine-tuning, or other calibration job was modified.

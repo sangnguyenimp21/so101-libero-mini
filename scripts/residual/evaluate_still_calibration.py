@@ -10,13 +10,26 @@ from so101_libero.policy.runner import PolicyRunner
 from so101_libero.residual.calibration import CalibrationOffsetEnv
 from so101_libero.residual.still_calibration import FirstStillCalibrator
 from so101_libero.tasks.registry import get_task
+from scripts.residual.evaluate_calibration_baseline import episode as baseline_episode
 
 ROOT = Path('docs/residual/results/calibration')
 CKPT = 'checkpoints/smolvla_cube_flip/checkpoints/100000/pretrained_model'
 L = int(json.loads((ROOT/'selection.json').read_text())['chosen_L_deg'])
 states = json.loads(Path('docs/residual/calibration/test.json').read_text())['episodes']
-reference = json.loads((ROOT/'final_evaluation/results.json').read_text())['sets']['test_Lstar']['baseline']
-assert len(states) == len(reference) == 100
+assert len(states) == 100
+
+# Measure SmolVLA alone here, on exactly the same frozen states and biases.
+# This keeps the comparator independent of PPO training and evaluation.
+baseline_runner = PolicyRunner(CKPT, device='cuda')
+baseline_env = CalibrationOffsetEnv(L)
+reference = []
+for row in states:
+    reference.append({'index': row['index'], **baseline_episode(baseline_env, baseline_runner, row, L)})
+    (ROOT/'still_calibration_baseline_partial.json').write_text(json.dumps(reference, indent=2))
+baseline_env.close()
+del baseline_runner, baseline_env
+torch.cuda.empty_cache()
+assert len(reference) == len(states)
 
 runner = PolicyRunner(CKPT, device='cuda')
 env = CalibrationOffsetEnv(L)
@@ -71,5 +84,6 @@ summary = {'Lstar_deg': L, 'episodes': len(rows), 'successes': k, 'wilson95': [l
     'estimator': {'window': 10, 'max_position_span_deg': 0.3,
         'max_command_span_deg': 0.5, 'bias_hat': 'median(measured_state - command)',
         'correction': 'SmolVLA_target - bias_hat'}}
-(ROOT/'still_calibration_results.json').write_text(json.dumps({'summary': summary, 'episodes': rows}, indent=2))
+(ROOT/'still_calibration_results.json').write_text(json.dumps(
+    {'summary': summary, 'baseline_episodes': reference, 'episodes': rows}, indent=2))
 print(json.dumps(summary, indent=2), flush=True)
