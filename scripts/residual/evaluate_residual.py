@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import math
 import os
 import sys
 import time
@@ -29,6 +30,7 @@ from so101_libero.utils.video import label, write_mp4
 
 DEFAULT_BASE_POLICY = Path("checkpoints/smolvla_cube_flip/checkpoints/100000/pretrained_model")
 DEFAULT_MODEL = Path("docs/residual/results/ppo_main/best_model.zip")
+DEFAULT_COMPARISON_MODEL = Path("docs/residual/results/ppo_main/final_model.zip")
 DEFAULT_TRAIN_DIR = Path("docs/residual/results/ppo_main")
 DEFAULT_STATES = Path("docs/residual/placements")
 DEFAULT_BASE_ORIGINAL = Path("docs/residual/results/baseline_original_50/results.json")
@@ -79,6 +81,31 @@ def summarize(rows: list[dict], prefix: str) -> dict:
         "wilson95": interval,
         "failure_types": {name: int(failure_counts[name]) for name in FAILURE_TYPES},
         "motion_failures": {name: int(motion_counts[name]) for name in MOTION_TYPES},
+    }
+
+
+def paired_comparison(rows: list[dict], prefix: str) -> dict:
+    """Paired baseline/model counts and exact two-sided McNemar test."""
+    both_success = sum(r["baseline_success"] and r[f"{prefix}_success"] for r in rows)
+    fixed = sum((not r["baseline_success"]) and r[f"{prefix}_success"] for r in rows)
+    broken = sum(r["baseline_success"] and (not r[f"{prefix}_success"]) for r in rows)
+    both_failed = len(rows) - both_success - fixed - broken
+    discordant = fixed + broken
+    if discordant:
+        tail = sum(math.comb(discordant, k) for k in range(min(fixed, broken) + 1)) / (2**discordant)
+        exact_p = min(1.0, 2.0 * tail)
+        corrected_chi2 = (max(abs(fixed - broken) - 1, 0) ** 2) / discordant
+    else:
+        exact_p, corrected_chi2 = 1.0, 0.0
+    return {
+        "episodes": len(rows),
+        "both_success": both_success,
+        "fixed": fixed,
+        "broken": broken,
+        "both_failed": both_failed,
+        "discordant": discordant,
+        "mcnemar_exact_two_sided_p": round(exact_p, 6),
+        "mcnemar_continuity_corrected_chi2": round(corrected_chi2, 6),
     }
 
 
@@ -205,16 +232,19 @@ def choose_improvement_videos(rows: list[dict], count: int) -> list[dict]:
     return selected
 
 
-def plot_success(rows: list[dict], out: Path) -> None:
+def plot_success(rows: list[dict], out: Path, include_final: bool) -> None:
     order = ["original_50", "shift_1p5cm_diagonal", "shift_2cm_axis",
              "shift_3cm_axis_feasible", "shift_4cm_axis_feasible"]
     labels = ["Original", "Diagonal 1.5 cm", "Axis 2 cm", "Axis 3 cm", "Axis 4 cm"]
     baseline = [summarize([r for r in rows if r["set_id"] == s], "baseline")["success_rate"] for s in order]
     residual = [summarize([r for r in rows if r["set_id"] == s], "residual")["success_rate"] for s in order]
+    final = [summarize([r for r in rows if r["set_id"] == s], "final")["success_rate"] for s in order]
     x = np.arange(len(order))
     fig, ax = plt.subplots(figsize=(8, 4.5))
     ax.plot(x, baseline, "o-", label="SmolVLA alone", linewidth=2)
-    ax.plot(x, residual, "o-", label="SmolVLA + residual", linewidth=2)
+    ax.plot(x, residual, "o-", label="Best-eval residual", linewidth=2)
+    if include_final:
+        ax.plot(x, final, "o--", label="Final residual", linewidth=1.5)
     ax.set_xticks(x, labels, rotation=18, ha="right")
     ax.set_ylim(-0.03, 1.03)
     ax.set_ylabel("Success rate")
@@ -259,17 +289,23 @@ def write_summary(path: Path, report: dict) -> None:
         "shift_3cm_axis_feasible": "Axis 3 cm feasible",
         "shift_4cm_axis_feasible": "Axis 4 cm feasible",
     }
-    lines = ["# Final residual evaluation", "", "| set | SmolVLA | residual | delta | residual stalled / moved / lifted |",
-             "|---|---:|---:|---:|---:|"]
+    lines = ["# Final residual evaluation", "", "| set | SmolVLA | best-eval | final | best delta | best stalled / moved / lifted |",
+             "|---|---:|---:|---:|---:|---:|"]
     for set_id, values in report["per_set"].items():
         b, r = values["baseline"], values["residual"]
-        m = r["motion_failures"]
+        f, m = values["final"], r["motion_failures"]
         lines.append(
             f"| {labels[set_id]} | {b['successes']}/{b['episodes']} | {r['successes']}/{r['episodes']} | "
+            f"{f['successes']}/{f['episodes']} | "
             f"{r['successes'] - b['successes']:+d} | {m['stalled']} / {m['moved_but_missed']} / "
             f"{m['lifted_but_not_flipped']} |"
         )
-    lines += ["", "Success intervals and complete episode records are in `results.json`.", "",
+    paired = report["paired_target_sets"]
+    lines += ["", f"Target paired best-eval: fixed={paired['best']['fixed']}, broken={paired['best']['broken']}, "
+              f"McNemar exact p={paired['best']['mcnemar_exact_two_sided_p']}.",
+              f"Target paired final: fixed={paired['final']['fixed']}, broken={paired['final']['broken']}, "
+              f"McNemar exact p={paired['final']['mcnemar_exact_two_sided_p']}.", "",
+              "Success intervals and complete episode records are in `results.json`.", "",
               "![Success comparison](success_vs_shift.png)", "", "![Training curve](training_curve.png)", ""]
     path.write_text("\n".join(lines))
 
@@ -278,6 +314,8 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--base-policy", type=Path, default=DEFAULT_BASE_POLICY)
     parser.add_argument("--model", type=Path, default=DEFAULT_MODEL)
+    parser.add_argument("--comparison-model", type=Path, default=DEFAULT_COMPARISON_MODEL,
+                        help="final training checkpoint to report alongside the best-eval checkpoint")
     parser.add_argument("--train-dir", type=Path, default=DEFAULT_TRAIN_DIR)
     parser.add_argument("--states-dir", type=Path, default=DEFAULT_STATES)
     parser.add_argument("--baseline-original", type=Path, default=DEFAULT_BASE_ORIGINAL)
@@ -291,18 +329,22 @@ def main() -> None:
         parser.error("run on a GPU node with MUJOCO_GL=egl")
     if not args.model.exists():
         parser.error(f"trained residual model does not exist: {args.model}")
+    if not args.comparison_model.exists():
+        parser.error(f"comparison residual model does not exist: {args.comparison_model}")
     args.out.mkdir(parents=True, exist_ok=True)
     jobs = load_jobs(args)
     if args.limit is not None:
         jobs = jobs[: args.limit]
     baseline_motion = load_baseline_motion(args.baseline_stalls)
     model = PPO.load(args.model, device="cpu")
+    comparison_model = PPO.load(args.comparison_model, device="cpu")
     env = ResidualSO101Env(ResidualConfig(checkpoint=args.base_policy))
     rows = []
     started = time.time()
     try:
         for i, job in enumerate(jobs):
             result = run_episode(model, env, job)
+            final_result = run_episode(comparison_model, env, job)
             baseline = job["baseline"]
             baseline_lifted = bool(baseline["lifted"])
             baseline_failure = broad_failure_type(
@@ -325,11 +367,13 @@ def main() -> None:
                 "baseline_failure_type": baseline_failure,
                 "baseline_motion_category": baseline_motion_category,
                 **{f"residual_{k}": v for k, v in result.items()},
+                **{f"final_{k}": v for k, v in final_result.items()},
             }
             rows.append(row)
             print(
                 f"{i + 1:03d}/{len(jobs)} {job['set_id']} {job['offset_label']} state={job['state_index']:02d}: "
-                f"baseline={'success' if baseline['success'] else baseline['outcome']} residual={result['outcome']}",
+                f"baseline={'success' if baseline['success'] else baseline['outcome']} "
+                f"best={result['outcome']} final={final_result['outcome']}",
                 flush=True,
             )
 
@@ -355,6 +399,7 @@ def main() -> None:
         set_id: {
             "baseline": summarize([r for r in rows if r["set_id"] == set_id], "baseline"),
             "residual": summarize([r for r in rows if r["set_id"] == set_id], "residual"),
+            "final": summarize([r for r in rows if r["set_id"] == set_id], "final"),
         }
         for set_id in set_order if any(r["set_id"] == set_id for r in rows)
     }
@@ -363,27 +408,41 @@ def main() -> None:
         "matched_state_protocol": True,
         "base_policy": str(args.base_policy),
         "residual_model": str(args.model),
+        "final_model": str(args.comparison_model),
         "privileged_cube_pose": True,
         "sim_only": True,
         "wall_time_s": round(time.time() - started, 1),
-        "overall": {"baseline": summarize(rows, "baseline"), "residual": summarize(rows, "residual")},
+        "overall": {"baseline": summarize(rows, "baseline"), "residual": summarize(rows, "residual"),
+                    "final": summarize(rows, "final")},
         "original": {
             "baseline": summarize([r for r in rows if r["set_id"] == "original_50"], "baseline"),
             "residual": summarize([r for r in rows if r["set_id"] == "original_50"], "residual"),
+            "final": summarize([r for r in rows if r["set_id"] == "original_50"], "final"),
         },
         "all_shifted": {
             "baseline": summarize([r for r in rows if r["set_id"] != "original_50"], "baseline"),
             "residual": summarize([r for r in rows if r["set_id"] != "original_50"], "residual"),
+            "final": summarize([r for r in rows if r["set_id"] != "original_50"], "final"),
         },
         "target_sets": {
             "baseline": summarize([r for r in rows if r["set_id"] in ("shift_2cm_axis", "shift_1p5cm_diagonal")], "baseline"),
             "residual": summarize([r for r in rows if r["set_id"] in ("shift_2cm_axis", "shift_1p5cm_diagonal")], "residual"),
+            "final": summarize([r for r in rows if r["set_id"] in ("shift_2cm_axis", "shift_1p5cm_diagonal")], "final"),
+        },
+        "paired_target_sets": {
+            "best": paired_comparison(
+                [r for r in rows if r["set_id"] in ("shift_2cm_axis", "shift_1p5cm_diagonal")], "residual"
+            ),
+            "final": paired_comparison(
+                [r for r in rows if r["set_id"] in ("shift_2cm_axis", "shift_1p5cm_diagonal")], "final"
+            ),
         },
         "per_set": per_set,
         "per_training_region": {
             tag: {
                 "baseline": summarize([r for r in rows if r["training_region_tag"] == tag], "baseline"),
                 "residual": summarize([r for r in rows if r["training_region_tag"] == tag], "residual"),
+                "final": summarize([r for r in rows if r["training_region_tag"] == tag], "final"),
             }
             for tag in ("in-training-region", "out-of-training-region")
             if any(r["training_region_tag"] == tag for r in rows)
@@ -399,7 +458,7 @@ def main() -> None:
         for row in rows:
             writer.writerow({k: row.get(k, "") for k in fields})
     if args.limit is None:
-        plot_success(rows, args.out / "success_vs_shift.png")
+        plot_success(rows, args.out / "success_vs_shift.png", include_final=True)
         points = plot_training_curve(args.train_dir, args.out / "training_curve.png")
         report["training_curve"] = points
         (args.out / "results.json").write_text(json.dumps(report, indent=2) + "\n")

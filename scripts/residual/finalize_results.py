@@ -8,55 +8,63 @@ from pathlib import Path
 
 SUMMARY_START = "<!-- RESIDUAL_CURRENT_SUMMARY_START -->"
 SUMMARY_END = "<!-- RESIDUAL_CURRENT_SUMMARY_END -->"
-PHASE_START = "<!-- RESIDUAL_PHASE_E_START -->"
-PHASE_END = "<!-- RESIDUAL_PHASE_E_END -->"
 
 
 def fraction(summary: dict) -> str:
     return f"{summary['successes']}/{summary['episodes']} ({100 * summary['success_rate']:.1f}%)"
 
 
-def make_current(report: dict) -> str:
-    original = report["original"]
-    target = report["target_sets"]
-    shifted = report["all_shifted"]
-    return "\n".join(
-        [
-            SUMMARY_START,
-            "## Current summary",
-            "",
-            f"- Final residual model: `{report['residual_model']}`; SmolVLA stayed frozen.",
-            f"- Target sets (axis 2 cm + diagonal 1.5 cm): SmolVLA {fraction(target['baseline'])}; "
-            f"residual {fraction(target['residual'])}.",
-            f"- Original 50 regression check: SmolVLA {fraction(original['baseline'])}; "
-            f"residual {fraction(original['residual'])}.",
-            f"- All 140 shifted states: SmolVLA {fraction(shifted['baseline'])}; residual {fraction(shifted['residual'])}.",
-            "- Method limitation: the residual observes privileged simulator cube pose and is sim-only.",
-            "- Final tables, plots, and improvement videos are under `docs/residual/results/final_evaluation/`.",
-            SUMMARY_END,
-        ]
-    )
+def make_current(reports: dict[str, dict]) -> str:
+    lines = [SUMMARY_START, "## Current summary", "", "- SmolVLA stayed frozen in every run."]
+    for label, report in sorted(reports.items()):
+        target, original = report["target_sets"], report["original"]
+        paired = report["paired_target_sets"]
+        lines.append(
+            f"- **{label} best-eval:** target {fraction(target['residual'])} vs baseline "
+            f"{fraction(target['baseline'])}; fixed/broken={paired['best']['fixed']}/{paired['best']['broken']} "
+            f"(McNemar p={paired['best']['mcnemar_exact_two_sided_p']}); original {fraction(original['residual'])}."
+        )
+        lines.append(
+            f"- **{label} final:** target {fraction(target['final'])}; "
+            f"fixed/broken={paired['final']['fixed']}/{paired['final']['broken']} "
+            f"(McNemar p={paired['final']['mcnemar_exact_two_sided_p']})."
+        )
+    lines += [
+        "- Method limitation: the residual observes privileged simulator cube pose and is sim-only.",
+        "- Variant tables, plots, and improvement videos are under `docs/residual/results/final_evaluation_*/`.",
+        SUMMARY_END,
+    ]
+    return "\n".join(lines)
 
 
-def make_phase(report: dict, evaluation_job: str) -> str:
+def make_phase(report: dict, evaluation_job: str, label: str, output_dir: Path) -> str:
+    phase_start = f"<!-- RESIDUAL_PHASE_E_{label.upper()}_START -->"
+    phase_end = f"<!-- RESIDUAL_PHASE_E_{label.upper()}_END -->"
+    paired = report["paired_target_sets"]
     lines = [
-        PHASE_START,
-        "## Phase E / Step 10 — Final matched evaluation",
+        phase_start,
+        f"## Phase E / Step 10 — {label} matched evaluation",
         "",
         f"- Dependent PBS evaluation job: `{evaluation_job}`.",
-        f"- Evaluated model: `{report['residual_model']}` with frozen base `{report['base_policy']}`.",
+        f"- Best-eval model: `{report['residual_model']}`; final model: `{report['final_model']}`; frozen base: `{report['base_policy']}`.",
         "- Protocol: exact same 50 original and 140 shifted initial states, seeds, horizon, EGL renderer, and success predicate as the saved baselines.",
-        f"- Original: baseline **{fraction(report['original']['baseline'])}**, residual **{fraction(report['original']['residual'])}**.",
+        f"- Original: baseline **{fraction(report['original']['baseline'])}**, best **{fraction(report['original']['residual'])}**, "
+        f"final **{fraction(report['original']['final'])}**.",
         f"- Target axis-2-cm + diagonal-1.5-cm sets: baseline **{fraction(report['target_sets']['baseline'])}**, "
-        f"residual **{fraction(report['target_sets']['residual'])}**.",
-        f"- All shifted: baseline **{fraction(report['all_shifted']['baseline'])}**, residual **{fraction(report['all_shifted']['residual'])}**.",
+        f"best **{fraction(report['target_sets']['residual'])}**, final **{fraction(report['target_sets']['final'])}**.",
+        f"- Target paired best: fixed={paired['best']['fixed']}, broken={paired['best']['broken']}, "
+        f"McNemar exact p={paired['best']['mcnemar_exact_two_sided_p']}; final: fixed={paired['final']['fixed']}, "
+        f"broken={paired['final']['broken']}, p={paired['final']['mcnemar_exact_two_sided_p']}.",
+        f"- All shifted: baseline **{fraction(report['all_shifted']['baseline'])}**, best **{fraction(report['all_shifted']['residual'])}**, "
+        f"final **{fraction(report['all_shifted']['final'])}**.",
         "- Per-set results:",
     ]
     for set_id, values in report["per_set"].items():
         residual = values["residual"]
         motion = residual["motion_failures"]
         lines.append(
-            f"  - `{set_id}`: baseline {fraction(values['baseline'])}; residual {fraction(residual)}; "
+            f"  - `{set_id}`: baseline {fraction(values['baseline'])}; best {fraction(residual)}; "
+            f"final {fraction(values['final'])}; "
             f"residual failures stalled/moved/lifted = {motion['stalled']}/{motion['moved_but_missed']}/"
             f"{motion['lifted_but_not_flipped']}."
         )
@@ -70,9 +78,9 @@ def make_phase(report: dict, evaluation_job: str) -> str:
     videos = report.get("improvement_videos", [])
     lines.append(f"- Residual-win videos: {len(videos)} ({', '.join(videos) if videos else 'none found'}).")
     lines += [
-        "- Outputs: `docs/residual/results/final_evaluation/{results.json,episodes.csv,summary.md,success_vs_shift.png,training_curve.png,videos/}`.",
+        f"- Outputs: `{output_dir}/{{results.json,episodes.csv,summary.md,success_vs_shift.png,training_curve.png,videos/}}`.",
         "- Limitation: `privileged_cube_pose=true`; these residual results are simulation-only.",
-        PHASE_END,
+        phase_end,
     ]
     return "\n".join(lines)
 
@@ -93,13 +101,29 @@ def main() -> None:
     parser.add_argument("--results", type=Path, default=Path("docs/residual/results/final_evaluation/results.json"))
     parser.add_argument("--notes", type=Path, default=Path("docs/residual/NOTES.md"))
     parser.add_argument("--evaluation-job", default="unknown")
+    parser.add_argument("--label", required=True)
     args = parser.parse_args()
     report = json.loads(args.results.read_text())
     if not report.get("complete") or len(report.get("episodes", [])) != 190:
         raise RuntimeError("refusing to finalize an incomplete final evaluation")
+    result_root = args.results.parent.parent
+    reports = {}
+    for candidate in sorted(result_root.glob("final_evaluation_*/results.json")):
+        candidate_report = json.loads(candidate.read_text())
+        if candidate_report.get("complete") and len(candidate_report.get("episodes", [])) == 190:
+            reports[candidate.parent.name.removeprefix("final_evaluation_")] = candidate_report
+    reports[args.label] = report
     text = args.notes.read_text()
-    text = replace_block(text, SUMMARY_START, SUMMARY_END, make_current(report), insert_after_title=True)
-    text = replace_block(text, PHASE_START, PHASE_END, make_phase(report, args.evaluation_job), insert_after_title=False)
+    text = replace_block(text, SUMMARY_START, SUMMARY_END, make_current(reports), insert_after_title=True)
+    phase_start = f"<!-- RESIDUAL_PHASE_E_{args.label.upper()}_START -->"
+    phase_end = f"<!-- RESIDUAL_PHASE_E_{args.label.upper()}_END -->"
+    text = replace_block(
+        text,
+        phase_start,
+        phase_end,
+        make_phase(report, args.evaluation_job, args.label, args.results.parent),
+        insert_after_title=False,
+    )
     args.notes.write_text(text)
 
 

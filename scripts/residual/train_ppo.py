@@ -104,21 +104,30 @@ def evaluate_residual(model: PPO, env: ResidualSO101Env, states: list[dict]) -> 
 
 
 class FrozenEvaluationCallback(BaseCallback):
-    def __init__(self, env: ResidualSO101Env, states: list[dict], eval_freq: int, out_dir: Path):
+    def __init__(self, env: ResidualSO101Env, states: list[dict], eval_freq: int, out_dir: Path,
+                 best_successes: int = -1):
         super().__init__(verbose=1)
         self.eval_env = env
         self.states = states
         self.eval_freq = eval_freq
         self.out_dir = out_dir
         self.next_eval = eval_freq
-        self.best_successes = -1
+        self.best_successes = best_successes
         self.path = out_dir / "evaluations.jsonl"
 
     def _on_step(self) -> bool:
         if self.eval_freq <= 0 or self.num_timesteps < self.next_eval:
             return True
         result = evaluate_residual(self.model, self.eval_env, self.states)
-        record = {"timesteps": self.num_timesteps, "wall_time": time.time(), **result}
+        checkpoint = self.out_dir / "eval_checkpoints" / f"eval_{self.num_timesteps:09d}_steps"
+        checkpoint.parent.mkdir(parents=True, exist_ok=True)
+        self.model.save(checkpoint)
+        record = {
+            "timesteps": self.num_timesteps,
+            "wall_time": time.time(),
+            "checkpoint": f"{checkpoint}.zip",
+            **result,
+        }
         with self.path.open("a") as handle:
             handle.write(json.dumps(record) + "\n")
         self.logger.record("eval/success_rate", result["success_rate"])
@@ -132,6 +141,7 @@ class FrozenEvaluationCallback(BaseCallback):
         if result["successes"] > self.best_successes:
             self.best_successes = result["successes"]
             self.model.save(self.out_dir / "best_model")
+            (self.out_dir / "best_evaluation.json").write_text(json.dumps(record, indent=2) + "\n")
         while self.next_eval <= self.num_timesteps:
             self.next_eval += self.eval_freq
         return True
@@ -185,6 +195,7 @@ def parse_args():
     parser.add_argument("--gamma", type=float, default=0.99)
     parser.add_argument("--gae-lambda", type=float, default=0.95)
     parser.add_argument("--ent-coef", type=float, default=0.0)
+    parser.add_argument("--target-kl", type=float, default=None)
     parser.add_argument("--log-std", type=float, default=-1.0)
     parser.add_argument("--base-device", default="cuda")
     parser.add_argument("--ppo-device", default="cpu")
@@ -249,6 +260,7 @@ def main() -> None:
             gamma=args.gamma,
             gae_lambda=args.gae_lambda,
             ent_coef=args.ent_coef,
+            target_kl=args.target_kl,
             seed=args.seed,
             device=args.ppo_device,
             tensorboard_log=str(args.run_dir / "tb"),
@@ -268,7 +280,31 @@ def main() -> None:
         eval_env.close()
         raise SystemExit("initial zero-mean residual differs from baseline by more than one episode")
 
-    eval_callback = FrozenEvaluationCallback(eval_env, eval_states, args.eval_freq, args.run_dir)
+    if args.resume is None:
+        initial_checkpoint = args.run_dir / "eval_checkpoints" / "eval_000000000_steps"
+        initial_checkpoint.parent.mkdir(parents=True, exist_ok=True)
+        model.save(initial_checkpoint)
+        model.save(args.run_dir / "best_model")
+        (args.run_dir / "best_evaluation.json").write_text(
+            json.dumps(
+                {
+                    "timesteps": 0,
+                    "wall_time": time.time(),
+                    "checkpoint": f"{initial_checkpoint}.zip",
+                    **initial,
+                },
+                indent=2,
+            )
+            + "\n"
+        )
+        best_successes = initial["successes"]
+    else:
+        best_path = args.run_dir / "best_evaluation.json"
+        best_successes = json.loads(best_path.read_text())["successes"] if best_path.exists() else -1
+
+    eval_callback = FrozenEvaluationCallback(
+        eval_env, eval_states, args.eval_freq, args.run_dir, best_successes=best_successes
+    )
     checkpoint_callback = CheckpointCallback(
         save_freq=max(args.checkpoint_freq // args.num_envs, 1),
         save_path=str(args.run_dir / "checkpoints"),

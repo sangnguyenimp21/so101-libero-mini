@@ -3,9 +3,10 @@
 <!-- RESIDUAL_CURRENT_SUMMARY_START -->
 ## Current summary
 
-- Phases A--C are complete: the best early nudge was 5 degrees (5/40 stalled-state recoveries), the zero-residual wrapper matched SmolVLA 10/10, and the eight-worker PPO smoke run passed.
-- Full 1,000,000-transition training is running as PBS job `1523564.stdct-mgmt-02` on `GN-A40-018`; SmolVLA is frozen throughout.
-- Final matched evaluation code is ready for the original 50 and all 140 shifted states. A dependent PBS evaluation job will run automatically after training succeeds.
+- The original PPO run was cancelled at 231,424 transitions because its frozen evaluation was 5/20 at both 100k and 200k, below the 9/20 SmolVLA baseline.
+- Replacement variants are prepared: **calm** (late scale 1.5 degrees) and **kickstart** (late scale zero); both use log-std -2, learning rate 1e-4, target KL 0.02, and a 5-degree first-chunk scale.
+- Each run saves the exact model at every evaluation. Timestep zero is the initial 9/20 incumbent, so an inferior learned model cannot become `best_model`.
+- Each training run has its own dependent matched evaluation of the best-eval and final checkpoints, including paired fixed/broken counts and exact McNemar tests on the 80 target states.
 - The residual uses privileged cube pose and is simulation-only.
 <!-- RESIDUAL_CURRENT_SUMMARY_END -->
 
@@ -459,3 +460,26 @@ Complete. The shifted baseline leaves substantial headroom for residual RL, espe
   `MUJOCO_GL=egl python -u scripts/residual/evaluate_residual.py`.
 - Training PBS job `1523564.stdct-mgmt-02` started successfully on `GN-A40-018` at 16:23 Singapore time.
 - Submitted dependent evaluation job **`1523590.stdct-mgmt-02`** with `afterok:1523564.stdct-mgmt-02`. It is held until training succeeds, then automatically runs all 190 states, writes plots/videos, calls `finalize_results.py` to replace the short summary at the top of this file and append the measured Phase E results, and commits only the final result paths.
+
+## Phase D restart — Calm and kickstart variants
+
+### Why the first full run was stopped
+
+- Valentin observed that frozen evaluation was **5/20 at 100,000** and **5/20 at 200,000** transitions, versus **9/20 for SmolVLA alone** on those exact states. Both evaluations lifted 10/20 cubes, so the learned residual often preserved pickup but spoiled completion/release of the flip.
+- Verified the two records in `docs/residual/results/ppo_main/evaluations.jsonl`. At 100k the paired target subset had 1 baseline failure fixed and 5 baseline successes broken; at 200k it had 0 fixed and 4 broken.
+- Cancelled training job `1523564.stdct-mgmt-02` and dependent evaluation job `1523590.stdct-mgmt-02` as explicitly requested. PBS history records training exit status 143 (user cancellation) after 34:28 wall time and 231,424 transitions. Existing checkpoints/logs were preserved.
+
+### Safer training/model-selection changes
+
+- Added PPO `--target-kl`; both replacement runs use 0.02, learning rate 1e-4, and initial log-standard-deviation -2.0.
+- Every frozen evaluation now saves its exact model under `eval_checkpoints/eval_*_steps.zip`. The timestep-zero model is saved as an evaluated checkpoint and starts as `best_model` with its 9/20 baseline-equivalent result. A periodic checkpoint replaces it only on a **strictly higher** success count. `best_evaluation.json` records why the selected checkpoint won.
+- **calm:** residual arm scale 5 degrees for steps 0--49, then 1.5 degrees.
+- **kickstart:** residual arm scale 5 degrees for steps 0--49, then exactly zero. The residual therefore cannot alter SmolVLA after the first chunk.
+- Both retain eight workers, 1,000,000 target transitions, evaluation/checkpointing every 100,000 transitions, and the same 20 frozen selection states.
+
+### Expanded matched evaluation
+
+- Final evaluation now runs both `best_model.zip` (the primary reported model) and `final_model.zip` on all 50 original plus 140 shifted states.
+- On the 80 requested target states (axis 2 cm + diagonal 1.5 cm), it reports paired `fixed` (baseline failed, residual succeeded), `broken` (baseline succeeded, residual failed), both-success, and both-failed counts.
+- It computes the exact two-sided McNemar binomial p-value and the continuity-corrected McNemar chi-square statistic for both best-eval and final checkpoints.
+- The dual-model integration smoke test passed on two original frozen states: baseline, best, and final all succeeded.
