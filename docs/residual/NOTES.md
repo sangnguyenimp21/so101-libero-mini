@@ -547,3 +547,10 @@ Complete. The shifted baseline leaves substantial headroom for residual RL, espe
 - At Valentin's request, changed only job `1523981` with `qalter -W depend=afterok:1523970.stdct-mgmt-02 1523981`. `qstat -f 1523981` now confirms `depend = afterok:1523970.stdct-mgmt-02`; the `Submit_arguments` field still shows the original submission command, but the active `depend` field is the scheduler's current dependency. The job remains held until L* selection succeeds.
 - Removed the comparator's data dependency on PPO evaluation. It now re-runs frozen SmolVLA alone on the same 100 test seeds, initial states, and L* biases, saves those paired baseline episodes, then runs the first-still calibration controller. Thus PPO training or evaluation failure does not prevent this result.
 - Static `py_compile` passed for the updated comparator. No kickstart, audit, fine-tuning, or other calibration job was modified.
+
+## Kickstart 500k separate evaluation submission (2026-11-05)
+
+- Confirmed `docs/residual/results/ppo_kickstart/checkpoints/ppo_residual_500000_steps.zip` exists while kickstart PPO job `1523671` remains running. No files in that job or its held evaluation `1523674` were modified.
+- Added `evaluate_kickstart_500k.py`: calls the existing `evaluate_residual.py` on original 50 and shifted 140 using the fixed 500k checkpoint and the saved kickstart scales (early arm 5, late arm 0, early and late gripper 5). The existing evaluator requires two model paths, so both arguments point to the same immutable 500k file; the duplicate `final` results are labelled as such.
+- Added `summarize_kickstart_500k.py`: per-set successes, Wilson 95% intervals, stalled/moved-but-missed/lifted-but-not-flipped failures, paired fixed/broken counts and exact two-sided McNemar tests versus the saved SmolVLA-alone outcomes. Results go only to `docs/residual/results/kickstart_500k_eval/` and will be committed after PBS completes.
+- Static `py_compile` passed. Evaluation is a separate one-GPU PBS job, estimated 2-6 h with a 12 h wall-time cap; no dependency on running kickstart training.
