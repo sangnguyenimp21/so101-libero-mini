@@ -523,3 +523,11 @@ Complete. The shifted baseline leaves substantial headroom for residual RL, espe
 - Added `evaluate_calibration_ppo.py`: paired baseline versus best and final checkpoints on frozen 100-state test and original 50 L=0, with Wilson CIs, the three failure types, fixed/broken, exact two-sided McNemar, per-joint mean residual, and up to three fixed-case videos per checkpoint.
 - Added PBS scripts for selection/commit, smoke plus training, and dependent final evaluation. Selection job commits the complete validation sweep and L* before the training job can start. If no level is 30%-70%, selection exits nonzero and the afterok training dependency cannot release. Estimated sweep up to 8 h; PPO smoke plus 500k transitions and periodic evaluations 12-20 h; final 450 matched episodes up to 16 h. All use EGL.
 - Static `py_compile` passed. The training and final-evaluation scripts await measured L*; their runtime results are pending.
+
+### Calibration PBS submissions
+
+- `qsub scripts/residual/calibration_sweep.pbs` -> `1523945.stdct-mgmt-02` (queued at submission). It repeats the L=0 ten-episode gate, then runs 50 validation episodes at each L in {0,2,4,6,8}; wall-time cap 8 h. Output: `docs/residual/results/calibration/validation_sweep.json`.
+- `qsub -W depend=afterok:1523945.stdct-mgmt-02 scripts/residual/calibration_select.pbs` -> `1523970.stdct-mgmt-02` (held). It selects the smallest L in the preregistered 30%-70% range, writes `selection.json`, appends the full sweep here, and commits both **before training can start**. If none qualifies, it exits nonzero, leaving all later jobs held.
+- `qsub -W depend=afterok:1523970.stdct-mgmt-02 scripts/residual/calibration_train.pbs` -> `1523971.stdct-mgmt-02` (held). It runs the ten-state zero-residual gate, 2-env 2048-step smoke test, then eight-worker 500k-step PPO; wall-time cap 24 h. The exact model is saved at each 100k selection evaluation.
+- `qsub -W depend=afterok:1523971.stdct-mgmt-02 scripts/residual/calibration_eval.pbs` -> `1523972.stdct-mgmt-02` (held). It performs the untouched frozen test and original-50 L=0 comparisons; wall-time cap 16 h.
+- The separately running kickstart PPO and its evaluation, action audit, and diverse-demo pipeline were not cancelled, modified, or resubmitted.
