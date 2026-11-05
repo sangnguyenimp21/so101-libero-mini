@@ -555,3 +555,20 @@ Complete. The shifted baseline leaves substantial headroom for residual RL, espe
 - Added `summarize_kickstart_500k.py`: per-set successes, Wilson 95% intervals, stalled/moved-but-missed/lifted-but-not-flipped failures, paired fixed/broken counts and exact two-sided McNemar tests versus the saved SmolVLA-alone outcomes. Results go only to `docs/residual/results/kickstart_500k_eval/` and will be committed after PBS completes.
 - Static `py_compile` passed. Evaluation is a separate one-GPU PBS job, estimated 2-6 h with a 12 h wall-time cap; no dependency on running kickstart training.
 - Submitted `qsub scripts/residual/evaluate_kickstart_500k.pbs` -> **`1524012.stdct-mgmt-02`** (queued independently). The original kickstart training `1523671` still shows running and its evaluation `1523674` remains held. Job log: `docs/residual/results/kickstart_500k_eval/pbs.log`; per-set report: `paired_per_set.md` and `paired_per_set.json` when complete.
+
+## Kickstart 500k separate matched evaluation
+
+PBS job evaluated the fixed 500k checkpoint, leaving the running kickstart training job untouched. The base policy and residual ran on the same original 50 and shifted 140 states and seeds.
+
+# Kickstart PPO at 500,000 steps
+
+The 500k checkpoint is evaluated with the saved kickstart action scales. The duplicate `final` column in `results.json` is the same 500k model, because the existing evaluator requires two model paths.
+
+| Set | SmolVLA | Kickstart 500k | Wilson 95% | Stalled | Moved but missed | Lifted not flipped | Fixed | Broken | Exact McNemar p |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| original_50 | 50/50 | 50/50 | [0.929, 1.000] | 0 | 0 | 0 | 0 | 0 | 1.000000 |
+| shift_2cm_axis | 19/40 | 20/40 | [0.352, 0.648] | 20 | 0 | 0 | 1 | 0 | 1.000000 |
+| shift_1p5cm_diagonal | 17/40 | 20/40 | [0.352, 0.648] | 20 | 0 | 0 | 3 | 0 | 0.250000 |
+| shift_3cm_axis_feasible | 0/30 | 0/30 | [0.000, 0.114] | 20 | 0 | 10 | 0 | 0 | 1.000000 |
+| shift_4cm_axis_feasible | 0/30 | 0/30 | [0.000, 0.114] | 10 | 20 | 0 | 0 | 0 | 1.000000 |
+

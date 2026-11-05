@@ -1,0 +1,302 @@
+{
+  "original_50": {
+    "baseline": {
+      "episodes": 50,
+      "successes": 50,
+      "success_rate": 1.0,
+      "wilson95": [
+        0.9286,
+        1.0
+      ],
+      "failure_types": {
+        "never_grasped": 0,
+        "dropped": 0,
+        "lifted_but_not_flipped": 0,
+        "timeout": 0,
+        "other": 0
+      },
+      "motion_failures": {
+        "stalled": 0,
+        "moved_but_missed": 0,
+        "lifted_but_not_flipped": 0
+      }
+    },
+    "kickstart_500k": {
+      "episodes": 50,
+      "successes": 50,
+      "success_rate": 1.0,
+      "wilson95": [
+        0.9286,
+        1.0
+      ],
+      "failure_types": {
+        "never_grasped": 0,
+        "dropped": 0,
+        "lifted_but_not_flipped": 0,
+        "timeout": 0,
+        "other": 0
+      },
+      "motion_failures": {
+        "stalled": 0,
+        "moved_but_missed": 0,
+        "lifted_but_not_flipped": 0
+      }
+    },
+    "paired": {
+      "episodes": 50,
+      "both_success": 50,
+      "fixed": 0,
+      "broken": 0,
+      "both_failed": 0,
+      "discordant": 0,
+      "mcnemar_exact_two_sided_p": 1.0,
+      "mcnemar_continuity_corrected_chi2": 0.0
+    }
+  },
+  "shift_2cm_axis": {
+    "baseline": {
+      "episodes": 40,
+      "successes": 19,
+      "success_rate": 0.475,
+      "wilson95": [
+        0.3294,
+        0.625
+      ],
+      "failure_types": {
+        "never_grasped": 20,
+        "dropped": 0,
+        "lifted_but_not_flipped": 1,
+        "timeout": 0,
+        "other": 0
+      },
+      "motion_failures": {
+        "stalled": 20,
+        "moved_but_missed": 0,
+        "lifted_but_not_flipped": 1
+      }
+    },
+    "kickstart_500k": {
+      "episodes": 40,
+      "successes": 20,
+      "success_rate": 0.5,
+      "wilson95": [
+        0.352,
+        0.648
+      ],
+      "failure_types": {
+        "never_grasped": 20,
+        "dropped": 0,
+        "lifted_but_not_flipped": 0,
+        "timeout": 0,
+        "other": 0
+      },
+      "motion_failures": {
+        "stalled": 20,
+        "moved_but_missed": 0,
+        "lifted_but_not_flipped": 0
+      }
+    },
+    "paired": {
+      "episodes": 40,
+      "both_success": 19,
+      "fixed": 1,
+      "broken": 0,
+      "both_failed": 20,
+      "discordant": 1,
+      "mcnemar_exact_two_sided_p": 1.0,
+      "mcnemar_continuity_corrected_chi2": 0.0
+    }
+  },
+  "shift_1p5cm_diagonal": {
+    "baseline": {
+      "episodes": 40,
+      "successes": 17,
+      "success_rate": 0.425,
+      "wilson95": [
+        0.2851,
+        0.5781
+      ],
+      "failure_types": {
+        "never_grasped": 20,
+        "dropped": 0,
+        "lifted_but_not_flipped": 3,
+        "timeout": 0,
+        "other": 0
+      },
+      "motion_failures": {
+        "stalled": 20,
+        "moved_but_missed": 0,
+        "lifted_but_not_flipped": 3
+      }
+    },
+    "kickstart_500k": {
+      "episodes": 40,
+      "successes": 20,
+      "success_rate": 0.5,
+      "wilson95": [
+        0.352,
+        0.648
+      ],
+      "failure_types": {
+        "never_grasped": 20,
+        "dropped": 0,
+        "lifted_but_not_flipped": 0,
+        "timeout": 0,
+        "other": 0
+      },
+      "motion_failures": {
+        "stalled": 20,
+        "moved_but_missed": 0,
+        "lifted_but_not_flipped": 0
+      }
+    },
+    "paired": {
+      "episodes": 40,
+      "both_success": 17,
+      "fixed": 3,
+      "broken": 0,
+      "both_failed": 20,
+      "discordant": 3,
+      "mcnemar_exact_two_sided_p": 0.25,
+      "mcnemar_continuity_corrected_chi2": 1.333333
+    }
+  },
+  "shift_3cm_axis_feasible": {
+    "baseline": {
+      "episodes": 30,
+      "successes": 0,
+      "success_rate": 0.0,
+      "wilson95": [
+        0.0,
+        0.1135
+      ],
+      "failure_types": {
+        "never_grasped": 20,
+        "dropped": 0,
+        "lifted_but_not_flipped": 10,
+        "timeout": 0,
+        "other": 0
+      },
+      "motion_failures": {
+        "stalled": 20,
+        "moved_but_missed": 0,
+        "lifted_but_not_flipped": 10
+      }
+    },
+    "kickstart_500k": {
+      "episodes": 30,
+      "successes": 0,
+      "success_rate": 0.0,
+      "wilson95": [
+        0.0,
+        0.1135
+      ],
+      "failure_types": {
+        "never_grasped": 20,
+        "dropped": 0,
+        "lifted_but_not_flipped": 10,
+        "timeout": 0,
+        "other": 0
+      },
+      "motion_failures": {
+        "stalled": 20,
+        "moved_but_missed": 0,
+        "lifted_but_not_flipped": 10
+      }
+    },
+    "paired": {
+      "episodes": 30,
+      "both_success": 0,
+      "fixed": 0,
+      "broken": 0,
+      "both_failed": 30,
+      "discordant": 0,
+      "mcnemar_exact_two_sided_p": 1.0,
+      "mcnemar_continuity_corrected_chi2": 0.0
+    }
+  },
+  "shift_4cm_axis_feasible": {
+    "baseline": {
+      "episodes": 30,
+      "successes": 0,
+      "success_rate": 0.0,
+      "wilson95": [
+        0.0,
+        0.1135
+      ],
+      "failure_types": {
+        "never_grasped": 29,
+        "dropped": 0,
+        "lifted_but_not_flipped": 1,
+        "timeout": 0,
+        "other": 0
+      },
+      "motion_failures": {
+        "stalled": 10,
+        "moved_but_missed": 19,
+        "lifted_but_not_flipped": 1
+      }
+    },
+    "kickstart_500k": {
+      "episodes": 30,
+      "successes": 0,
+      "success_rate": 0.0,
+      "wilson95": [
+        0.0,
+        0.1135
+      ],
+      "failure_types": {
+        "never_grasped": 30,
+        "dropped": 0,
+        "lifted_but_not_flipped": 0,
+        "timeout": 0,
+        "other": 0
+      },
+      "motion_failures": {
+        "stalled": 10,
+        "moved_but_missed": 20,
+        "lifted_but_not_flipped": 0
+      }
+    },
+    "paired": {
+      "episodes": 30,
+      "both_success": 0,
+      "fixed": 0,
+      "broken": 0,
+      "both_failed": 30,
+      "discordant": 0,
+      "mcnemar_exact_two_sided_p": 1.0,
+      "mcnemar_continuity_corrected_chi2": 0.0
+    }
+  },
+  "original_50_paired": {
+    "episodes": 50,
+    "both_success": 50,
+    "fixed": 0,
+    "broken": 0,
+    "both_failed": 0,
+    "discordant": 0,
+    "mcnemar_exact_two_sided_p": 1.0,
+    "mcnemar_continuity_corrected_chi2": 0.0
+  },
+  "all_shifted_140_paired": {
+    "episodes": 140,
+    "both_success": 36,
+    "fixed": 4,
+    "broken": 0,
+    "both_failed": 100,
+    "discordant": 4,
+    "mcnemar_exact_two_sided_p": 0.125,
+    "mcnemar_continuity_corrected_chi2": 2.25
+  },
+  "all_190_paired": {
+    "episodes": 190,
+    "both_success": 86,
+    "fixed": 4,
+    "broken": 0,
+    "both_failed": 100,
+    "discordant": 4,
+    "mcnemar_exact_two_sided_p": 0.125,
+    "mcnemar_continuity_corrected_chi2": 2.25
+  }
+}
