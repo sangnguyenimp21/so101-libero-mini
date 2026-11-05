@@ -439,3 +439,13 @@ Complete. The shifted baseline leaves substantial headroom for residual RL, espe
 - PBS job: **`1523564.stdct-mgmt-02`**, name `so101_residual_ppo`, queue `batch_gpu`.
 - State immediately after submission: `Q` (queued), scheduler comment `Insufficient amount of resource: node_pool`. This means no matching GPU node was free at that moment; submission itself succeeded.
 - Batch log path: `docs/residual/results/ppo_main/pbs.log`.
+
+## Phase E / Step 10 — Final evaluation pipeline prepared (2026-11-05)
+
+- Added `scripts/residual/evaluate_residual.py`. It evaluates a trained PPO model deterministically on exactly the same 50 original and 140 shifted states/seeds used by the saved SmolVLA baselines.
+- Outputs include matched per-episode JSON/CSV; Wilson intervals; the Step 6 broad failure types; stalled / moved-but-missed / lifted-but-not-flipped failure classification; per-set and in/out-training-region summaries; an original-50 regression check; all-shifted and two-target-set aggregates; success-versus-shift and training-curve plots; and up to three videos selected only where the residual succeeds and the saved baseline failed.
+- The report explicitly records `privileged_cube_pose=true` and `sim_only=true`.
+- Smoke-tested with the Phase C model on two original frozen states: both residual results matched the two saved baseline successes. Empty-set aggregation in limited smoke mode is handled explicitly.
+- The full command will be run only after PBS training produces `docs/residual/results/ppo_main/best_model.zip`:
+  `MUJOCO_GL=egl python -u scripts/residual/evaluate_residual.py`.
+- PBS job `1523564.stdct-mgmt-02` was still queued when the evaluator smoke test completed.
