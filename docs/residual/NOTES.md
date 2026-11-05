@@ -354,3 +354,29 @@ Complete. The shifted baseline leaves substantial headroom for residual RL, espe
 - 98/104 replay outcomes exactly matched the saved baseline outcome. Six normal-motion boundary cases changed their detailed outcome on replay (including one success); CUDA/render/physics numerical sensitivity can change whether a near-boundary flip settles. Five were already baseline lifted/not-flipped states. One 4 cm-right baseline never-lifted state replayed a significant-motion partial flip; it remains moved-but-missed based on the baseline lift fact and the strong direction-wide motion pattern.
 - Both stalled trace episodes reproduced their baseline `never_lifted` outcome exactly, so the stay-still conclusion is unaffected.
 - Outputs: `docs/residual/results/baseline_shifted_140/stall_diagnostics/{summary.md,summary.json,classification.csv}` plus the two first-three-chunk CSV traces.
+
+## Phase A — Early expert-direction nudge diagnostic (2026-11-05)
+
+### Protocol
+
+- Added `scripts/residual/nudge_test.py`. It selects exactly the 40 baseline-stalled states in the two target sets: 20 from `shift_2cm_axis` and 20 from `shift_1p5cm_diagonal`.
+- For each reset, the unchanged scripted expert plans its collision-checked pre-grasp joint configuration. During steps 0--49, each of SmolVLA's five arm-joint targets is shifted toward that configuration, capped independently at 2, 5, or 10 degrees. The gripper remains SmolVLA-controlled. From step 50 onward, actions are exactly the frozen SmolVLA outputs.
+- This is a diagnostic use of privileged simulator state through the scripted expert; it is not the learned residual policy. States, seeds, EGL rendering, checkpoint, 450-step horizon, and success predicate match the saved shifted baseline.
+- Full command: `MUJOCO_GL=egl python -u scripts/residual/nudge_test.py`.
+
+### Results
+
+| first-chunk nudge cap | all stalled states | axis 2 cm | diagonal 1.5 cm | lifted failures |
+|---:|---:|---:|---:|---:|
+| 2 degrees | 0/40 | 0/20 | 0/20 | 0 |
+| 5 degrees | **5/40** | 0/20 | **5/20** | 0 |
+| 10 degrees | 0/40 | 0/20 | 0/20 | 4 still held |
+
+- Wilson 95% intervals over all 40 states: 2 degrees [0%, 8.76%], 5 degrees [5.46%, 26.11%], 10 degrees [0%, 8.76%].
+- Five degrees is the best tested early scale and is also the requested minimum. Ten degrees was not better: it caused four diagonal episodes to lift without completing/releasing the flip. Axis-2-cm stalled states did not recover at any tested cap.
+- Interpretation: a small early displacement can break part of the folded-state failure mode, but the correct magnitude is narrow and a one-chunk fixed-direction displacement is insufficient for the axis set. The residual policy needs sustained closed-loop feedback and distance shaping rather than simply maximizing the early correction.
+- Outputs: `docs/residual/results/nudge_test/results.json` and `episodes.csv`. The report is complete with 120 rows.
+
+### Decision for Phase B
+
+- Use an early arm scale of 5 degrees for steps 0--49 and a later arm scale in the requested 2--3 degree range. Keep the gripper scale separately configurable in its native 0--100 units.
