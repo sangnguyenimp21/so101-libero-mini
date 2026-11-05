@@ -324,3 +324,33 @@ Complete. Do not start Step 6 until Valentin reviews these results. Step 6 must 
 ### Step 6 status
 
 Complete. The shifted baseline leaves substantial headroom for residual RL, especially at 3 cm and 4 cm. Do not start Step 7 until Valentin reviews the results.
+
+## Step 6 follow-up — Stalled-failure diagnosis (2026-11-05)
+
+- Added `scripts/residual/classify_baseline_failures.py` and reran all 104 failed shifted-baseline states with the same frozen checkpoint, states, seeds, EGL renderer, and horizon while recording joint motion.
+- Definition: maximum absolute deviation from the reset value over the five arm joints and all 450 steps. The gripper is excluded from the 5-degree threshold because it uses a 0–100 scale. Categories are: stalled `<5 deg`; moved-but-missed `>=5 deg` and baseline never lifted; lifted-but-not-flipped from the saved baseline's `lifted=true` fact.
+- Result: **70 stalled, 19 moved but missed, 15 lifted but not flipped**.
+- Per set:
+  - Axis 2 cm: 20 stalled, 0 moved/missed, 1 lifted/not flipped.
+  - Diagonal 1.5 cm: 20 stalled, 0 moved/missed, 3 lifted/not flipped.
+  - Feasible axes 3 cm: 20 stalled, 0 moved/missed, 10 lifted/not flipped.
+  - Feasible axes 4 cm: 10 stalled, 19 moved/missed, 1 lifted/not flipped.
+- Directional structure:
+  - 2 cm forward and left: all 10 failures in each direction stalled; the one backward failure lifted but did not finish; right had no failures.
+  - Diagonal forward-left and backward-left: all 10 failures in each direction stalled; the three backward-right failures lifted but did not finish; forward-right had no failures.
+  - 3 cm forward and left: all 10 in each direction stalled; all 10 right failures lifted but did not finish.
+  - 4 cm forward: 10 moved/missed; left: 10 stalled; right: 9 moved/missed and 1 lifted/not flipped.
+- The threshold has a very large margin: stalled replays moved only about 0.4–1.0 degrees, while normal-motion replays moved about 87–95 degrees.
+
+### First-three-chunk action evidence
+
+- Logged 150 state/action pairs (three 50-action chunks) for two stalled episodes:
+  - Diagonal 1.5 cm forward-left state 28: episode maximum movement 0.4206 deg. Per-chunk mean absolute arm target-minus-state differences were 0.0492, 0.0482, and 0.0440 deg; maxima were 0.3100, 0.3203, and 0.3316 deg.
+  - Axis 2 cm left state 22: episode maximum movement 0.5381 deg. Per-chunk means were 0.0561, 0.0508, and 0.0590 deg; maxima were 0.3764, 0.2323, and 0.4791 deg.
+- Mean gripper target-minus-state difference stayed around 0.017–0.024 units. SmolVLA therefore truly outputs near-hold targets at the folded reset configuration; the robot is not stuck while receiving a large motion command.
+
+### Reproducibility caveat and outputs
+
+- 98/104 replay outcomes exactly matched the saved baseline outcome. Six normal-motion boundary cases changed their detailed outcome on replay (including one success); CUDA/render/physics numerical sensitivity can change whether a near-boundary flip settles. Five were already baseline lifted/not-flipped states. One 4 cm-right baseline never-lifted state replayed a significant-motion partial flip; it remains moved-but-missed based on the baseline lift fact and the strong direction-wide motion pattern.
+- Both stalled trace episodes reproduced their baseline `never_lifted` outcome exactly, so the stay-still conclusion is unaffected.
+- Outputs: `docs/residual/results/baseline_shifted_140/stall_diagnostics/{summary.md,summary.json,classification.csv}` plus the two first-three-chunk CSV traces.
