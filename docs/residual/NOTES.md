@@ -1,5 +1,14 @@
 # Residual RL project notes
 
+<!-- RESIDUAL_CURRENT_SUMMARY_START -->
+## Current summary
+
+- Phases A--C are complete: the best early nudge was 5 degrees (5/40 stalled-state recoveries), the zero-residual wrapper matched SmolVLA 10/10, and the eight-worker PPO smoke run passed.
+- Full 1,000,000-transition training is running as PBS job `1523564.stdct-mgmt-02` on `GN-A40-018`; SmolVLA is frozen throughout.
+- Final matched evaluation code is ready for the original 50 and all 140 shifted states. A dependent PBS evaluation job will run automatically after training succeeds.
+- The residual uses privileged cube pose and is simulation-only.
+<!-- RESIDUAL_CURRENT_SUMMARY_END -->
+
 ## Step 1 — Understand the code (2026-11-05)
 
 Branch: `residual-rl`.
