@@ -497,3 +497,11 @@ Complete. The shifted baseline leaves substantial headroom for residual RL, espe
 - Added `generate_diverse_demos.py`, separate generation/fine-tune/evaluation PBS scripts, paired-summary generator, and the read-only PPO action audit script. Generation uses the repository `DemoWriter`, and fine-tuning uses `scripts/train.sh` with the existing 100k checkpoint as `--policy.path`; frozen original 50 and shifted 140 evaluations reuse the existing scripts and start-state files.
 - Note correction: kickstart `config.json` records late arm scale zero but late gripper scale 5.0, so the gripper can still receive later residual corrections. The audit loads the actual saved scales.
 - Static verification: all new Python scripts compiled with `py_compile`. Runtime results are pending PBS jobs.
+
+### PBS submissions
+
+- Action audit: `qsub scripts/residual/check_ppo_actions.pbs` -> `1523908.stdct-mgmt-02` (queued). It picks the latest numbered checkpoint at execution time, measures deterministic first-50-step mean absolute action by joint, then runs three stochastic 20-state trials. It reads only the PPO runs. The selection states are part of the 140 frozen test states, so the code's name `validation` was inaccurate.
+- Demo generation: `qsub scripts/residual/diverse_generate.pbs` -> `1523909.stdct-mgmt-02` (queued), 24-hour cap.
+- Fine-tuning: `qsub -W depend=afterok:1523909.stdct-mgmt-02 scripts/residual/diverse_train.pbs` -> `1523914.stdct-mgmt-02` (held), 20k optimization steps from the 100k checkpoint, 24-hour cap.
+- Evaluation: `qsub -W depend=afterok:1523914.stdct-mgmt-02 scripts/residual/diverse_eval.pbs` -> `1523915.stdct-mgmt-02` (held), original 50 plus all shifted 140, paired fixed/broken summary, 12-hour cap.
+- Outputs: `docs/residual/results/ppo_action_audit.json`, `/scratch/e1638612/datasets/lerobot/local/so101_cube_flip_diverse_300`, `outputs/train/smolvla_cube_flip_diverse_300`, and `docs/residual/results/diverse_demo/`. Monitor with `qstat -awn1` and the corresponding PBS logs.

@@ -12,11 +12,14 @@ out = {}
 for name in ('calm', 'kickstart'):
     run = Path('docs/residual/results') / f'ppo_{name}'
     cfg = json.loads((run / 'config.json').read_text())
-    model = PPO.load(run / 'best_model.zip', device='cpu')
+    checkpoints = sorted((run / 'checkpoints').glob('ppo_residual_*_steps.zip'),
+                         key=lambda p: int(p.stem.split('_')[-2]))
+    checkpoint = checkpoints[-1] if checkpoints else run / 'best_model.zip'
+    model = PPO.load(checkpoint, device='cpu')
     env = ResidualSO101Env(ResidualConfig(checkpoint='checkpoints/smolvla_cube_flip/checkpoints/100000/pretrained_model',
         early_arm_scale_deg=cfg['early_arm_scale'], late_arm_scale_deg=cfg['late_arm_scale'],
         early_gripper_scale=cfg['early_gripper_scale'], late_gripper_scale=cfg['late_gripper_scale']))
-    variant = {'checkpoint': str(run / 'best_model.zip'), 'selection_seeds': [int(s['seed']) for s in states],
+    variant = {'checkpoint': str(checkpoint), 'selection_seeds': [int(s['seed']) for s in states],
                'deterministic_reference': '9/20 SmolVLA baseline', 'trials': []}
     for trial in (-1, 0, 1, 2):
         magnitudes = []
