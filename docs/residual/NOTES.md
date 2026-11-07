@@ -4,7 +4,7 @@
 ## Current summary
 
 - The calibration baseline sweep finished: L=0,2,4,6,8 degrees gave 50/50, 37/50, 9/50, 4/50, and 1/50 success. No level met the original 30%-70% rule, so the dependent calibration training and evaluation did not run.
-- On 2026-11-07 Valentin explicitly chose L=2 degrees for a follow-up residual PPO test. This is a user-directed choice after seeing the validation sweep, not the original preregistered selection. Frozen selection (20 states) and test (100 states) sets remain separate; the test set has not been used to choose the level.
+- On 2026-11-07 Valentin explicitly chose L=2 degrees for a follow-up residual PPO test. This is a user-directed choice after seeing the validation sweep, not the original preregistered selection. Frozen selection (20 states) and test (100 states) sets remain separate; the test set has not been used to choose the level. Training job `1530592` is queued; dependent evaluation job `1530593` is held until training succeeds.
 - The completed kickstart 500k matched evaluation preserved 50/50 original success and improved the two near-shift sets from 36/80 to 40/80. The separate full kickstart evaluation failed during a video rerun; the diverse-demo generation and action audit failed on Python imports. No PBS batch jobs remain active as of 2026-11-07.
 <!-- RESIDUAL_CURRENT_SUMMARY_END -->
 
@@ -579,4 +579,10 @@ The 500k checkpoint is evaluated with the saved kickstart action scales. The dup
 - Recorded `chosen_L_deg=2` in `results/calibration/selection.json` with the reason. Frozen selection states are in `calibration/selection.json` (20 episodes, 33M seeds); frozen test states are in `calibration/test.json` (100 episodes, 34M seeds). Training uses a separate 22M seed stream. The test set was not inspected for outcomes.
 - Existing `calibration_train.pbs` runs the 10-episode zero-residual gate, a 2,048-step two-worker smoke test, then eight-worker PPO for 500,000 transitions; `calibration_eval.pbs` compares selected and final models with SmolVLA on the frozen 100-state test and the original 50 L=0 states. These jobs have not been submitted for this follow-up.
 - Historical PBS check: the old calibration selection job ended without a qualifying level and its dependent jobs did not run. The full kickstart evaluation failed while rerunning a video, and the diverse-demo and action-audit jobs failed on import errors. No batch jobs are currently active.
+
+### PBS submission after Valentin's approval
+
+- Valentin approved submitting the 2-degree training and dependent evaluation jobs. Submitted `qsub scripts/residual/calibration_train.pbs` -> `1530592.stdct-mgmt-02`; estimated 12-20 hours, 24-hour PBS limit. The job begins with the mandatory 10-episode zero-residual comparison and stops if it fails, then runs a 2,048-step smoke test and 500,000-step PPO training.
+- Submitted `qsub -W depend=afterok:1530592.stdct-mgmt-02 scripts/residual/calibration_eval.pbs` -> `1530593.stdct-mgmt-02`; estimated up to 16 hours, 16-hour PBS limit. It evaluates the frozen 100-state 2-degree test set and 50 original states at zero offset.
+- `qstat -awn1` immediately after submission showed training queued and evaluation held. `qstat -f 1530593` confirmed `depend = afterok:1530592.stdct-mgmt-02`. Logs: `docs/residual/results/calibration/train.log` and `eval.log`. Monitor with `qstat -awn1`.
 
