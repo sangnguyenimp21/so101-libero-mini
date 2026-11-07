@@ -3,9 +3,9 @@
 <!-- RESIDUAL_CURRENT_SUMMARY_START -->
 ## Current summary
 
-- At Valentin's request, calm PPO job `1523669` and dependent evaluation `1523673` were cancelled. Kickstart, action audit, diverse-demo, and calibration jobs were left untouched.
-- Calibration sweep `1523945` is running. If validation finds an L* in the preregistered 30%-70% range, the selection job commits it before PPO training; final evaluation uses the frozen 100-state test and original 50 normal states.
-- A new non-learning calibration baseline is prepared: detect the first steady command/position window, estimate `bias = measured position - command`, then subtract that estimate from later SmolVLA targets. It will run after the PPO final evaluation on the same frozen 100 test episodes, with paired counts and failure types.
+- The calibration baseline sweep finished: L=0,2,4,6,8 degrees gave 50/50, 37/50, 9/50, 4/50, and 1/50 success. No level met the original 30%-70% rule, so the dependent calibration training and evaluation did not run.
+- On 2026-11-07 Valentin explicitly chose L=2 degrees for a follow-up residual PPO test. This is a user-directed choice after seeing the validation sweep, not the original preregistered selection. Frozen selection (20 states) and test (100 states) sets remain separate; the test set has not been used to choose the level.
+- The completed kickstart 500k matched evaluation preserved 50/50 original success and improved the two near-shift sets from 36/80 to 40/80. The separate full kickstart evaluation failed during a video rerun; the diverse-demo generation and action audit failed on Python imports. No PBS batch jobs remain active as of 2026-11-07.
 <!-- RESIDUAL_CURRENT_SUMMARY_END -->
 
 ## Step 1 — Understand the code (2026-11-05)
@@ -571,4 +571,12 @@ The 500k checkpoint is evaluated with the saved kickstart action scales. The dup
 | shift_1p5cm_diagonal | 17/40 | 20/40 | [0.352, 0.648] | 20 | 0 | 0 | 3 | 0 | 0.250000 |
 | shift_3cm_axis_feasible | 0/30 | 0/30 | [0.000, 0.114] | 20 | 0 | 10 | 0 | 0 | 1.000000 |
 | shift_4cm_axis_feasible | 0/30 | 0/30 | [0.000, 0.114] | 10 | 20 | 0 | 0 | 0 | 1.000000 |
+
+## Calibration 2-degree follow-up preparation (2026-11-07)
+
+- Valentin requested testing a correction policy at L=2 degrees after seeing that the original calibration sweep selected no level. This is a new, explicit follow-up decision; do not describe it as satisfying the old 30%-70% rule.
+- Verified the completed validation sweep: L=0: 50/50 (Wilson 95% 0.929-1.000); L=2: 37/50 (0.604-0.841); L=4: 9/50 (0.098-0.308); L=6: 4/50 (0.032-0.188); L=8: 1/50 (0.004-0.105). The full episode records and failure types are in `results/calibration/validation_sweep.json`.
+- Recorded `chosen_L_deg=2` in `results/calibration/selection.json` with the reason. Frozen selection states are in `calibration/selection.json` (20 episodes, 33M seeds); frozen test states are in `calibration/test.json` (100 episodes, 34M seeds). Training uses a separate 22M seed stream. The test set was not inspected for outcomes.
+- Existing `calibration_train.pbs` runs the 10-episode zero-residual gate, a 2,048-step two-worker smoke test, then eight-worker PPO for 500,000 transitions; `calibration_eval.pbs` compares selected and final models with SmolVLA on the frozen 100-state test and the original 50 L=0 states. These jobs have not been submitted for this follow-up.
+- Historical PBS check: the old calibration selection job ended without a qualifying level and its dependent jobs did not run. The full kickstart evaluation failed while rerunning a video, and the diverse-demo and action-audit jobs failed on import errors. No batch jobs are currently active.
 
