@@ -605,3 +605,9 @@ The 500k checkpoint is evaluated with the saved kickstart action scales. The dup
 - Submitted the non-learning first-still comparator with `qsub scripts/residual/still_calibration_eval.pbs` -> `1532154.stdct-mgmt-02` (queued). It uses the same frozen 100-state test and paired SmolVLA baseline; estimated 1-4 hours, PBS cap 6 hours.
 - Added `summarize_calibration_comparison.py` and a short CPU PBS report job. Submitted `qsub -W depend=afterok:1532153.stdct-mgmt-02:1532154.stdct-mgmt-02 scripts/residual/calibration_no_leak_compare.pbs` -> `1532163.stdct-mgmt-02`. PBS confirms it is held behind both successful evaluations. It will write `results/calibration/no_leak/comparison.md`, append the matched table here, and commit scoped results. No-leak and non-learning jobs were still queued at the last `qstat -awn1` check.
 
+
+### Non-learning first-still-moment calibration result
+
+- Frozen test at L*=2 degrees: 64/100; Wilson 95% [0.542352199811621, 0.7272892540950986]. SmolVLA alone: 63/100.
+- Paired fixed=2, broken=1, exact two-sided McNemar p=1.0. Failures: {'lifted_not_flipped': 10, 'moved_but_missed': 26}.
+- Bias estimated in 36/100 episodes; mean absolute estimation error by arm joint (degrees): [0.5195041731628589, 0.6493362947180867, 0.6340355814993381, 0.6299938604235649, 0.7311451207846403].
