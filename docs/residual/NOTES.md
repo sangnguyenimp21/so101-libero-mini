@@ -637,3 +637,9 @@ At zero offset on the original 50 states: SmolVLA and both simulator-assisted PP
 The no-leak PPO observation contains measured joints, current SmolVLA command, previous offset-free commanded target, command-minus-measured error, chunk index, and previous residual. The first-still comparator uses commands and measured positions only.
 
 Per-episode results, confidence intervals, failure types, action magnitudes, and videos are in the respective result JSON files.
+
+## Independent 200-episode no-leak confirmation (2026-11-08)
+
+- The 20-state selection set was **too easy to discriminate checkpoints**: zero residual already scored 18/20, and every deterministic checkpoint through 500k scored at most 18/20. It selected the step-zero policy even though the separately reported 500k final checkpoint later scored 81/100 versus 62/100 on the first frozen test. The first test result prompted this independent confirmation; it will not be used to change the model or settings.
+- **Model frozen before confirmation outcomes:** `docs/residual/results/calibration/no_leak/ppo/final_model.zip`, SHA-256 `85469b20688c532492453d73e11fa49607cd6f3b9540f47eb05a01ac1ea6207f`. Evaluation will use deterministic PPO actions and the unchanged L=2-degree offset wrapper, no-leak observation, simulator task, and original cube-flip placements.
+- Created and validated `docs/residual/calibration/confirmation_2deg_200.json` before evaluation: 200 full initial states and fixed per-episode offsets, seeds 40,000,000–40,000,199, five original placements in round-robin order. This seed range was absent from existing scripts/state files and is disjoint from the 22M training, 32M validation, 33M selection, 34M first test, and 31M shifted-position seed streams. No confirmation outcomes have been inspected.
