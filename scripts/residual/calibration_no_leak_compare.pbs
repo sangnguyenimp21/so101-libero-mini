@@ -1,0 +1,13 @@
+#!/bin/bash
+#PBS -N calib_compare
+#PBS -P personal-e1638612
+#PBS -l select=1:ncpus=1:mpiprocs=1:ompthreads=1
+#PBS -l walltime=00:30:00
+#PBS -j oe
+#PBS -o /scratch/e1638612/so101-libero-mini/docs/residual/results/calibration/no_leak/compare.log
+set -euo pipefail
+cd /scratch/e1638612/so101-libero-mini
+source /scratch/e1638612/miniforge3/bin/activate
+conda activate so101lm
+python -u scripts/residual/summarize_calibration_comparison.py
+flock /tmp/so101_residual_git.lock bash -c 'git add docs/residual/NOTES.md docs/residual/results/calibration/no_leak/comparison.md docs/residual/results/calibration/no_leak/zero_residual_test.json docs/residual/results/calibration/no_leak/final_evaluation/results.json docs/residual/results/calibration/no_leak/final_evaluation/videos docs/residual/results/calibration/no_leak/ppo/best_evaluation.json docs/residual/results/calibration/no_leak/ppo/evaluations.jsonl docs/residual/results/calibration/no_leak/ppo/best_model.zip docs/residual/results/calibration/no_leak/ppo/final_model.zip && git commit -m "residual: record matched no-leak calibration comparison"'
