@@ -327,6 +327,24 @@ sideways from the robot's centre line:
 Before the real arm, `python scripts/real/run_policy.py --robot sim --task-id cube_flip --policy <checkpoint>` runs the
 same policy loop in the simulator.
 
+### Measuring real success rates (`scripts/eval_real.py`)
+
+```bash
+conda activate lerobot
+python scripts/eval_real.py run                     # every task, 10 trials each, checkpoint 080000 (--trials, --ckpt, --tasks)
+python scripts/eval_real.py summary                 # Markdown table
+python scripts/eval_real.py push                    # outputs/train/<run>/eval_real/080000/ -> <hf user>/<run>, next to eval/
+```
+
+Each trial is one launch of `scripts/real_smolvla.sh` (robot and camera settings through its environment variables, as
+above) and one attempt. It ends when the arm is back at its start pose after leaving it (> 40° away, then every arm
+joint within 20°), at the task's time limit (flip 30 s, push 25 s, cylinder 35 s; the voice-robot-controller's), by a
+watchdog, or by Ctrl+C. The operator then records success, failure or redo (a discarded attempt is kept with its
+reason). Per trial it keeps the launcher output, the per-tick state/action log and `policy_view.mp4` (what the policy
+saw). Results are saved after every trial and a rerun resumes. `results.json` uses the simulator's keys, so
+`so101_libero.cli.summarize` and `scripts/wandb_log_eval.py` read it too. Tests without hardware:
+`python -m pytest -q tests/test_eval_real.py`.
+
 ## Files
 
 Suite files:

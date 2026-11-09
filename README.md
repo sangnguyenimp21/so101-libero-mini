@@ -85,6 +85,8 @@ init_states/<task>.json            frozen evaluation states (50 per task, expert
 scripts/env.sh                     run anything in the runtime (Singularity image + venv + GL + thread settings)
 scripts/train.sh                   lerobot-train wrapper with project defaults (presets: act, diffusion, smolvla)
 scripts/eval_variants.sh           evaluate one checkpoint with several inference settings
+scripts/eval_real.py               real-robot evaluation of the so101_tri SmolVLA checkpoints (operator-judged trials,
+                                   results in outputs/train/<run>/eval_real/<step>/, push to the Hub)
 scripts/setup_*.sh                 one-time setup (OSMesa, EGL shim, SmolVLA extras; conda runtime for SLURM)
 pbs/                               Hopper GPU jobs: smoke, generate, train (+eval), eval (+ small diagnostics)
 slurm/train_smolvla_*.slurm        so101_tri SmolVLA jobs (cylinder_side, cube_flip, green_push, multitask; settings in

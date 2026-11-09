@@ -46,7 +46,9 @@ TASK="${TASK:-cylinder_right_of_cube}"
 # LAB Settings
 PORT="${PORT:-/dev/tty.usbmodem5B610366661}"
 ROBOT_ID="${ROBOT_ID:-my_follower_sim}"
-FRONT_CAM="${FRONT_CAM:-2}"
+# OpenCV orders cameras by unique ID: 0 USB2.0_CAM1 (wrist), 1 FaceTime HD, 2 OBS Virtual Camera (fixed 1920x1080:
+# "failed to set capture_width=1280"), 3 iPhone (front). List them: system_profiler SPCameraDataType
+FRONT_CAM="${FRONT_CAM:-3}"
 WRIST_CAM="${WRIST_CAM:-0}"
 FRONT_W="${FRONT_W:-1280}"
 FRONT_H="${FRONT_H:-720}"
