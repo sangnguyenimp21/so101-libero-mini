@@ -1,0 +1,15 @@
+#!/bin/bash
+#PBS -P CFP05-CF-002
+#PBS -j oe
+#PBS -k oed
+#PBS -N so101lm-render-smoke
+#PBS -q auto
+#PBS -l select=1:ngpus=1:ncpus=4:mem=32gb
+#PBS -l walltime=00:05:00
+# Offscreen-render smoke test on a GPU node:  qsub pbs/smoke_render.pbs   (log: logs/pbs/<jobid>.log)
+cd "$PBS_O_WORKDIR"
+mkdir -p logs/pbs
+{
+echo "host $(hostname)  gpu $(nvidia-smi --query-gpu=name --format=csv,noheader | head -1)  $(date)"
+bash scripts/env.sh python tests/render_smoke.py
+} > "logs/pbs/${PBS_JOBID%%.*}.log" 2>&1

@@ -1,0 +1,233 @@
+{
+  "timesteps": 0,
+  "wall_time": 1793871057.0703647,
+  "checkpoint": "/scratch/e1638612/so101-libero-mini/docs/residual/results/ppo_kickstart/eval_checkpoints/eval_000000000_steps.zip",
+  "episodes": 20,
+  "successes": 10,
+  "success_rate": 0.5,
+  "baseline_successes": 9,
+  "baseline_success_rate": 0.45,
+  "lifted": 10,
+  "episode_results": [
+    {
+      "set_id": "shift_2cm_axis",
+      "state_index": 0,
+      "seed": 31000000,
+      "offset_label": "forward",
+      "baseline_success": false,
+      "residual_success": false,
+      "lifted": false,
+      "steps": 450,
+      "total_reward": 0.000275
+    },
+    {
+      "set_id": "shift_2cm_axis",
+      "state_index": 1,
+      "seed": 31000001,
+      "offset_label": "backward",
+      "baseline_success": true,
+      "residual_success": true,
+      "lifted": true,
+      "steps": 258,
+      "total_reward": 1.19637
+    },
+    {
+      "set_id": "shift_2cm_axis",
+      "state_index": 2,
+      "seed": 31000002,
+      "offset_label": "left",
+      "baseline_success": false,
+      "residual_success": false,
+      "lifted": false,
+      "steps": 450,
+      "total_reward": 0.000263
+    },
+    {
+      "set_id": "shift_2cm_axis",
+      "state_index": 3,
+      "seed": 31000003,
+      "offset_label": "right",
+      "baseline_success": true,
+      "residual_success": true,
+      "lifted": true,
+      "steps": 274,
+      "total_reward": 1.222714
+    },
+    {
+      "set_id": "shift_2cm_axis",
+      "state_index": 4,
+      "seed": 31000004,
+      "offset_label": "forward",
+      "baseline_success": false,
+      "residual_success": false,
+      "lifted": false,
+      "steps": 450,
+      "total_reward": 0.000181
+    },
+    {
+      "set_id": "shift_2cm_axis",
+      "state_index": 5,
+      "seed": 31000005,
+      "offset_label": "backward",
+      "baseline_success": true,
+      "residual_success": true,
+      "lifted": true,
+      "steps": 255,
+      "total_reward": 1.19583
+    },
+    {
+      "set_id": "shift_2cm_axis",
+      "state_index": 6,
+      "seed": 31000006,
+      "offset_label": "left",
+      "baseline_success": false,
+      "residual_success": false,
+      "lifted": false,
+      "steps": 450,
+      "total_reward": 0.000136
+    },
+    {
+      "set_id": "shift_2cm_axis",
+      "state_index": 7,
+      "seed": 31000007,
+      "offset_label": "right",
+      "baseline_success": true,
+      "residual_success": true,
+      "lifted": true,
+      "steps": 261,
+      "total_reward": 1.220379
+    },
+    {
+      "set_id": "shift_2cm_axis",
+      "state_index": 8,
+      "seed": 31000008,
+      "offset_label": "forward",
+      "baseline_success": false,
+      "residual_success": false,
+      "lifted": false,
+      "steps": 450,
+      "total_reward": 0.000147
+    },
+    {
+      "set_id": "shift_2cm_axis",
+      "state_index": 9,
+      "seed": 31000009,
+      "offset_label": "backward",
+      "baseline_success": false,
+      "residual_success": true,
+      "lifted": true,
+      "steps": 266,
+      "total_reward": 1.199862
+    },
+    {
+      "set_id": "shift_1p5cm_diagonal",
+      "state_index": 0,
+      "seed": 31300000,
+      "offset_label": "forward_left",
+      "baseline_success": false,
+      "residual_success": false,
+      "lifted": false,
+      "steps": 450,
+      "total_reward": 0.00033
+    },
+    {
+      "set_id": "shift_1p5cm_diagonal",
+      "state_index": 1,
+      "seed": 31300001,
+      "offset_label": "forward_right",
+      "baseline_success": true,
+      "residual_success": true,
+      "lifted": true,
+      "steps": 268,
+      "total_reward": 1.225406
+    },
+    {
+      "set_id": "shift_1p5cm_diagonal",
+      "state_index": 2,
+      "seed": 31300002,
+      "offset_label": "backward_left",
+      "baseline_success": false,
+      "residual_success": false,
+      "lifted": false,
+      "steps": 450,
+      "total_reward": 0.000243
+    },
+    {
+      "set_id": "shift_1p5cm_diagonal",
+      "state_index": 3,
+      "seed": 31300003,
+      "offset_label": "backward_right",
+      "baseline_success": true,
+      "residual_success": true,
+      "lifted": true,
+      "steps": 254,
+      "total_reward": 1.209514
+    },
+    {
+      "set_id": "shift_1p5cm_diagonal",
+      "state_index": 4,
+      "seed": 31300004,
+      "offset_label": "forward_left",
+      "baseline_success": false,
+      "residual_success": false,
+      "lifted": false,
+      "steps": 450,
+      "total_reward": 5.8e-05
+    },
+    {
+      "set_id": "shift_1p5cm_diagonal",
+      "state_index": 5,
+      "seed": 31300005,
+      "offset_label": "forward_right",
+      "baseline_success": true,
+      "residual_success": true,
+      "lifted": true,
+      "steps": 279,
+      "total_reward": 1.226056
+    },
+    {
+      "set_id": "shift_1p5cm_diagonal",
+      "state_index": 6,
+      "seed": 31300006,
+      "offset_label": "backward_left",
+      "baseline_success": false,
+      "residual_success": false,
+      "lifted": false,
+      "steps": 450,
+      "total_reward": 0.000314
+    },
+    {
+      "set_id": "shift_1p5cm_diagonal",
+      "state_index": 7,
+      "seed": 31300007,
+      "offset_label": "backward_right",
+      "baseline_success": true,
+      "residual_success": true,
+      "lifted": true,
+      "steps": 258,
+      "total_reward": 1.210343
+    },
+    {
+      "set_id": "shift_1p5cm_diagonal",
+      "state_index": 8,
+      "seed": 31300008,
+      "offset_label": "forward_left",
+      "baseline_success": false,
+      "residual_success": false,
+      "lifted": false,
+      "steps": 450,
+      "total_reward": 0.000413
+    },
+    {
+      "set_id": "shift_1p5cm_diagonal",
+      "state_index": 9,
+      "seed": 31300009,
+      "offset_label": "forward_right",
+      "baseline_success": true,
+      "residual_success": true,
+      "lifted": true,
+      "steps": 279,
+      "total_reward": 1.22582
+    }
+  ]
+}

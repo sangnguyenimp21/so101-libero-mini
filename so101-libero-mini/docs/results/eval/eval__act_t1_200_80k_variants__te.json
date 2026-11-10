@@ -1,0 +1,551 @@
+{
+  "policy": {
+    "policy": "outputs/train/act_t1_200/checkpoints/080000/pretrained_model",
+    "type": "act",
+    "language_conditioned": false,
+    "device": "cpu",
+    "temporal_ensemble_coeff": 0.01,
+    "training_dataset": "local/so101_mini_t1_200",
+    "training_render_backend": "osmesa"
+  },
+  "overall": {
+    "episodes": 50,
+    "successes": 40,
+    "success_rate": 0.8,
+    "wilson95": [
+      0.6696,
+      0.8876
+    ]
+  },
+  "per_task": {
+    "cylinder_to_tray": {
+      "language": "Pick up the red cylinder and place it inside the black tray.",
+      "episodes": 50,
+      "successes": 40,
+      "success_rate": 0.8,
+      "wilson95": [
+        0.6696,
+        0.8876
+      ],
+      "outcomes": {
+        "success": 40,
+        "never_lifted": 9,
+        "dropped_or_placed_wrong": 1
+      },
+      "mean_steps_success": 149.3
+    }
+  },
+  "warnings": [],
+  "wall_time_s": 992.9,
+  "render_backend": "osmesa",
+  "image_size": [
+    256,
+    256
+  ],
+  "episodes": [
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 0,
+      "seed": 10000000,
+      "success": true,
+      "steps": 161,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 184.75,
+      "video": "videos/cylinder_to_tray_ep000_success.mp4"
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 1,
+      "seed": 10000001,
+      "success": true,
+      "steps": 165,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 182.63,
+      "video": "videos/cylinder_to_tray_ep001_success.mp4"
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 2,
+      "seed": 10000002,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "mean_policy_ms": 183.44,
+      "video": "videos/cylinder_to_tray_ep002_fail.mp4"
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 3,
+      "seed": 10000003,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "mean_policy_ms": 181.16,
+      "video": "videos/cylinder_to_tray_ep003_fail.mp4"
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 4,
+      "seed": 10000004,
+      "success": true,
+      "steps": 138,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 180.96
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 5,
+      "seed": 10000005,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "mean_policy_ms": 180.96
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 6,
+      "seed": 10000006,
+      "success": true,
+      "steps": 158,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 181.34
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 7,
+      "seed": 10000007,
+      "success": true,
+      "steps": 155,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 183.08
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 8,
+      "seed": 10000008,
+      "success": true,
+      "steps": 144,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 186.15
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 9,
+      "seed": 10000009,
+      "success": false,
+      "steps": 450,
+      "outcome": "dropped_or_placed_wrong",
+      "lifted": true,
+      "mean_policy_ms": 178.73
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 10,
+      "seed": 10000010,
+      "success": true,
+      "steps": 144,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 183.11
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 11,
+      "seed": 10000011,
+      "success": true,
+      "steps": 164,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 180.75
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 12,
+      "seed": 10000012,
+      "success": true,
+      "steps": 142,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 181.33
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 13,
+      "seed": 10000013,
+      "success": true,
+      "steps": 151,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 184.53
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 14,
+      "seed": 10000014,
+      "success": true,
+      "steps": 136,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 182.44
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 15,
+      "seed": 10000015,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "mean_policy_ms": 180.18
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 16,
+      "seed": 10000016,
+      "success": true,
+      "steps": 135,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 182.05
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 17,
+      "seed": 10000017,
+      "success": true,
+      "steps": 142,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 184.31
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 18,
+      "seed": 10000018,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "mean_policy_ms": 182.59
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 19,
+      "seed": 10000019,
+      "success": true,
+      "steps": 140,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 180.22
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 20,
+      "seed": 10000020,
+      "success": true,
+      "steps": 147,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 180.3
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 21,
+      "seed": 10000021,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "mean_policy_ms": 186.89
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 22,
+      "seed": 10000022,
+      "success": true,
+      "steps": 171,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 181.19
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 23,
+      "seed": 10000023,
+      "success": true,
+      "steps": 131,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 179.76
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 24,
+      "seed": 10000024,
+      "success": true,
+      "steps": 164,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 183.93
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 25,
+      "seed": 10000025,
+      "success": true,
+      "steps": 148,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 181.22
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 26,
+      "seed": 10000026,
+      "success": true,
+      "steps": 142,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 181.96
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 27,
+      "seed": 10000027,
+      "success": true,
+      "steps": 149,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 181.18
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 28,
+      "seed": 10000028,
+      "success": true,
+      "steps": 141,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 181.62
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 29,
+      "seed": 10000029,
+      "success": true,
+      "steps": 147,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 182.94
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 30,
+      "seed": 10000030,
+      "success": true,
+      "steps": 163,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 185.44
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 31,
+      "seed": 10000031,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "mean_policy_ms": 183.93
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 32,
+      "seed": 10000032,
+      "success": true,
+      "steps": 168,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 180.93
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 33,
+      "seed": 10000033,
+      "success": true,
+      "steps": 137,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 179.84
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 34,
+      "seed": 10000034,
+      "success": true,
+      "steps": 130,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 182.32
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 35,
+      "seed": 10000035,
+      "success": true,
+      "steps": 131,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 184.72
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 36,
+      "seed": 10000036,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "mean_policy_ms": 186.4
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 37,
+      "seed": 10000037,
+      "success": true,
+      "steps": 169,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 181.79
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 38,
+      "seed": 10000038,
+      "success": true,
+      "steps": 160,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 181.98
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 39,
+      "seed": 10000039,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "mean_policy_ms": 191.6
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 40,
+      "seed": 10000040,
+      "success": true,
+      "steps": 146,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 192.07
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 41,
+      "seed": 10000041,
+      "success": true,
+      "steps": 152,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 188.62
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 42,
+      "seed": 10000042,
+      "success": true,
+      "steps": 156,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 189.48
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 43,
+      "seed": 10000043,
+      "success": true,
+      "steps": 155,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 192.68
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 44,
+      "seed": 10000044,
+      "success": true,
+      "steps": 142,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 194.03
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 45,
+      "seed": 10000045,
+      "success": true,
+      "steps": 150,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 190.51
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 46,
+      "seed": 10000046,
+      "success": true,
+      "steps": 144,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 189.96
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 47,
+      "seed": 10000047,
+      "success": true,
+      "steps": 148,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 189.93
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 48,
+      "seed": 10000048,
+      "success": true,
+      "steps": 154,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 193.17
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 49,
+      "seed": 10000049,
+      "success": true,
+      "steps": 152,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 193.05
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+docs/residual/results/calibration/no_leak/comparison.md
+[residual-rl 5b3cdee] residual: record matched no-leak calibration comparison
+ Committer: Mikhalchuk Valentin <e1638612@GN-A40-074.stdct.loc>
+Your name and email address were configured automatically based
+on your username and hostname. Please check that they are accurate.
+You can suppress this message by setting them explicitly. Run the
+following command and follow the instructions in your editor to edit
+your configuration file:
+
+    git config --global --edit
+
+After doing this, you may fix the identity used for this commit with:
+
+    git commit --amend --reset-author
+
+ 12 files changed, 6671 insertions(+)
+ create mode 100644 docs/residual/results/calibration/no_leak/comparison.md
+ create mode 100644 docs/residual/results/calibration/no_leak/final_evaluation/results.json
+ create mode 100644 docs/residual/results/calibration/no_leak/final_evaluation/videos/best_model_state_045.mp4
+ create mode 100644 docs/residual/results/calibration/no_leak/final_evaluation/videos/final_model_state_001.mp4
+ create mode 100644 docs/residual/results/calibration/no_leak/final_evaluation/videos/final_model_state_003.mp4
+ create mode 100644 docs/residual/results/calibration/no_leak/final_evaluation/videos/final_model_state_005.mp4
+ create mode 100644 docs/residual/results/calibration/no_leak/ppo/best_evaluation.json
+ create mode 100644 docs/residual/results/calibration/no_leak/ppo/best_model.zip
+ create mode 100644 docs/residual/results/calibration/no_leak/ppo/evaluations.jsonl
+ create mode 100644 docs/residual/results/calibration/no_leak/ppo/final_model.zip
+ create mode 100644 docs/residual/results/calibration/no_leak/zero_residual_test.json

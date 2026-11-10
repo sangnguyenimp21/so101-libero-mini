@@ -1,0 +1,11 @@
+{
+  "chosen_L_deg": 2,
+  "rule": "User-directed follow-up at L=2 degrees on 2026-11-07; the original 30%-70% preregistered rule selected no level",
+  "successes": {
+    "0": "50/50",
+    "2": "37/50",
+    "4": "9/50",
+    "6": "4/50",
+    "8": "1/50"
+  }
+}

@@ -1,0 +1,15 @@
+#!/bin/bash
+#PBS -N diverse_finetune
+#PBS -P personal-e1638612
+#PBS -l select=1:ncpus=16:mpiprocs=1:ompthreads=16:ngpus=1
+#PBS -l walltime=24:00:00
+#PBS -j oe
+#PBS -o /scratch/e1638612/so101-libero-mini/docs/residual/results/diverse_demo/train.log
+set -euo pipefail
+cd /scratch/e1638612/so101-libero-mini
+source /scratch/e1638612/miniforge3/bin/activate
+conda activate so101lm
+export MUJOCO_GL=egl
+export POLICY=smolvla STEPS=20000 BATCH_SIZE=32 SAVE_FREQ=5000 NUM_WORKERS=8 WANDB=false
+export DATASET_ROOT=/scratch/e1638612/datasets/lerobot/local/so101_cube_flip_diverse_300
+bash scripts/train.sh local/so101_cube_flip_diverse_300 outputs/train/smolvla_cube_flip_diverse_300 --policy.path=checkpoints/smolvla_cube_flip/checkpoints/100000/pretrained_model

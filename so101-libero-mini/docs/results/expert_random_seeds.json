@@ -1,0 +1,36 @@
+{
+  "seeds_per_task": 100,
+  "note": "training-distribution seeds k*100000+5000+i (not used by the stored datasets), default expert config",
+  "tasks": {
+    "cylinder_to_tray": {
+      "episodes": 100,
+      "successes": 100,
+      "failures": {},
+      "mean_steps": 172.0,
+      "max_slip_mm": 1.8
+    },
+    "cylinder_to_container": {
+      "episodes": 100,
+      "successes": 100,
+      "failures": {},
+      "mean_steps": 170.0,
+      "max_slip_mm": 1.9
+    },
+    "cube_to_tray": {
+      "episodes": 100,
+      "successes": 100,
+      "failures": {},
+      "mean_steps": 174.6,
+      "max_slip_mm": 2.09
+    },
+    "cylinder_left_of_cube": {
+      "episodes": 100,
+      "successes": 98,
+      "failures": {
+        "plan:jaws would hit an item at the target spot": 2
+      },
+      "mean_steps": 159.8,
+      "max_slip_mm": 1.4
+    }
+  }
+}

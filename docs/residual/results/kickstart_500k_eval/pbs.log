@@ -1,0 +1,229 @@
+Loading  HuggingFaceTB/SmolVLM2-500M-Video-Instruct weights ...
+`torch_dtype` is deprecated! Use `dtype` instead!
+Reducing the number of VLM layers to 16 ...
+Loading weights from local directory
+001/190 original_50 placement_0 state=00: baseline=success best=success final=success
+002/190 original_50 placement_1 state=01: baseline=success best=success final=success
+003/190 original_50 placement_2 state=02: baseline=success best=success final=success
+004/190 original_50 placement_3 state=03: baseline=success best=success final=success
+005/190 original_50 placement_4 state=04: baseline=success best=success final=success
+006/190 original_50 placement_0 state=05: baseline=success best=success final=success
+007/190 original_50 placement_1 state=06: baseline=success best=success final=success
+008/190 original_50 placement_2 state=07: baseline=success best=success final=success
+009/190 original_50 placement_3 state=08: baseline=success best=success final=success
+010/190 original_50 placement_4 state=09: baseline=success best=success final=success
+011/190 original_50 placement_0 state=10: baseline=success best=success final=success
+012/190 original_50 placement_1 state=11: baseline=success best=success final=success
+013/190 original_50 placement_2 state=12: baseline=success best=success final=success
+014/190 original_50 placement_3 state=13: baseline=success best=success final=success
+015/190 original_50 placement_4 state=14: baseline=success best=success final=success
+016/190 original_50 placement_0 state=15: baseline=success best=success final=success
+017/190 original_50 placement_1 state=16: baseline=success best=success final=success
+018/190 original_50 placement_2 state=17: baseline=success best=success final=success
+019/190 original_50 placement_3 state=18: baseline=success best=success final=success
+020/190 original_50 placement_4 state=19: baseline=success best=success final=success
+021/190 original_50 placement_0 state=20: baseline=success best=success final=success
+022/190 original_50 placement_1 state=21: baseline=success best=success final=success
+023/190 original_50 placement_2 state=22: baseline=success best=success final=success
+024/190 original_50 placement_3 state=23: baseline=success best=success final=success
+025/190 original_50 placement_4 state=24: baseline=success best=success final=success
+026/190 original_50 placement_0 state=25: baseline=success best=success final=success
+027/190 original_50 placement_1 state=26: baseline=success best=success final=success
+028/190 original_50 placement_2 state=27: baseline=success best=success final=success
+029/190 original_50 placement_3 state=28: baseline=success best=success final=success
+030/190 original_50 placement_4 state=29: baseline=success best=success final=success
+031/190 original_50 placement_0 state=30: baseline=success best=success final=success
+032/190 original_50 placement_1 state=31: baseline=success best=success final=success
+033/190 original_50 placement_2 state=32: baseline=success best=success final=success
+034/190 original_50 placement_3 state=33: baseline=success best=success final=success
+035/190 original_50 placement_4 state=34: baseline=success best=success final=success
+036/190 original_50 placement_0 state=35: baseline=success best=success final=success
+037/190 original_50 placement_1 state=36: baseline=success best=success final=success
+038/190 original_50 placement_2 state=37: baseline=success best=success final=success
+039/190 original_50 placement_3 state=38: baseline=success best=success final=success
+040/190 original_50 placement_4 state=39: baseline=success best=success final=success
+041/190 original_50 placement_0 state=40: baseline=success best=success final=success
+042/190 original_50 placement_1 state=41: baseline=success best=success final=success
+043/190 original_50 placement_2 state=42: baseline=success best=success final=success
+044/190 original_50 placement_3 state=43: baseline=success best=success final=success
+045/190 original_50 placement_4 state=44: baseline=success best=success final=success
+046/190 original_50 placement_0 state=45: baseline=success best=success final=success
+047/190 original_50 placement_1 state=46: baseline=success best=success final=success
+048/190 original_50 placement_2 state=47: baseline=success best=success final=success
+049/190 original_50 placement_3 state=48: baseline=success best=success final=success
+050/190 original_50 placement_4 state=49: baseline=success best=success final=success
+051/190 shift_2cm_axis forward state=00: baseline=never_lifted best=never_lifted final=never_lifted
+052/190 shift_2cm_axis backward state=01: baseline=success best=success final=success
+053/190 shift_2cm_axis left state=02: baseline=never_lifted best=never_lifted final=never_lifted
+054/190 shift_2cm_axis right state=03: baseline=success best=success final=success
+055/190 shift_2cm_axis forward state=04: baseline=never_lifted best=never_lifted final=never_lifted
+056/190 shift_2cm_axis backward state=05: baseline=success best=success final=success
+057/190 shift_2cm_axis left state=06: baseline=never_lifted best=never_lifted final=never_lifted
+058/190 shift_2cm_axis right state=07: baseline=success best=success final=success
+059/190 shift_2cm_axis forward state=08: baseline=never_lifted best=never_lifted final=never_lifted
+060/190 shift_2cm_axis backward state=09: baseline=still_held best=success final=success
+061/190 shift_2cm_axis left state=10: baseline=never_lifted best=never_lifted final=never_lifted
+062/190 shift_2cm_axis right state=11: baseline=success best=success final=success
+063/190 shift_2cm_axis forward state=12: baseline=never_lifted best=never_lifted final=never_lifted
+064/190 shift_2cm_axis backward state=13: baseline=success best=success final=success
+065/190 shift_2cm_axis left state=14: baseline=never_lifted best=never_lifted final=never_lifted
+066/190 shift_2cm_axis right state=15: baseline=success best=success final=success
+067/190 shift_2cm_axis forward state=16: baseline=never_lifted best=never_lifted final=never_lifted
+068/190 shift_2cm_axis backward state=17: baseline=success best=success final=success
+069/190 shift_2cm_axis left state=18: baseline=never_lifted best=never_lifted final=never_lifted
+070/190 shift_2cm_axis right state=19: baseline=success best=success final=success
+071/190 shift_2cm_axis forward state=20: baseline=never_lifted best=never_lifted final=never_lifted
+072/190 shift_2cm_axis backward state=21: baseline=success best=success final=success
+073/190 shift_2cm_axis left state=22: baseline=never_lifted best=never_lifted final=never_lifted
+074/190 shift_2cm_axis right state=23: baseline=success best=success final=success
+075/190 shift_2cm_axis forward state=24: baseline=never_lifted best=never_lifted final=never_lifted
+076/190 shift_2cm_axis backward state=25: baseline=success best=success final=success
+077/190 shift_2cm_axis left state=26: baseline=never_lifted best=never_lifted final=never_lifted
+078/190 shift_2cm_axis right state=27: baseline=success best=success final=success
+079/190 shift_2cm_axis forward state=28: baseline=never_lifted best=never_lifted final=never_lifted
+080/190 shift_2cm_axis backward state=29: baseline=success best=success final=success
+081/190 shift_2cm_axis left state=30: baseline=never_lifted best=never_lifted final=never_lifted
+082/190 shift_2cm_axis right state=31: baseline=success best=success final=success
+083/190 shift_2cm_axis forward state=32: baseline=never_lifted best=never_lifted final=never_lifted
+084/190 shift_2cm_axis backward state=33: baseline=success best=success final=success
+085/190 shift_2cm_axis left state=34: baseline=never_lifted best=never_lifted final=never_lifted
+086/190 shift_2cm_axis right state=35: baseline=success best=success final=success
+087/190 shift_2cm_axis forward state=36: baseline=never_lifted best=never_lifted final=never_lifted
+088/190 shift_2cm_axis backward state=37: baseline=success best=success final=success
+089/190 shift_2cm_axis left state=38: baseline=never_lifted best=never_lifted final=never_lifted
+090/190 shift_2cm_axis right state=39: baseline=success best=success final=success
+091/190 shift_1p5cm_diagonal forward_left state=00: baseline=never_lifted best=never_lifted final=never_lifted
+092/190 shift_1p5cm_diagonal forward_right state=01: baseline=success best=success final=success
+093/190 shift_1p5cm_diagonal backward_left state=02: baseline=never_lifted best=never_lifted final=never_lifted
+094/190 shift_1p5cm_diagonal backward_right state=03: baseline=success best=success final=success
+095/190 shift_1p5cm_diagonal forward_left state=04: baseline=never_lifted best=never_lifted final=never_lifted
+096/190 shift_1p5cm_diagonal forward_right state=05: baseline=success best=success final=success
+097/190 shift_1p5cm_diagonal backward_left state=06: baseline=never_lifted best=never_lifted final=never_lifted
+098/190 shift_1p5cm_diagonal backward_right state=07: baseline=success best=success final=success
+099/190 shift_1p5cm_diagonal forward_left state=08: baseline=never_lifted best=never_lifted final=never_lifted
+100/190 shift_1p5cm_diagonal forward_right state=09: baseline=success best=success final=success
+101/190 shift_1p5cm_diagonal backward_left state=10: baseline=never_lifted best=never_lifted final=never_lifted
+102/190 shift_1p5cm_diagonal backward_right state=11: baseline=success best=success final=success
+103/190 shift_1p5cm_diagonal forward_left state=12: baseline=never_lifted best=never_lifted final=never_lifted
+104/190 shift_1p5cm_diagonal forward_right state=13: baseline=success best=success final=success
+105/190 shift_1p5cm_diagonal backward_left state=14: baseline=never_lifted best=never_lifted final=never_lifted
+106/190 shift_1p5cm_diagonal backward_right state=15: baseline=turned_but_not_in_place_or_not_settled best=success final=still_held
+107/190 shift_1p5cm_diagonal forward_left state=16: baseline=never_lifted best=never_lifted final=never_lifted
+108/190 shift_1p5cm_diagonal forward_right state=17: baseline=success best=success final=success
+109/190 shift_1p5cm_diagonal backward_left state=18: baseline=never_lifted best=never_lifted final=never_lifted
+110/190 shift_1p5cm_diagonal backward_right state=19: baseline=success best=success final=success
+111/190 shift_1p5cm_diagonal forward_left state=20: baseline=never_lifted best=never_lifted final=never_lifted
+112/190 shift_1p5cm_diagonal forward_right state=21: baseline=success best=success final=success
+113/190 shift_1p5cm_diagonal backward_left state=22: baseline=never_lifted best=never_lifted final=never_lifted
+114/190 shift_1p5cm_diagonal backward_right state=23: baseline=success best=success final=success
+115/190 shift_1p5cm_diagonal forward_left state=24: baseline=never_lifted best=never_lifted final=never_lifted
+116/190 shift_1p5cm_diagonal forward_right state=25: baseline=success best=success final=success
+117/190 shift_1p5cm_diagonal backward_left state=26: baseline=never_lifted best=never_lifted final=never_lifted
+118/190 shift_1p5cm_diagonal backward_right state=27: baseline=success best=success final=success
+119/190 shift_1p5cm_diagonal forward_left state=28: baseline=never_lifted best=never_lifted final=never_lifted
+120/190 shift_1p5cm_diagonal forward_right state=29: baseline=success best=success final=success
+121/190 shift_1p5cm_diagonal backward_left state=30: baseline=never_lifted best=never_lifted final=never_lifted
+122/190 shift_1p5cm_diagonal backward_right state=31: baseline=still_held best=success final=success
+123/190 shift_1p5cm_diagonal forward_left state=32: baseline=never_lifted best=never_lifted final=never_lifted
+124/190 shift_1p5cm_diagonal forward_right state=33: baseline=success best=success final=success
+125/190 shift_1p5cm_diagonal backward_left state=34: baseline=never_lifted best=never_lifted final=never_lifted
+126/190 shift_1p5cm_diagonal backward_right state=35: baseline=success best=success final=success
+127/190 shift_1p5cm_diagonal forward_left state=36: baseline=never_lifted best=never_lifted final=never_lifted
+128/190 shift_1p5cm_diagonal forward_right state=37: baseline=success best=success final=success
+129/190 shift_1p5cm_diagonal backward_left state=38: baseline=never_lifted best=never_lifted final=never_lifted
+130/190 shift_1p5cm_diagonal backward_right state=39: baseline=still_held best=success final=success
+131/190 shift_3cm_axis_feasible forward state=00: baseline=never_lifted best=never_lifted final=never_lifted
+132/190 shift_3cm_axis_feasible left state=01: baseline=never_lifted best=never_lifted final=never_lifted
+133/190 shift_3cm_axis_feasible right state=02: baseline=still_held best=still_held final=still_held
+134/190 shift_3cm_axis_feasible forward state=03: baseline=never_lifted best=never_lifted final=never_lifted
+135/190 shift_3cm_axis_feasible left state=04: baseline=never_lifted best=never_lifted final=never_lifted
+136/190 shift_3cm_axis_feasible right state=05: baseline=not_turned best=still_held final=still_held
+137/190 shift_3cm_axis_feasible forward state=06: baseline=never_lifted best=never_lifted final=never_lifted
+138/190 shift_3cm_axis_feasible left state=07: baseline=never_lifted best=never_lifted final=never_lifted
+139/190 shift_3cm_axis_feasible right state=08: baseline=still_held best=still_held final=still_held
+140/190 shift_3cm_axis_feasible forward state=09: baseline=never_lifted best=never_lifted final=never_lifted
+141/190 shift_3cm_axis_feasible left state=10: baseline=never_lifted best=never_lifted final=never_lifted
+142/190 shift_3cm_axis_feasible right state=11: baseline=still_held best=still_held final=still_held
+143/190 shift_3cm_axis_feasible forward state=12: baseline=never_lifted best=never_lifted final=never_lifted
+144/190 shift_3cm_axis_feasible left state=13: baseline=never_lifted best=never_lifted final=never_lifted
+145/190 shift_3cm_axis_feasible right state=14: baseline=still_held best=turned_but_not_in_place_or_not_settled final=turned_but_not_in_place_or_not_settled
+146/190 shift_3cm_axis_feasible forward state=15: baseline=never_lifted best=never_lifted final=never_lifted
+147/190 shift_3cm_axis_feasible left state=16: baseline=never_lifted best=never_lifted final=never_lifted
+148/190 shift_3cm_axis_feasible right state=17: baseline=still_held best=still_held final=still_held
+149/190 shift_3cm_axis_feasible forward state=18: baseline=never_lifted best=never_lifted final=never_lifted
+150/190 shift_3cm_axis_feasible left state=19: baseline=never_lifted best=never_lifted final=never_lifted
+151/190 shift_3cm_axis_feasible right state=20: baseline=still_held best=turned_but_not_in_place_or_not_settled final=turned_but_not_in_place_or_not_settled
+152/190 shift_3cm_axis_feasible forward state=21: baseline=never_lifted best=never_lifted final=never_lifted
+153/190 shift_3cm_axis_feasible left state=22: baseline=never_lifted best=never_lifted final=never_lifted
+154/190 shift_3cm_axis_feasible right state=23: baseline=still_held best=still_held final=still_held
+155/190 shift_3cm_axis_feasible forward state=24: baseline=never_lifted best=never_lifted final=never_lifted
+156/190 shift_3cm_axis_feasible left state=25: baseline=never_lifted best=never_lifted final=never_lifted
+157/190 shift_3cm_axis_feasible right state=26: baseline=turned_but_not_in_place_or_not_settled best=still_held final=still_held
+158/190 shift_3cm_axis_feasible forward state=27: baseline=never_lifted best=never_lifted final=never_lifted
+159/190 shift_3cm_axis_feasible left state=28: baseline=never_lifted best=never_lifted final=never_lifted
+160/190 shift_3cm_axis_feasible right state=29: baseline=still_held best=still_held final=still_held
+161/190 shift_4cm_axis_feasible forward state=00: baseline=never_lifted best=never_lifted final=never_lifted
+162/190 shift_4cm_axis_feasible left state=01: baseline=never_lifted best=never_lifted final=never_lifted
+163/190 shift_4cm_axis_feasible right state=02: baseline=never_lifted best=never_lifted final=never_lifted
+164/190 shift_4cm_axis_feasible forward state=03: baseline=never_lifted best=never_lifted final=never_lifted
+165/190 shift_4cm_axis_feasible left state=04: baseline=never_lifted best=never_lifted final=never_lifted
+166/190 shift_4cm_axis_feasible right state=05: baseline=never_lifted best=never_lifted final=never_lifted
+167/190 shift_4cm_axis_feasible forward state=06: baseline=never_lifted best=never_lifted final=never_lifted
+168/190 shift_4cm_axis_feasible left state=07: baseline=never_lifted best=never_lifted final=never_lifted
+169/190 shift_4cm_axis_feasible right state=08: baseline=never_lifted best=never_lifted final=never_lifted
+170/190 shift_4cm_axis_feasible forward state=09: baseline=never_lifted best=never_lifted final=never_lifted
+171/190 shift_4cm_axis_feasible left state=10: baseline=never_lifted best=never_lifted final=never_lifted
+172/190 shift_4cm_axis_feasible right state=11: baseline=still_held best=never_lifted final=never_lifted
+173/190 shift_4cm_axis_feasible forward state=12: baseline=never_lifted best=never_lifted final=never_lifted
+174/190 shift_4cm_axis_feasible left state=13: baseline=never_lifted best=never_lifted final=never_lifted
+175/190 shift_4cm_axis_feasible right state=14: baseline=never_lifted best=never_lifted final=never_lifted
+176/190 shift_4cm_axis_feasible forward state=15: baseline=never_lifted best=never_lifted final=never_lifted
+177/190 shift_4cm_axis_feasible left state=16: baseline=never_lifted best=never_lifted final=never_lifted
+178/190 shift_4cm_axis_feasible right state=17: baseline=never_lifted best=never_lifted final=never_lifted
+179/190 shift_4cm_axis_feasible forward state=18: baseline=never_lifted best=never_lifted final=never_lifted
+180/190 shift_4cm_axis_feasible left state=19: baseline=never_lifted best=never_lifted final=never_lifted
+181/190 shift_4cm_axis_feasible right state=20: baseline=never_lifted best=never_lifted final=never_lifted
+182/190 shift_4cm_axis_feasible forward state=21: baseline=never_lifted best=never_lifted final=never_lifted
+183/190 shift_4cm_axis_feasible left state=22: baseline=never_lifted best=never_lifted final=never_lifted
+184/190 shift_4cm_axis_feasible right state=23: baseline=never_lifted best=never_lifted final=never_lifted
+185/190 shift_4cm_axis_feasible forward state=24: baseline=never_lifted best=never_lifted final=never_lifted
+186/190 shift_4cm_axis_feasible left state=25: baseline=never_lifted best=never_lifted final=never_lifted
+187/190 shift_4cm_axis_feasible right state=26: baseline=never_lifted best=never_lifted final=never_lifted
+188/190 shift_4cm_axis_feasible forward state=27: baseline=never_lifted best=never_lifted final=never_lifted
+189/190 shift_4cm_axis_feasible left state=28: baseline=never_lifted best=never_lifted final=never_lifted
+190/190 shift_4cm_axis_feasible right state=29: baseline=never_lifted best=never_lifted final=never_lifted
+# Kickstart PPO at 500,000 steps
+
+The 500k checkpoint is evaluated with the saved kickstart action scales. The duplicate `final` column in `results.json` is the same 500k model, because the existing evaluator requires two model paths.
+
+| Set | SmolVLA | Kickstart 500k | Wilson 95% | Stalled | Moved but missed | Lifted not flipped | Fixed | Broken | Exact McNemar p |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| original_50 | 50/50 | 50/50 | [0.929, 1.000] | 0 | 0 | 0 | 0 | 0 | 1.000000 |
+| shift_2cm_axis | 19/40 | 20/40 | [0.352, 0.648] | 20 | 0 | 0 | 1 | 0 | 1.000000 |
+| shift_1p5cm_diagonal | 17/40 | 20/40 | [0.352, 0.648] | 20 | 0 | 0 | 3 | 0 | 0.250000 |
+| shift_3cm_axis_feasible | 0/30 | 0/30 | [0.000, 0.114] | 20 | 0 | 10 | 0 | 0 | 1.000000 |
+| shift_4cm_axis_feasible | 0/30 | 0/30 | [0.000, 0.114] | 10 | 20 | 0 | 0 | 0 | 1.000000 |
+[residual-rl be6cf92] residual: record kickstart 500k matched evaluation
+ Committer: Mikhalchuk Valentin <e1638612@GN-A40-043.stdct.loc>
+Your name and email address were configured automatically based
+on your username and hostname. Please check that they are accurate.
+You can suppress this message by setting them explicitly. Run the
+following command and follow the instructions in your editor to edit
+your configuration file:
+
+    git config --global --edit
+
+After doing this, you may fix the identity used for this commit with:
+
+    git commit --amend --reset-author
+
+ 10 files changed, 7859 insertions(+)
+ create mode 100644 docs/residual/results/kickstart_500k_eval/checkpoint.sha256
+ create mode 100644 docs/residual/results/kickstart_500k_eval/episodes.csv
+ create mode 100644 docs/residual/results/kickstart_500k_eval/paired_per_set.json
+ create mode 100644 docs/residual/results/kickstart_500k_eval/paired_per_set.md
+ create mode 100644 docs/residual/results/kickstart_500k_eval/pbs.log
+ create mode 100644 docs/residual/results/kickstart_500k_eval/results.json
+ create mode 100644 docs/residual/results/kickstart_500k_eval/success_vs_shift.png
+ create mode 100644 docs/residual/results/kickstart_500k_eval/summary.md
+ create mode 100644 docs/residual/results/kickstart_500k_eval/training_curve.png

@@ -1,0 +1,190 @@
+{
+  "split": "zero_test",
+  "levels": {
+    "0": {
+      "episodes": [
+        {
+          "seed": 11400000,
+          "placement_id": 0,
+          "bias_deg": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "success": true,
+          "lifted": true,
+          "steps": 247,
+          "max_arm_motion_deg": 93.91963195800781,
+          "failure_type": null
+        },
+        {
+          "seed": 11400001,
+          "placement_id": 1,
+          "bias_deg": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "success": true,
+          "lifted": true,
+          "steps": 265,
+          "max_arm_motion_deg": 93.76334381103516,
+          "failure_type": null
+        },
+        {
+          "seed": 11400002,
+          "placement_id": 2,
+          "bias_deg": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "success": true,
+          "lifted": true,
+          "steps": 252,
+          "max_arm_motion_deg": 93.4802474975586,
+          "failure_type": null
+        },
+        {
+          "seed": 11400003,
+          "placement_id": 3,
+          "bias_deg": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "success": true,
+          "lifted": true,
+          "steps": 248,
+          "max_arm_motion_deg": 94.54608154296875,
+          "failure_type": null
+        },
+        {
+          "seed": 11400004,
+          "placement_id": 4,
+          "bias_deg": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "success": true,
+          "lifted": true,
+          "steps": 249,
+          "max_arm_motion_deg": 93.06698608398438,
+          "failure_type": null
+        },
+        {
+          "seed": 11400005,
+          "placement_id": 0,
+          "bias_deg": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "success": true,
+          "lifted": true,
+          "steps": 251,
+          "max_arm_motion_deg": 94.1446533203125,
+          "failure_type": null
+        },
+        {
+          "seed": 11400006,
+          "placement_id": 1,
+          "bias_deg": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "success": true,
+          "lifted": true,
+          "steps": 257,
+          "max_arm_motion_deg": 93.37753295898438,
+          "failure_type": null
+        },
+        {
+          "seed": 11400007,
+          "placement_id": 2,
+          "bias_deg": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "success": true,
+          "lifted": true,
+          "steps": 244,
+          "max_arm_motion_deg": 93.4616928100586,
+          "failure_type": null
+        },
+        {
+          "seed": 11400008,
+          "placement_id": 3,
+          "bias_deg": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "success": true,
+          "lifted": true,
+          "steps": 250,
+          "max_arm_motion_deg": 93.83942413330078,
+          "failure_type": null
+        },
+        {
+          "seed": 11400009,
+          "placement_id": 4,
+          "bias_deg": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "success": true,
+          "lifted": true,
+          "steps": 248,
+          "max_arm_motion_deg": 93.22107696533203,
+          "failure_type": null
+        }
+      ],
+      "successes": 10,
+      "n": 10,
+      "wilson95": [
+        0.7224598312333834,
+        1.0
+      ],
+      "failures": {
+        "stalled": 0,
+        "moved_but_missed": 0,
+        "lifted_not_flipped": 0
+      }
+    }
+  }
+}

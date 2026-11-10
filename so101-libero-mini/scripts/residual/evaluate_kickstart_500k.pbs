@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+#PBS -N kickstart_500k_eval
+#PBS -P personal-e1638612
+#PBS -l select=1:ncpus=8:mpiprocs=1:ompthreads=8:ngpus=1
+#PBS -l walltime=12:00:00
+#PBS -j oe
+#PBS -o /scratch/e1638612/so101-libero-mini/docs/residual/results/kickstart_500k_eval/pbs.log
+set -euo pipefail
+cd /scratch/e1638612/so101-libero-mini
+source /scratch/e1638612/miniforge3/bin/activate
+conda activate so101lm
+export MUJOCO_GL=egl PYTHONPATH=. PYTHONUNBUFFERED=1 OMP_NUM_THREADS=2
+export HF_HOME=/scratch/e1638612/hf_cache
+sha256sum docs/residual/results/ppo_kickstart/checkpoints/ppo_residual_500000_steps.zip > docs/residual/results/kickstart_500k_eval/checkpoint.sha256
+python -u scripts/residual/evaluate_kickstart_500k.py
+python -u scripts/residual/summarize_kickstart_500k.py
+exec 9>.git/residual-finalize.lock
+flock 9
+python - <<'PY'
+from pathlib import Path
+p=Path('docs/residual/NOTES.md')
+summary=Path('docs/residual/results/kickstart_500k_eval/paired_per_set.md').read_text()
+with p.open('a') as f:
+    f.write('\n## Kickstart 500k separate matched evaluation\n\n')
+    f.write('PBS job evaluated the fixed 500k checkpoint, leaving the running kickstart training job untouched. '
+            'The base policy and residual ran on the same original 50 and shifted 140 states and seeds.\n\n')
+    f.write(summary+'\n')
+PY
+git add docs/residual/NOTES.md docs/residual/results/kickstart_500k_eval
+if ! git diff --cached --quiet; then
+    git commit -m 'residual: record kickstart 500k matched evaluation'
+fi

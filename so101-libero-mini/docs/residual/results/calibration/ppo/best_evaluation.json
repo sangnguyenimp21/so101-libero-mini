@@ -1,0 +1,141 @@
+{
+  "steps": 300000,
+  "deterministic": {
+    "successes": 19,
+    "n": 20,
+    "outcomes": [
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      false,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true
+    ],
+    "mean_abs_residual_by_joint": [
+      0.3022458851337433,
+      0.2082531899213791,
+      0.3904571533203125,
+      0.294016569852829,
+      0.2545523941516876,
+      0.17181622982025146
+    ]
+  },
+  "stochastic": [
+    {
+      "successes": 10,
+      "n": 20,
+      "outcomes": [
+        true,
+        false,
+        false,
+        false,
+        true,
+        false,
+        true,
+        true,
+        true,
+        false,
+        true,
+        false,
+        false,
+        false,
+        true,
+        true,
+        false,
+        false,
+        true,
+        true
+      ],
+      "mean_abs_residual_by_joint": [
+        0.5136238932609558,
+        0.4654076397418976,
+        0.5885879993438721,
+        0.5931204557418823,
+        0.49950897693634033,
+        0.28153541684150696
+      ]
+    },
+    {
+      "successes": 11,
+      "n": 20,
+      "outcomes": [
+        false,
+        true,
+        false,
+        false,
+        false,
+        true,
+        true,
+        false,
+        true,
+        false,
+        true,
+        true,
+        true,
+        false,
+        true,
+        false,
+        true,
+        false,
+        true,
+        true
+      ],
+      "mean_abs_residual_by_joint": [
+        0.5168465375900269,
+        0.46696215867996216,
+        0.577781081199646,
+        0.6006313562393188,
+        0.4974154233932495,
+        0.286853551864624
+      ]
+    },
+    {
+      "successes": 12,
+      "n": 20,
+      "outcomes": [
+        true,
+        true,
+        false,
+        false,
+        true,
+        true,
+        true,
+        false,
+        false,
+        false,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        false,
+        false,
+        false
+      ],
+      "mean_abs_residual_by_joint": [
+        0.5060523152351379,
+        0.47489312291145325,
+        0.583218514919281,
+        0.5961236953735352,
+        0.4977146089076996,
+        0.28948044776916504
+      ]
+    }
+  ]
+}

@@ -1,0 +1,434 @@
+{
+  "policy": "checkpoints/smolvla_cube_flip/checkpoints/100000/pretrained_model",
+  "baseline": "docs/residual/results/baseline_shifted_140/results.json",
+  "threshold_definition": {
+    "stalled": "maximum absolute deviation from reset over arm joints 0-4 is < 5.0 degrees",
+    "gripper_excluded": true
+  },
+  "complete": true,
+  "wall_time_s": 395.7,
+  "overall": {
+    "failed_episodes": 104,
+    "stalled": 70,
+    "moved_but_missed": 19,
+    "lifted_but_not_flipped": 15
+  },
+  "per_set": {
+    "shift_2cm_axis": {
+      "failed_episodes": 21,
+      "stalled": 20,
+      "moved_but_missed": 0,
+      "lifted_but_not_flipped": 1
+    },
+    "shift_1p5cm_diagonal": {
+      "failed_episodes": 23,
+      "stalled": 20,
+      "moved_but_missed": 0,
+      "lifted_but_not_flipped": 3
+    },
+    "shift_3cm_axis_feasible": {
+      "failed_episodes": 30,
+      "stalled": 20,
+      "moved_but_missed": 0,
+      "lifted_but_not_flipped": 10
+    },
+    "shift_4cm_axis_feasible": {
+      "failed_episodes": 30,
+      "stalled": 10,
+      "moved_but_missed": 19,
+      "lifted_but_not_flipped": 1
+    }
+  },
+  "per_direction": {
+    "shift_2cm_axis": {
+      "forward": {
+        "failed_episodes": 10,
+        "stalled": 10,
+        "moved_but_missed": 0,
+        "lifted_but_not_flipped": 0
+      },
+      "backward": {
+        "failed_episodes": 1,
+        "stalled": 0,
+        "moved_but_missed": 0,
+        "lifted_but_not_flipped": 1
+      },
+      "left": {
+        "failed_episodes": 10,
+        "stalled": 10,
+        "moved_but_missed": 0,
+        "lifted_but_not_flipped": 0
+      },
+      "right": {
+        "failed_episodes": 0,
+        "stalled": 0,
+        "moved_but_missed": 0,
+        "lifted_but_not_flipped": 0
+      }
+    },
+    "shift_1p5cm_diagonal": {
+      "forward_left": {
+        "failed_episodes": 10,
+        "stalled": 10,
+        "moved_but_missed": 0,
+        "lifted_but_not_flipped": 0
+      },
+      "forward_right": {
+        "failed_episodes": 0,
+        "stalled": 0,
+        "moved_but_missed": 0,
+        "lifted_but_not_flipped": 0
+      },
+      "backward_left": {
+        "failed_episodes": 10,
+        "stalled": 10,
+        "moved_but_missed": 0,
+        "lifted_but_not_flipped": 0
+      },
+      "backward_right": {
+        "failed_episodes": 3,
+        "stalled": 0,
+        "moved_but_missed": 0,
+        "lifted_but_not_flipped": 3
+      }
+    },
+    "shift_3cm_axis_feasible": {
+      "forward": {
+        "failed_episodes": 10,
+        "stalled": 10,
+        "moved_but_missed": 0,
+        "lifted_but_not_flipped": 0
+      },
+      "left": {
+        "failed_episodes": 10,
+        "stalled": 10,
+        "moved_but_missed": 0,
+        "lifted_but_not_flipped": 0
+      },
+      "right": {
+        "failed_episodes": 10,
+        "stalled": 0,
+        "moved_but_missed": 0,
+        "lifted_but_not_flipped": 10
+      }
+    },
+    "shift_4cm_axis_feasible": {
+      "forward": {
+        "failed_episodes": 10,
+        "stalled": 0,
+        "moved_but_missed": 10,
+        "lifted_but_not_flipped": 0
+      },
+      "left": {
+        "failed_episodes": 10,
+        "stalled": 10,
+        "moved_but_missed": 0,
+        "lifted_but_not_flipped": 0
+      },
+      "right": {
+        "failed_episodes": 10,
+        "stalled": 0,
+        "moved_but_missed": 9,
+        "lifted_but_not_flipped": 1
+      }
+    }
+  },
+  "rerun_reproducibility": {
+    "matched": 98,
+    "mismatched": 6,
+    "mismatches": [
+      {
+        "set_id": "shift_1p5cm_diagonal",
+        "state_index": 31,
+        "seed": 31300031,
+        "baseline_outcome": "still_held",
+        "rerun_outcome": "turned_but_not_in_place_or_not_settled",
+        "motion_category": "lifted_but_not_flipped"
+      },
+      {
+        "set_id": "shift_1p5cm_diagonal",
+        "state_index": 39,
+        "seed": 31300039,
+        "baseline_outcome": "still_held",
+        "rerun_outcome": "success",
+        "motion_category": "lifted_but_not_flipped"
+      },
+      {
+        "set_id": "shift_3cm_axis_feasible",
+        "state_index": 5,
+        "seed": 31100005,
+        "baseline_outcome": "not_turned",
+        "rerun_outcome": "still_held",
+        "motion_category": "lifted_but_not_flipped"
+      },
+      {
+        "set_id": "shift_3cm_axis_feasible",
+        "state_index": 26,
+        "seed": 31100026,
+        "baseline_outcome": "turned_but_not_in_place_or_not_settled",
+        "rerun_outcome": "still_held",
+        "motion_category": "lifted_but_not_flipped"
+      },
+      {
+        "set_id": "shift_3cm_axis_feasible",
+        "state_index": 29,
+        "seed": 31100029,
+        "baseline_outcome": "still_held",
+        "rerun_outcome": "turned_but_not_in_place_or_not_settled",
+        "motion_category": "lifted_but_not_flipped"
+      },
+      {
+        "set_id": "shift_4cm_axis_feasible",
+        "state_index": 5,
+        "seed": 31200005,
+        "baseline_outcome": "never_lifted",
+        "rerun_outcome": "turned_but_not_in_place_or_not_settled",
+        "motion_category": "moved_but_missed"
+      }
+    ]
+  },
+  "stalled_action_traces": [
+    {
+      "set_id": "shift_1p5cm_diagonal",
+      "state_index": 28,
+      "seed": 31300028,
+      "offset_label": "forward_left",
+      "max_arm_joint_change_deg": 0.4206,
+      "csv": "shift_1p5cm_diagonal__forward_left__state28__first_3_chunks.csv",
+      "chunks": [
+        {
+          "chunk_index": 0,
+          "steps": [
+            0,
+            49
+          ],
+          "max_observed_arm_change_from_start_deg": 0.2873,
+          "mean_abs_predicted_action_minus_state_arm_deg": 0.0492,
+          "max_abs_predicted_action_minus_state_arm_deg": 0.31,
+          "mean_abs_predicted_gripper_action_minus_state_units": 0.024,
+          "predicted_action_range": {
+            "shoulder_pan": [
+              0.0225,
+              0.0858
+            ],
+            "shoulder_lift": [
+              -93.9795,
+              -93.6903
+            ],
+            "elbow_flex": [
+              81.7988,
+              82.0767
+            ],
+            "wrist_flex": [
+              67.7727,
+              68.017
+            ],
+            "wrist_roll": [
+              -0.2552,
+              0.2819
+            ],
+            "gripper": [
+              2.9617,
+              3.0957
+            ]
+          }
+        },
+        {
+          "chunk_index": 1,
+          "steps": [
+            50,
+            99
+          ],
+          "max_observed_arm_change_from_start_deg": 0.3252,
+          "mean_abs_predicted_action_minus_state_arm_deg": 0.0482,
+          "max_abs_predicted_action_minus_state_arm_deg": 0.3203,
+          "mean_abs_predicted_gripper_action_minus_state_units": 0.0198,
+          "predicted_action_range": {
+            "shoulder_pan": [
+              0.0365,
+              0.1139
+            ],
+            "shoulder_lift": [
+              -94.0033,
+              -93.793
+            ],
+            "elbow_flex": [
+              81.8645,
+              82.0716
+            ],
+            "wrist_flex": [
+              67.7484,
+              68.0224
+            ],
+            "wrist_roll": [
+              -0.2427,
+              0.3522
+            ],
+            "gripper": [
+              2.9777,
+              3.0734
+            ]
+          }
+        },
+        {
+          "chunk_index": 2,
+          "steps": [
+            100,
+            149
+          ],
+          "max_observed_arm_change_from_start_deg": 0.3188,
+          "mean_abs_predicted_action_minus_state_arm_deg": 0.044,
+          "max_abs_predicted_action_minus_state_arm_deg": 0.3316,
+          "mean_abs_predicted_gripper_action_minus_state_units": 0.0169,
+          "predicted_action_range": {
+            "shoulder_pan": [
+              0.0627,
+              0.1249
+            ],
+            "shoulder_lift": [
+              -93.9025,
+              -93.7041
+            ],
+            "elbow_flex": [
+              81.841,
+              82.0793
+            ],
+            "wrist_flex": [
+              67.7081,
+              67.9468
+            ],
+            "wrist_roll": [
+              -0.3454,
+              0.1548
+            ],
+            "gripper": [
+              2.9749,
+              3.096
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "set_id": "shift_2cm_axis",
+      "state_index": 22,
+      "seed": 31000022,
+      "offset_label": "left",
+      "max_arm_joint_change_deg": 0.5381,
+      "csv": "shift_2cm_axis__left__state22__first_3_chunks.csv",
+      "chunks": [
+        {
+          "chunk_index": 0,
+          "steps": [
+            0,
+            49
+          ],
+          "max_observed_arm_change_from_start_deg": 0.3716,
+          "mean_abs_predicted_action_minus_state_arm_deg": 0.0561,
+          "max_abs_predicted_action_minus_state_arm_deg": 0.3764,
+          "mean_abs_predicted_gripper_action_minus_state_units": 0.0176,
+          "predicted_action_range": {
+            "shoulder_pan": [
+              -0.0024,
+              0.0733
+            ],
+            "shoulder_lift": [
+              -94.1471,
+              -93.9276
+            ],
+            "elbow_flex": [
+              81.9109,
+              82.1407
+            ],
+            "wrist_flex": [
+              67.809,
+              68.0297
+            ],
+            "wrist_roll": [
+              -0.389,
+              0.2561
+            ],
+            "gripper": [
+              2.9856,
+              3.056
+            ]
+          }
+        },
+        {
+          "chunk_index": 1,
+          "steps": [
+            50,
+            99
+          ],
+          "max_observed_arm_change_from_start_deg": 0.422,
+          "mean_abs_predicted_action_minus_state_arm_deg": 0.0508,
+          "max_abs_predicted_action_minus_state_arm_deg": 0.2323,
+          "mean_abs_predicted_gripper_action_minus_state_units": 0.0184,
+          "predicted_action_range": {
+            "shoulder_pan": [
+              0.0222,
+              0.1012
+            ],
+            "shoulder_lift": [
+              -94.062,
+              -93.8016
+            ],
+            "elbow_flex": [
+              81.906,
+              82.1311
+            ],
+            "wrist_flex": [
+              67.7667,
+              67.9684
+            ],
+            "wrist_roll": [
+              -0.4424,
+              0.0268
+            ],
+            "gripper": [
+              2.9944,
+              3.0758
+            ]
+          }
+        },
+        {
+          "chunk_index": 2,
+          "steps": [
+            100,
+            149
+          ],
+          "max_observed_arm_change_from_start_deg": 0.476,
+          "mean_abs_predicted_action_minus_state_arm_deg": 0.059,
+          "max_abs_predicted_action_minus_state_arm_deg": 0.4791,
+          "mean_abs_predicted_gripper_action_minus_state_units": 0.0242,
+          "predicted_action_range": {
+            "shoulder_pan": [
+              0.0259,
+              0.1244
+            ],
+            "shoulder_lift": [
+              -94.0893,
+              -93.8125
+            ],
+            "elbow_flex": [
+              81.8247,
+              82.1784
+            ],
+            "wrist_flex": [
+              67.6981,
+              68.0352
+            ],
+            "wrist_roll": [
+              -0.4951,
+              0.0623
+            ],
+            "gripper": [
+              2.9609,
+              3.0665
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

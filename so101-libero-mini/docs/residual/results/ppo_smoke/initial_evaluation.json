@@ -1,0 +1,98 @@
+{
+  "episodes": 8,
+  "successes": 4,
+  "success_rate": 0.5,
+  "baseline_successes": 4,
+  "baseline_success_rate": 0.5,
+  "lifted": 4,
+  "episode_results": [
+    {
+      "set_id": "shift_2cm_axis",
+      "state_index": 0,
+      "seed": 31000000,
+      "offset_label": "forward",
+      "baseline_success": false,
+      "residual_success": false,
+      "lifted": false,
+      "steps": 450,
+      "total_reward": 0.000298
+    },
+    {
+      "set_id": "shift_2cm_axis",
+      "state_index": 1,
+      "seed": 31000001,
+      "offset_label": "backward",
+      "baseline_success": true,
+      "residual_success": true,
+      "lifted": true,
+      "steps": 260,
+      "total_reward": 1.196511
+    },
+    {
+      "set_id": "shift_2cm_axis",
+      "state_index": 2,
+      "seed": 31000002,
+      "offset_label": "left",
+      "baseline_success": false,
+      "residual_success": false,
+      "lifted": false,
+      "steps": 450,
+      "total_reward": 0.000294
+    },
+    {
+      "set_id": "shift_2cm_axis",
+      "state_index": 3,
+      "seed": 31000003,
+      "offset_label": "right",
+      "baseline_success": true,
+      "residual_success": true,
+      "lifted": true,
+      "steps": 271,
+      "total_reward": 1.221957
+    },
+    {
+      "set_id": "shift_1p5cm_diagonal",
+      "state_index": 0,
+      "seed": 31300000,
+      "offset_label": "forward_left",
+      "baseline_success": false,
+      "residual_success": false,
+      "lifted": false,
+      "steps": 450,
+      "total_reward": 0.000366
+    },
+    {
+      "set_id": "shift_1p5cm_diagonal",
+      "state_index": 1,
+      "seed": 31300001,
+      "offset_label": "forward_right",
+      "baseline_success": true,
+      "residual_success": true,
+      "lifted": true,
+      "steps": 269,
+      "total_reward": 1.225184
+    },
+    {
+      "set_id": "shift_1p5cm_diagonal",
+      "state_index": 2,
+      "seed": 31300002,
+      "offset_label": "backward_left",
+      "baseline_success": false,
+      "residual_success": false,
+      "lifted": false,
+      "steps": 450,
+      "total_reward": 0.000209
+    },
+    {
+      "set_id": "shift_1p5cm_diagonal",
+      "state_index": 3,
+      "seed": 31300003,
+      "offset_label": "backward_right",
+      "baseline_success": true,
+      "residual_success": true,
+      "lifted": true,
+      "steps": 254,
+      "total_reward": 1.209488
+    }
+  ]
+}

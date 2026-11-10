@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+#PBS -N eval_kickstart
+#PBS -P personal-e1638612
+#PBS -l select=1:ncpus=36:mpiprocs=1:ompthreads=36:ngpus=1
+#PBS -l walltime=06:00:00
+#PBS -j oe
+#PBS -o /scratch/e1638612/so101-libero-mini/docs/residual/results/final_evaluation_kickstart/pbs.log
+
+set -euo pipefail
+RESIDUAL_REPO=/scratch/e1638612/so101-libero-mini
+cd "$RESIDUAL_REPO"
+source /scratch/e1638612/miniforge3/bin/activate
+conda activate so101lm
+export MUJOCO_GL=egl PYTHONUNBUFFERED=1 OMP_NUM_THREADS=2
+python -u scripts/residual/evaluate_residual.py \
+    --model docs/residual/results/ppo_kickstart/best_model.zip \
+    --comparison-model docs/residual/results/ppo_kickstart/final_model.zip \
+    --train-dir docs/residual/results/ppo_kickstart \
+    --out docs/residual/results/final_evaluation_kickstart
+
+exec 9>.git/residual-finalize.lock
+flock 9
+python -u scripts/residual/finalize_results.py \
+    --results docs/residual/results/final_evaluation_kickstart/results.json \
+    --label kickstart --evaluation-job "${PBS_JOBID:-unknown}"
+git add docs/residual/NOTES.md docs/residual/results/final_evaluation_kickstart
+for RESIDUAL_FILE in config.json initial_evaluation.json best_evaluation.json evaluations.jsonl monitor.csv; do
+    [[ ! -f "docs/residual/results/ppo_kickstart/$RESIDUAL_FILE" ]] || git add "docs/residual/results/ppo_kickstart/$RESIDUAL_FILE"
+done
+git diff --cached --quiet || git commit -m "residual: record kickstart PPO evaluation"

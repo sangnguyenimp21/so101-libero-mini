@@ -1,0 +1,4 @@
+Traceback (most recent call last):
+  File "/scratch/e1638612/so101-libero-mini/scripts/residual/check_ppo_actions.py", line 7, in <module>
+    from scripts.residual.train_ppo import load_eval_states
+ModuleNotFoundError: No module named 'scripts'

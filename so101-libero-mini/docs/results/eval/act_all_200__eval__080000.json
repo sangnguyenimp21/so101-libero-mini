@@ -1,0 +1,1778 @@
+{
+  "policy": {
+    "policy": "outputs/train/act_all_200/checkpoints/080000/pretrained_model",
+    "type": "act",
+    "language_conditioned": false,
+    "device": "cpu",
+    "training_dataset": "local/so101_mini_all_200",
+    "training_render_backend": "egl"
+  },
+  "overall": {
+    "episodes": 150,
+    "successes": 18,
+    "success_rate": 0.12,
+    "wilson95": [
+      0.0773,
+      0.1817
+    ]
+  },
+  "per_task": {
+    "cylinder_to_tray": {
+      "language": "Pick up the red cylinder and place it inside the black tray.",
+      "episodes": 50,
+      "successes": 10,
+      "success_rate": 0.2,
+      "wilson95": [
+        0.1124,
+        0.3304
+      ],
+      "outcomes": {
+        "in_a_container": 6,
+        "success": 10,
+        "wrong_object_lifted": 1,
+        "never_lifted": 33
+      },
+      "mean_steps_success": 156.0
+    },
+    "cylinder_to_container": {
+      "language": "Pick up the red cylinder and place it inside the circular container.",
+      "episodes": 50,
+      "successes": 4,
+      "success_rate": 0.08,
+      "wilson95": [
+        0.0315,
+        0.1884
+      ],
+      "outcomes": {
+        "in_a_container": 5,
+        "never_lifted": 38,
+        "success": 4,
+        "wrong_object_lifted": 3
+      },
+      "mean_steps_success": 135.2
+    },
+    "cube_to_tray": {
+      "language": "Pick up the blue object and place it inside the black tray.",
+      "episodes": 50,
+      "successes": 4,
+      "success_rate": 0.08,
+      "wilson95": [
+        0.0315,
+        0.1884
+      ],
+      "outcomes": {
+        "never_lifted": 34,
+        "success": 4,
+        "wrong_object_lifted": 12
+      },
+      "mean_steps_success": 138.8
+    }
+  },
+  "warnings": [
+    "act ignores the instruction, but several evaluated tasks share a scene: it cannot know which task to do (useful only as a no-language baseline)",
+    "training images were rendered with egl, this evaluation renders with osmesa (set SO101_RENDER=egl for an identical renderer)"
+  ],
+  "complete": true,
+  "wall_time_s": 2712.5,
+  "render_backend": "osmesa",
+  "image_size": [
+    256,
+    256
+  ],
+  "episodes": [
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 0,
+      "seed": 10000000,
+      "success": false,
+      "steps": 450,
+      "outcome": "in_a_container",
+      "lifted": true,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.53,
+      "video": "videos/cylinder_to_tray_ep000_fail.mp4"
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 1,
+      "seed": 10000001,
+      "success": true,
+      "steps": 163,
+      "outcome": "success",
+      "lifted": true,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 7.52,
+      "video": "videos/cylinder_to_tray_ep001_success.mp4"
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 2,
+      "seed": 10000002,
+      "success": false,
+      "steps": 450,
+      "outcome": "wrong_object_lifted",
+      "lifted": false,
+      "other_objects_lifted": [
+        "blue_cube"
+      ],
+      "mean_policy_ms": 6.56,
+      "video": "videos/cylinder_to_tray_ep002_fail.mp4"
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 3,
+      "seed": 10000003,
+      "success": true,
+      "steps": 139,
+      "outcome": "success",
+      "lifted": true,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.92,
+      "video": "videos/cylinder_to_tray_ep003_success.mp4"
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 4,
+      "seed": 10000004,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.38
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 5,
+      "seed": 10000005,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.52
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 6,
+      "seed": 10000006,
+      "success": true,
+      "steps": 159,
+      "outcome": "success",
+      "lifted": true,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 8.17
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 7,
+      "seed": 10000007,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.75
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 8,
+      "seed": 10000008,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.08
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 9,
+      "seed": 10000009,
+      "success": false,
+      "steps": 450,
+      "outcome": "in_a_container",
+      "lifted": true,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.73
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 10,
+      "seed": 10000010,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.32
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 11,
+      "seed": 10000011,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.69
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 12,
+      "seed": 10000012,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.49
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 13,
+      "seed": 10000013,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.91
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 14,
+      "seed": 10000014,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.19
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 15,
+      "seed": 10000015,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.5
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 16,
+      "seed": 10000016,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.91
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 17,
+      "seed": 10000017,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.41
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 18,
+      "seed": 10000018,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.24
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 19,
+      "seed": 10000019,
+      "success": false,
+      "steps": 450,
+      "outcome": "in_a_container",
+      "lifted": true,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.19
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 20,
+      "seed": 10000020,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.5
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 21,
+      "seed": 10000021,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 7.22
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 22,
+      "seed": 10000022,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.62
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 23,
+      "seed": 10000023,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.42
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 24,
+      "seed": 10000024,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.85
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 25,
+      "seed": 10000025,
+      "success": true,
+      "steps": 155,
+      "outcome": "success",
+      "lifted": true,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 7.51
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 26,
+      "seed": 10000026,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.16
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 27,
+      "seed": 10000027,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.37
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 28,
+      "seed": 10000028,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.72
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 29,
+      "seed": 10000029,
+      "success": true,
+      "steps": 138,
+      "outcome": "success",
+      "lifted": true,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 7.52
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 30,
+      "seed": 10000030,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.55
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 31,
+      "seed": 10000031,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 7.3
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 32,
+      "seed": 10000032,
+      "success": true,
+      "steps": 162,
+      "outcome": "success",
+      "lifted": true,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 7.94
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 33,
+      "seed": 10000033,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.46
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 34,
+      "seed": 10000034,
+      "success": true,
+      "steps": 130,
+      "outcome": "success",
+      "lifted": true,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 7.36
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 35,
+      "seed": 10000035,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.5
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 36,
+      "seed": 10000036,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.26
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 37,
+      "seed": 10000037,
+      "success": true,
+      "steps": 219,
+      "outcome": "success",
+      "lifted": true,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 7.03
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 38,
+      "seed": 10000038,
+      "success": false,
+      "steps": 450,
+      "outcome": "in_a_container",
+      "lifted": true,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.63
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 39,
+      "seed": 10000039,
+      "success": true,
+      "steps": 152,
+      "outcome": "success",
+      "lifted": true,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 7.95
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 40,
+      "seed": 10000040,
+      "success": false,
+      "steps": 450,
+      "outcome": "in_a_container",
+      "lifted": true,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.55
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 41,
+      "seed": 10000041,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 7.25
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 42,
+      "seed": 10000042,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.4
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 43,
+      "seed": 10000043,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.4
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 44,
+      "seed": 10000044,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.35
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 45,
+      "seed": 10000045,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.43
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 46,
+      "seed": 10000046,
+      "success": true,
+      "steps": 143,
+      "outcome": "success",
+      "lifted": true,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.99
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 47,
+      "seed": 10000047,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 7.0
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 48,
+      "seed": 10000048,
+      "success": false,
+      "steps": 450,
+      "outcome": "in_a_container",
+      "lifted": true,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.22
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 49,
+      "seed": 10000049,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.46
+    },
+    {
+      "task_id": "cylinder_to_container",
+      "index": 0,
+      "seed": 10100000,
+      "success": false,
+      "steps": 450,
+      "outcome": "in_a_container",
+      "lifted": true,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 7.55,
+      "video": "videos/cylinder_to_container_ep000_fail.mp4"
+    },
+    {
+      "task_id": "cylinder_to_container",
+      "index": 1,
+      "seed": 10100001,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.57,
+      "video": "videos/cylinder_to_container_ep001_fail.mp4"
+    },
+    {
+      "task_id": "cylinder_to_container",
+      "index": 2,
+      "seed": 10100002,
+      "success": true,
+      "steps": 130,
+      "outcome": "success",
+      "lifted": true,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 7.76,
+      "video": "videos/cylinder_to_container_ep002_success.mp4"
+    },
+    {
+      "task_id": "cylinder_to_container",
+      "index": 3,
+      "seed": 10100003,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.56,
+      "video": "videos/cylinder_to_container_ep003_fail.mp4"
+    },
+    {
+      "task_id": "cylinder_to_container",
+      "index": 4,
+      "seed": 10100004,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.62
+    },
+    {
+      "task_id": "cylinder_to_container",
+      "index": 5,
+      "seed": 10100005,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.61
+    },
+    {
+      "task_id": "cylinder_to_container",
+      "index": 6,
+      "seed": 10100006,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.38
+    },
+    {
+      "task_id": "cylinder_to_container",
+      "index": 7,
+      "seed": 10100007,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.44
+    },
+    {
+      "task_id": "cylinder_to_container",
+      "index": 8,
+      "seed": 10100008,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.43
+    },
+    {
+      "task_id": "cylinder_to_container",
+      "index": 9,
+      "seed": 10100009,
+      "success": false,
+      "steps": 450,
+      "outcome": "wrong_object_lifted",
+      "lifted": false,
+      "other_objects_lifted": [
+        "blue_cube"
+      ],
+      "mean_policy_ms": 6.63
+    },
+    {
+      "task_id": "cylinder_to_container",
+      "index": 10,
+      "seed": 10100010,
+      "success": false,
+      "steps": 450,
+      "outcome": "in_a_container",
+      "lifted": true,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 7.04
+    },
+    {
+      "task_id": "cylinder_to_container",
+      "index": 11,
+      "seed": 10100011,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.57
+    },
+    {
+      "task_id": "cylinder_to_container",
+      "index": 12,
+      "seed": 10100012,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.42
+    },
+    {
+      "task_id": "cylinder_to_container",
+      "index": 13,
+      "seed": 10100013,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.33
+    },
+    {
+      "task_id": "cylinder_to_container",
+      "index": 14,
+      "seed": 10100014,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.33
+    },
+    {
+      "task_id": "cylinder_to_container",
+      "index": 15,
+      "seed": 10100015,
+      "success": true,
+      "steps": 129,
+      "outcome": "success",
+      "lifted": true,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 7.63
+    },
+    {
+      "task_id": "cylinder_to_container",
+      "index": 16,
+      "seed": 10100016,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.36
+    },
+    {
+      "task_id": "cylinder_to_container",
+      "index": 17,
+      "seed": 10100017,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.58
+    },
+    {
+      "task_id": "cylinder_to_container",
+      "index": 18,
+      "seed": 10100018,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.36
+    },
+    {
+      "task_id": "cylinder_to_container",
+      "index": 19,
+      "seed": 10100019,
+      "success": false,
+      "steps": 450,
+      "outcome": "in_a_container",
+      "lifted": true,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.59
+    },
+    {
+      "task_id": "cylinder_to_container",
+      "index": 20,
+      "seed": 10100020,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.53
+    },
+    {
+      "task_id": "cylinder_to_container",
+      "index": 21,
+      "seed": 10100021,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.36
+    },
+    {
+      "task_id": "cylinder_to_container",
+      "index": 22,
+      "seed": 10100022,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.45
+    },
+    {
+      "task_id": "cylinder_to_container",
+      "index": 23,
+      "seed": 10100023,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.45
+    },
+    {
+      "task_id": "cylinder_to_container",
+      "index": 24,
+      "seed": 10100024,
+      "success": false,
+      "steps": 450,
+      "outcome": "in_a_container",
+      "lifted": true,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.75
+    },
+    {
+      "task_id": "cylinder_to_container",
+      "index": 25,
+      "seed": 10100025,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 7.18
+    },
+    {
+      "task_id": "cylinder_to_container",
+      "index": 26,
+      "seed": 10100026,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.52
+    },
+    {
+      "task_id": "cylinder_to_container",
+      "index": 27,
+      "seed": 10100027,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.52
+    },
+    {
+      "task_id": "cylinder_to_container",
+      "index": 28,
+      "seed": 10100028,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.45
+    },
+    {
+      "task_id": "cylinder_to_container",
+      "index": 29,
+      "seed": 10100029,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.4
+    },
+    {
+      "task_id": "cylinder_to_container",
+      "index": 30,
+      "seed": 10100030,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.68
+    },
+    {
+      "task_id": "cylinder_to_container",
+      "index": 31,
+      "seed": 10100031,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.33
+    },
+    {
+      "task_id": "cylinder_to_container",
+      "index": 32,
+      "seed": 10100032,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.52
+    },
+    {
+      "task_id": "cylinder_to_container",
+      "index": 33,
+      "seed": 10100033,
+      "success": false,
+      "steps": 450,
+      "outcome": "in_a_container",
+      "lifted": true,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.97
+    },
+    {
+      "task_id": "cylinder_to_container",
+      "index": 34,
+      "seed": 10100034,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.26
+    },
+    {
+      "task_id": "cylinder_to_container",
+      "index": 35,
+      "seed": 10100035,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.5
+    },
+    {
+      "task_id": "cylinder_to_container",
+      "index": 36,
+      "seed": 10100036,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.23
+    },
+    {
+      "task_id": "cylinder_to_container",
+      "index": 37,
+      "seed": 10100037,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.29
+    },
+    {
+      "task_id": "cylinder_to_container",
+      "index": 38,
+      "seed": 10100038,
+      "success": true,
+      "steps": 130,
+      "outcome": "success",
+      "lifted": true,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 7.17
+    },
+    {
+      "task_id": "cylinder_to_container",
+      "index": 39,
+      "seed": 10100039,
+      "success": false,
+      "steps": 450,
+      "outcome": "wrong_object_lifted",
+      "lifted": false,
+      "other_objects_lifted": [
+        "blue_cube"
+      ],
+      "mean_policy_ms": 6.19
+    },
+    {
+      "task_id": "cylinder_to_container",
+      "index": 40,
+      "seed": 10100040,
+      "success": true,
+      "steps": 152,
+      "outcome": "success",
+      "lifted": true,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 8.19
+    },
+    {
+      "task_id": "cylinder_to_container",
+      "index": 41,
+      "seed": 10100041,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.6
+    },
+    {
+      "task_id": "cylinder_to_container",
+      "index": 42,
+      "seed": 10100042,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.19
+    },
+    {
+      "task_id": "cylinder_to_container",
+      "index": 43,
+      "seed": 10100043,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.8
+    },
+    {
+      "task_id": "cylinder_to_container",
+      "index": 44,
+      "seed": 10100044,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.67
+    },
+    {
+      "task_id": "cylinder_to_container",
+      "index": 45,
+      "seed": 10100045,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.51
+    },
+    {
+      "task_id": "cylinder_to_container",
+      "index": 46,
+      "seed": 10100046,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.23
+    },
+    {
+      "task_id": "cylinder_to_container",
+      "index": 47,
+      "seed": 10100047,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.17
+    },
+    {
+      "task_id": "cylinder_to_container",
+      "index": 48,
+      "seed": 10100048,
+      "success": false,
+      "steps": 450,
+      "outcome": "wrong_object_lifted",
+      "lifted": false,
+      "other_objects_lifted": [
+        "blue_cube"
+      ],
+      "mean_policy_ms": 6.2
+    },
+    {
+      "task_id": "cylinder_to_container",
+      "index": 49,
+      "seed": 10100049,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.18
+    },
+    {
+      "task_id": "cube_to_tray",
+      "index": 0,
+      "seed": 10200000,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.89,
+      "video": "videos/cube_to_tray_ep000_fail.mp4"
+    },
+    {
+      "task_id": "cube_to_tray",
+      "index": 1,
+      "seed": 10200001,
+      "success": true,
+      "steps": 130,
+      "outcome": "success",
+      "lifted": true,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 7.39,
+      "video": "videos/cube_to_tray_ep001_success.mp4"
+    },
+    {
+      "task_id": "cube_to_tray",
+      "index": 2,
+      "seed": 10200002,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 7.43,
+      "video": "videos/cube_to_tray_ep002_fail.mp4"
+    },
+    {
+      "task_id": "cube_to_tray",
+      "index": 3,
+      "seed": 10200003,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.57,
+      "video": "videos/cube_to_tray_ep003_fail.mp4"
+    },
+    {
+      "task_id": "cube_to_tray",
+      "index": 4,
+      "seed": 10200004,
+      "success": false,
+      "steps": 450,
+      "outcome": "wrong_object_lifted",
+      "lifted": false,
+      "other_objects_lifted": [
+        "red_cylinder"
+      ],
+      "mean_policy_ms": 6.45
+    },
+    {
+      "task_id": "cube_to_tray",
+      "index": 5,
+      "seed": 10200005,
+      "success": false,
+      "steps": 450,
+      "outcome": "wrong_object_lifted",
+      "lifted": false,
+      "other_objects_lifted": [
+        "red_cylinder"
+      ],
+      "mean_policy_ms": 6.18
+    },
+    {
+      "task_id": "cube_to_tray",
+      "index": 6,
+      "seed": 10200006,
+      "success": false,
+      "steps": 450,
+      "outcome": "wrong_object_lifted",
+      "lifted": false,
+      "other_objects_lifted": [
+        "red_cylinder"
+      ],
+      "mean_policy_ms": 6.62
+    },
+    {
+      "task_id": "cube_to_tray",
+      "index": 7,
+      "seed": 10200007,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.43
+    },
+    {
+      "task_id": "cube_to_tray",
+      "index": 8,
+      "seed": 10200008,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.54
+    },
+    {
+      "task_id": "cube_to_tray",
+      "index": 9,
+      "seed": 10200009,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.19
+    },
+    {
+      "task_id": "cube_to_tray",
+      "index": 10,
+      "seed": 10200010,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.13
+    },
+    {
+      "task_id": "cube_to_tray",
+      "index": 11,
+      "seed": 10200011,
+      "success": false,
+      "steps": 450,
+      "outcome": "wrong_object_lifted",
+      "lifted": false,
+      "other_objects_lifted": [
+        "red_cylinder"
+      ],
+      "mean_policy_ms": 6.41
+    },
+    {
+      "task_id": "cube_to_tray",
+      "index": 12,
+      "seed": 10200012,
+      "success": false,
+      "steps": 450,
+      "outcome": "wrong_object_lifted",
+      "lifted": false,
+      "other_objects_lifted": [
+        "red_cylinder"
+      ],
+      "mean_policy_ms": 7.04
+    },
+    {
+      "task_id": "cube_to_tray",
+      "index": 13,
+      "seed": 10200013,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.28
+    },
+    {
+      "task_id": "cube_to_tray",
+      "index": 14,
+      "seed": 10200014,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.53
+    },
+    {
+      "task_id": "cube_to_tray",
+      "index": 15,
+      "seed": 10200015,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 7.14
+    },
+    {
+      "task_id": "cube_to_tray",
+      "index": 16,
+      "seed": 10200016,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.66
+    },
+    {
+      "task_id": "cube_to_tray",
+      "index": 17,
+      "seed": 10200017,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.21
+    },
+    {
+      "task_id": "cube_to_tray",
+      "index": 18,
+      "seed": 10200018,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.25
+    },
+    {
+      "task_id": "cube_to_tray",
+      "index": 19,
+      "seed": 10200019,
+      "success": false,
+      "steps": 450,
+      "outcome": "wrong_object_lifted",
+      "lifted": false,
+      "other_objects_lifted": [
+        "red_cylinder"
+      ],
+      "mean_policy_ms": 6.45
+    },
+    {
+      "task_id": "cube_to_tray",
+      "index": 20,
+      "seed": 10200020,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.78
+    },
+    {
+      "task_id": "cube_to_tray",
+      "index": 21,
+      "seed": 10200021,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.24
+    },
+    {
+      "task_id": "cube_to_tray",
+      "index": 22,
+      "seed": 10200022,
+      "success": false,
+      "steps": 450,
+      "outcome": "wrong_object_lifted",
+      "lifted": false,
+      "other_objects_lifted": [
+        "red_cylinder"
+      ],
+      "mean_policy_ms": 6.64
+    },
+    {
+      "task_id": "cube_to_tray",
+      "index": 23,
+      "seed": 10200023,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.69
+    },
+    {
+      "task_id": "cube_to_tray",
+      "index": 24,
+      "seed": 10200024,
+      "success": true,
+      "steps": 143,
+      "outcome": "success",
+      "lifted": true,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 7.03
+    },
+    {
+      "task_id": "cube_to_tray",
+      "index": 25,
+      "seed": 10200025,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.83
+    },
+    {
+      "task_id": "cube_to_tray",
+      "index": 26,
+      "seed": 10200026,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.29
+    },
+    {
+      "task_id": "cube_to_tray",
+      "index": 27,
+      "seed": 10200027,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.34
+    },
+    {
+      "task_id": "cube_to_tray",
+      "index": 28,
+      "seed": 10200028,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.3
+    },
+    {
+      "task_id": "cube_to_tray",
+      "index": 29,
+      "seed": 10200029,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.7
+    },
+    {
+      "task_id": "cube_to_tray",
+      "index": 30,
+      "seed": 10200030,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.3
+    },
+    {
+      "task_id": "cube_to_tray",
+      "index": 31,
+      "seed": 10200031,
+      "success": false,
+      "steps": 450,
+      "outcome": "wrong_object_lifted",
+      "lifted": false,
+      "other_objects_lifted": [
+        "red_cylinder"
+      ],
+      "mean_policy_ms": 6.52
+    },
+    {
+      "task_id": "cube_to_tray",
+      "index": 32,
+      "seed": 10200032,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.48
+    },
+    {
+      "task_id": "cube_to_tray",
+      "index": 33,
+      "seed": 10200033,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.15
+    },
+    {
+      "task_id": "cube_to_tray",
+      "index": 34,
+      "seed": 10200034,
+      "success": true,
+      "steps": 132,
+      "outcome": "success",
+      "lifted": true,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 7.09
+    },
+    {
+      "task_id": "cube_to_tray",
+      "index": 35,
+      "seed": 10200035,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.12
+    },
+    {
+      "task_id": "cube_to_tray",
+      "index": 36,
+      "seed": 10200036,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.27
+    },
+    {
+      "task_id": "cube_to_tray",
+      "index": 37,
+      "seed": 10200037,
+      "success": false,
+      "steps": 450,
+      "outcome": "wrong_object_lifted",
+      "lifted": false,
+      "other_objects_lifted": [
+        "red_cylinder"
+      ],
+      "mean_policy_ms": 6.41
+    },
+    {
+      "task_id": "cube_to_tray",
+      "index": 38,
+      "seed": 10200038,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.66
+    },
+    {
+      "task_id": "cube_to_tray",
+      "index": 39,
+      "seed": 10200039,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.32
+    },
+    {
+      "task_id": "cube_to_tray",
+      "index": 40,
+      "seed": 10200040,
+      "success": false,
+      "steps": 450,
+      "outcome": "wrong_object_lifted",
+      "lifted": false,
+      "other_objects_lifted": [
+        "red_cylinder"
+      ],
+      "mean_policy_ms": 6.68
+    },
+    {
+      "task_id": "cube_to_tray",
+      "index": 41,
+      "seed": 10200041,
+      "success": false,
+      "steps": 450,
+      "outcome": "wrong_object_lifted",
+      "lifted": false,
+      "other_objects_lifted": [
+        "red_cylinder"
+      ],
+      "mean_policy_ms": 6.67
+    },
+    {
+      "task_id": "cube_to_tray",
+      "index": 42,
+      "seed": 10200042,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.16
+    },
+    {
+      "task_id": "cube_to_tray",
+      "index": 43,
+      "seed": 10200043,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.1
+    },
+    {
+      "task_id": "cube_to_tray",
+      "index": 44,
+      "seed": 10200044,
+      "success": true,
+      "steps": 150,
+      "outcome": "success",
+      "lifted": true,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.26
+    },
+    {
+      "task_id": "cube_to_tray",
+      "index": 45,
+      "seed": 10200045,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.49
+    },
+    {
+      "task_id": "cube_to_tray",
+      "index": 46,
+      "seed": 10200046,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.23
+    },
+    {
+      "task_id": "cube_to_tray",
+      "index": 47,
+      "seed": 10200047,
+      "success": false,
+      "steps": 450,
+      "outcome": "wrong_object_lifted",
+      "lifted": false,
+      "other_objects_lifted": [
+        "red_cylinder"
+      ],
+      "mean_policy_ms": 6.28
+    },
+    {
+      "task_id": "cube_to_tray",
+      "index": 48,
+      "seed": 10200048,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.43
+    },
+    {
+      "task_id": "cube_to_tray",
+      "index": 49,
+      "seed": 10200049,
+      "success": false,
+      "steps": 450,
+      "outcome": "never_lifted",
+      "lifted": false,
+      "other_objects_lifted": [],
+      "mean_policy_ms": 6.24
+    }
+  ]
+}

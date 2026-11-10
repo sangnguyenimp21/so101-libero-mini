@@ -1,0 +1,107 @@
+{
+  "policy": {
+    "policy": "checkpoints/smolvla_cube_flip/checkpoints/100000/pretrained_model",
+    "type": "smolvla",
+    "language_conditioned": true,
+    "device": "cuda",
+    "training_dataset": null,
+    "training_render_backend": null
+  },
+  "overall": {
+    "episodes": 5,
+    "successes": 5,
+    "success_rate": 1.0,
+    "wilson95": [
+      0.5655,
+      1.0
+    ]
+  },
+  "per_task": {
+    "cube_flip": {
+      "language": "Pick up the red cube and flip it onto its side.",
+      "episodes": 5,
+      "successes": 5,
+      "success_rate": 1.0,
+      "wilson95": [
+        0.5655,
+        1.0
+      ],
+      "outcomes": {
+        "success": 5
+      },
+      "mean_steps_success": 252.8
+    }
+  },
+  "warnings": [],
+  "complete": true,
+  "wall_time_s": 39.0,
+  "render_backend": "egl",
+  "visual_rand": false,
+  "image_size": [
+    256,
+    256
+  ],
+  "episodes": [
+    {
+      "task_id": "cube_flip",
+      "index": 0,
+      "seed": 11400000,
+      "success": true,
+      "steps": 247,
+      "outcome": "success",
+      "lifted": true,
+      "other_objects_lifted": [],
+      "max_lift_cm": 8.06,
+      "mean_policy_ms": 7.84,
+      "video": "videos/cube_flip_ep000_success.mp4"
+    },
+    {
+      "task_id": "cube_flip",
+      "index": 1,
+      "seed": 11400001,
+      "success": true,
+      "steps": 265,
+      "outcome": "success",
+      "lifted": true,
+      "other_objects_lifted": [],
+      "max_lift_cm": 7.94,
+      "mean_policy_ms": 7.43
+    },
+    {
+      "task_id": "cube_flip",
+      "index": 2,
+      "seed": 11400002,
+      "success": true,
+      "steps": 252,
+      "outcome": "success",
+      "lifted": true,
+      "other_objects_lifted": [],
+      "max_lift_cm": 7.99,
+      "mean_policy_ms": 6.85
+    },
+    {
+      "task_id": "cube_flip",
+      "index": 3,
+      "seed": 11400003,
+      "success": true,
+      "steps": 248,
+      "outcome": "success",
+      "lifted": true,
+      "other_objects_lifted": [],
+      "max_lift_cm": 7.71,
+      "mean_policy_ms": 6.32
+    },
+    {
+      "task_id": "cube_flip",
+      "index": 4,
+      "seed": 11400004,
+      "success": true,
+      "steps": 252,
+      "outcome": "success",
+      "lifted": true,
+      "other_objects_lifted": [],
+      "max_lift_cm": 7.74,
+      "mean_policy_ms": 6.83
+    }
+  ]
+}

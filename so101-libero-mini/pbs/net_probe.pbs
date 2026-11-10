@@ -1,0 +1,28 @@
+#!/bin/bash
+#PBS -P CFP05-CF-002
+#PBS -j oe
+#PBS -k oed
+#PBS -N so101lm-netprobe
+#PBS -q auto
+#PBS -l select=1:ngpus=1:ncpus=4:mem=16gb
+#PBS -l walltime=00:05:00
+# Can a GPU node reach wandb (online logging)?  qsub pbs/net_probe.pbs   (log: logs/pbs/<jobid>.log)
+cd "$PBS_O_WORKDIR"
+mkdir -p logs/pbs
+{
+echo "host $(hostname)  gpu $(nvidia-smi --query-gpu=name --format=csv,noheader | head -1)  $(date)"
+echo "proxy env: $(env | grep -i proxy | tr '\n' ' ')"
+echo -n "api.wandb.ai https: "; curl -sS -m 15 -o /dev/null -w '%{http_code}\n' https://api.wandb.ai || echo "curl failed"
+echo -n "pypi https: "; curl -sS -m 15 -o /dev/null -w '%{http_code}\n' https://pypi.org || echo "curl failed"
+bash scripts/env.sh python - <<'PY'
+import os, wandb
+print("wandb", wandb.__version__, "netrc:", os.path.exists(os.path.expanduser("~/.netrc")))
+try:
+    api = wandb.Api(timeout=20)
+    print("viewer:", api.viewer.entity, [t for t in api.viewer.teams][:5] if hasattr(api.viewer, "teams") else "")
+    print("API OK")
+except Exception as e:
+    print("API FAILED:", type(e).__name__, e)
+PY
+echo "DONE $(date)"
+} > "logs/pbs/${PBS_JOBID%%.*}.log" 2>&1

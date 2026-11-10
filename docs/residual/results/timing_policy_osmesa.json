@@ -1,0 +1,43 @@
+{
+  "backend": "osmesa",
+  "policy": {
+    "checkpoint": "checkpoints/smolvla_cube_flip/checkpoints/100000/pretrained_model",
+    "policy_load_s": 21.501,
+    "first_chunk_warmup_s": 0.465,
+    "warmed_chunk": {
+      "samples": 3,
+      "mean_ms": 205.923,
+      "median_ms": 205.793,
+      "min_ms": 205.788,
+      "max_ms": 206.188
+    },
+    "episode": {
+      "state_index": 0,
+      "seed": 11400000,
+      "steps": 250,
+      "success": true,
+      "wall_s": 57.458,
+      "policy_act_total_s": 2.933
+    },
+    "memory": {
+      "rss_increase_gib": 1.055,
+      "gpu_increase_gib": 1.588,
+      "gpu_total_gib": 44.422,
+      "max_rss_gib": 3.209
+    }
+  },
+  "training_estimate": {
+    "episodes": 2000,
+    "measured_episode_steps": 250,
+    "measured_length_one_env_hours": 31.92,
+    "full_horizon_steps": 450,
+    "full_horizon_estimated_s_per_episode": 103.424,
+    "full_horizon_one_env_hours": 57.46,
+    "parallel_envs": 8,
+    "measured_length_ideal_parallel_hours": 3.99,
+    "full_horizon_ideal_parallel_hours": 7.18,
+    "estimated_gpu_for_parallel_envs_gib": 12.7,
+    "estimated_rss_for_parallel_envs_gib": 8.44,
+    "note": "Parallel times assume linear scaling; shared-GPU contention must be measured before training."
+  }
+}

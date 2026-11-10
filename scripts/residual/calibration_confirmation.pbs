@@ -1,0 +1,25 @@
+#!/bin/bash
+#PBS -N calib_confirm200
+#PBS -P personal-e1638612
+#PBS -l select=1:ncpus=16:mpiprocs=1:ompthreads=16:ngpus=1
+#PBS -l walltime=08:00:00
+#PBS -j oe
+#PBS -o /scratch/e1638612/so101-libero-mini/docs/residual/results/calibration/no_leak/confirmation_2deg_200/pbs.log
+set -euo pipefail
+cd /scratch/e1638612/so101-libero-mini
+source /scratch/e1638612/miniforge3/bin/activate
+conda activate so101lm
+export MUJOCO_GL=egl PYTHONPATH=. OMP_NUM_THREADS=2
+python -u scripts/residual/evaluate_calibration_confirmation.py
+python - <<'PY'
+import json
+from pathlib import Path
+p=Path('docs/residual/results/calibration/no_leak/confirmation_2deg_200/results.json')
+r=json.loads(p.read_text())['summary']
+with Path('docs/residual/NOTES.md').open('a') as f:
+ f.write('\n### Independent 200-episode no-leak confirmation result\n\n')
+ f.write(f"- Frozen L=2-degree confirmation: SmolVLA {r['baseline_successes']}/{r['n']} (Wilson 95% {r['baseline_wilson95']}); no-leak FINAL PPO {r['residual_successes']}/{r['n']} (Wilson 95% {r['residual_wilson95']}).\n")
+ f.write(f"- Paired fixed={r['fixed']}, broken={r['broken']}, exact two-sided McNemar p={r['mcnemar_exact_two_sided_p']}. Failure types: baseline {r['baseline_failures']}, residual {r['residual_failures']}.\n")
+ f.write('- The final 500k checkpoint and seed range were committed before this evaluation; this is an independent confirmation of the separately reported final-checkpoint result, not checkpoint selection.\n')
+PY
+flock /tmp/so101_residual_git.lock bash -c 'git add docs/residual/NOTES.md docs/residual/results/calibration/no_leak/confirmation_2deg_200/results.json && git commit -m "residual: record independent 200-episode no-leak confirmation"'

@@ -1,0 +1,59 @@
+#!/bin/bash
+#PBS -P CFP05-CF-002
+#PBS -j oe
+#PBS -k oed
+#PBS -N so101lm-evalreal
+#PBS -q auto
+#PBS -l select=1:ngpus=1
+#PBS -l walltime=01:30:00
+# Extra evaluations of one training run in a single job (one GPU allocation): the last checkpoint under randomized
+# appearance (--visual-rand), earlier checkpoints, and the inference variants n25 / temporal ensembling.
+#   qsub -W depend=afterok:<train_job> -v OUT=outputs/train/act_real_cube_300,WANDB=true,WANDB_PROJECT=cs6283,WANDB_ENTITY=... pbs/eval_real.pbs
+# Variables: OUT TASKS [red_cube_aside] EXTRA_CKPTS ["040000 060000"; "" = none] VARIANTS ["n25 te"; "" = none]
+#   VISRAND [1] EPISODES [50] VIDEOS [6] WORKERS [8] WANDB [false] WANDB_PROJECT WANDB_ENTITY
+# Results: $OUT/eval/<name>/results.json (names: last_<step>_visrand, <ckpt>, last_<step>_n25, last_<step>_te).
+cd "$PBS_O_WORKDIR"
+set -o pipefail
+mkdir -p logs/pbs
+JOB="${PBS_JOBID%%.*}"
+OUT="${OUT:?set OUT (training run dir)}"
+TASKS="${TASKS:-red_cube_aside}"
+EXTRA_CKPTS="${EXTRA_CKPTS-040000 060000}"
+VARIANTS="${VARIANTS-n25 te}"
+export PYTHONFAULTHANDLER=1 WANDB_PROJECT WANDB_ENTITY
+{
+echo "==== host $(hostname) $(nvidia-smi --query-gpu=name --format=csv,noheader | head -1) $(date)"
+STEP=$(tr -dc 0-9 < "$OUT/checkpoints/last/training_state/training_step.json")
+LAST="$OUT/checkpoints/last/pretrained_model"
+FAILED=0
+run() {  # run NAME CKPT [extra evaluate flags...]
+    local name="$1" ckpt="$2"; shift 2
+    if python3 -c "import json,sys; sys.exit(0 if json.load(open('$OUT/eval/$name/results.json')).get('complete', True) else 1)" 2>/dev/null; then
+        echo "eval $name exists"; return; fi
+    echo "==== evaluate $name ($ckpt $*) $(date)"
+    # shellcheck disable=SC2086
+    SO101_RENDER=osmesa bash scripts/env.sh python -m so101_libero.cli.evaluate --policy "$ckpt" --tasks $TASKS \
+        --episodes "${EPISODES:-50}" --videos "${VIDEOS:-6}" --workers "${WORKERS:-8}" --out "$OUT/eval/$name" "$@" \
+        > "$OUT/eval_$name.log" 2>&1
+    local status=$?
+    grep -E "WARNING|Error" "$OUT/eval_$name.log" | head -5; tail -n 6 "$OUT/eval_$name.log"
+    [ "$status" -eq 0 ] || { echo "EVALUATION $name FAILED (exit $status), log $OUT/eval_$name.log"; FAILED=1; return; }
+    if [ "${WANDB:-false}" = true ]; then
+        bash scripts/env.sh python scripts/wandb_log_eval.py --run-dir "$OUT" --results "$OUT/eval/$name/results.json" \
+            --label "$name" --videos 3 || echo "wandb eval logging failed (non-fatal)"
+    fi
+}
+[ "${VISRAND:-1}" = 1 ] && run "last_${STEP}_visrand" "$LAST" --visual-rand
+for c in $EXTRA_CKPTS; do [ -d "$OUT/checkpoints/$c" ] && run "$c" "$OUT/checkpoints/$c/pretrained_model"; done
+for v in $VARIANTS; do
+    case "$v" in
+        te) run "last_${STEP}_te" "$LAST" --temporal-ensemble 0.01 ;;
+        n*) run "last_${STEP}_$v" "$LAST" --n-action-steps "${v#n}" ;;
+        *) echo "unknown variant $v" ;;
+    esac
+done
+echo "==== success rates"
+bash scripts/env.sh python -m so101_libero.cli.summarize "$OUT"/eval/*/results.json 2>/dev/null || true
+echo "==== DONE $(date)"
+exit "$FAILED"
+} > "logs/pbs/$JOB.log" 2>&1

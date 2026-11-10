@@ -1,0 +1,2081 @@
+{
+  "policy": {
+    "policy": "scripted expert (privileged state)"
+  },
+  "overall": {
+    "episodes": 200,
+    "successes": 200,
+    "success_rate": 1.0,
+    "wilson95": [
+      0.9812,
+      1.0
+    ]
+  },
+  "per_task": {
+    "cylinder_to_tray": {
+      "language": "Pick up the red cylinder and place it inside the black tray.",
+      "episodes": 50,
+      "successes": 50,
+      "success_rate": 1.0,
+      "wilson95": [
+        0.9286,
+        1.0
+      ],
+      "outcomes": {
+        "success": 50
+      },
+      "mean_steps_success": 141.0
+    },
+    "cylinder_to_container": {
+      "language": "Pick up the red cylinder and place it inside the circular container.",
+      "episodes": 50,
+      "successes": 50,
+      "success_rate": 1.0,
+      "wilson95": [
+        0.9286,
+        1.0
+      ],
+      "outcomes": {
+        "success": 50
+      },
+      "mean_steps_success": 142.7
+    },
+    "cube_to_tray": {
+      "language": "Pick up the blue object and place it inside the black tray.",
+      "episodes": 50,
+      "successes": 50,
+      "success_rate": 1.0,
+      "wilson95": [
+        0.9286,
+        1.0
+      ],
+      "outcomes": {
+        "success": 50
+      },
+      "mean_steps_success": 142.2
+    },
+    "cylinder_left_of_cube": {
+      "language": "Move the red object to the left of the blue object.",
+      "episodes": 50,
+      "successes": 50,
+      "success_rate": 1.0,
+      "wilson95": [
+        0.9286,
+        1.0
+      ],
+      "outcomes": {
+        "success": 50
+      },
+      "mean_steps_success": 126.3
+    }
+  },
+  "warnings": [],
+  "wall_time_s": 12.6,
+  "render_backend": null,
+  "image_size": [
+    256,
+    256
+  ],
+  "episodes": [
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 0,
+      "seed": 10000000,
+      "success": true,
+      "steps": 145,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.2
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 1,
+      "seed": 10000001,
+      "success": true,
+      "steps": 160,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.19
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 2,
+      "seed": 10000002,
+      "success": true,
+      "steps": 151,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.51
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 3,
+      "seed": 10000003,
+      "success": true,
+      "steps": 138,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.6
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 4,
+      "seed": 10000004,
+      "success": true,
+      "steps": 132,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.87
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 5,
+      "seed": 10000005,
+      "success": true,
+      "steps": 133,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.2
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 6,
+      "seed": 10000006,
+      "success": true,
+      "steps": 146,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.17
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 7,
+      "seed": 10000007,
+      "success": true,
+      "steps": 136,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.17
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 8,
+      "seed": 10000008,
+      "success": true,
+      "steps": 140,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.37
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 9,
+      "seed": 10000009,
+      "success": true,
+      "steps": 158,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.69
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 10,
+      "seed": 10000010,
+      "success": true,
+      "steps": 142,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.16
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 11,
+      "seed": 10000011,
+      "success": true,
+      "steps": 149,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.15
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 12,
+      "seed": 10000012,
+      "success": true,
+      "steps": 137,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.16
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 13,
+      "seed": 10000013,
+      "success": true,
+      "steps": 137,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.57
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 14,
+      "seed": 10000014,
+      "success": true,
+      "steps": 130,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.17
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 15,
+      "seed": 10000015,
+      "success": true,
+      "steps": 132,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.59
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 16,
+      "seed": 10000016,
+      "success": true,
+      "steps": 155,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.68
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 17,
+      "seed": 10000017,
+      "success": true,
+      "steps": 135,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.16
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 18,
+      "seed": 10000018,
+      "success": true,
+      "steps": 143,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.54
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 19,
+      "seed": 10000019,
+      "success": true,
+      "steps": 138,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.17
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 20,
+      "seed": 10000020,
+      "success": true,
+      "steps": 139,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.36
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 21,
+      "seed": 10000021,
+      "success": true,
+      "steps": 130,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.61
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 22,
+      "seed": 10000022,
+      "success": true,
+      "steps": 159,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.33
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 23,
+      "seed": 10000023,
+      "success": true,
+      "steps": 123,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.17
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 24,
+      "seed": 10000024,
+      "success": true,
+      "steps": 153,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.34
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 25,
+      "seed": 10000025,
+      "success": true,
+      "steps": 148,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.16
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 26,
+      "seed": 10000026,
+      "success": true,
+      "steps": 124,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.85
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 27,
+      "seed": 10000027,
+      "success": true,
+      "steps": 135,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.16
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 28,
+      "seed": 10000028,
+      "success": true,
+      "steps": 139,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.16
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 29,
+      "seed": 10000029,
+      "success": true,
+      "steps": 136,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 1.12
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 30,
+      "seed": 10000030,
+      "success": true,
+      "steps": 163,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.15
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 31,
+      "seed": 10000031,
+      "success": true,
+      "steps": 133,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 1.35
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 32,
+      "seed": 10000032,
+      "success": true,
+      "steps": 161,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.51
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 33,
+      "seed": 10000033,
+      "success": true,
+      "steps": 137,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.58
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 34,
+      "seed": 10000034,
+      "success": true,
+      "steps": 125,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.6
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 35,
+      "seed": 10000035,
+      "success": true,
+      "steps": 128,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.39
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 36,
+      "seed": 10000036,
+      "success": true,
+      "steps": 141,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.54
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 37,
+      "seed": 10000037,
+      "success": true,
+      "steps": 157,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.27
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 38,
+      "seed": 10000038,
+      "success": true,
+      "steps": 140,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.17
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 39,
+      "seed": 10000039,
+      "success": true,
+      "steps": 149,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.35
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 40,
+      "seed": 10000040,
+      "success": true,
+      "steps": 140,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 1.77
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 41,
+      "seed": 10000041,
+      "success": true,
+      "steps": 128,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.16
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 42,
+      "seed": 10000042,
+      "success": true,
+      "steps": 148,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.16
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 43,
+      "seed": 10000043,
+      "success": true,
+      "steps": 152,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.74
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 44,
+      "seed": 10000044,
+      "success": true,
+      "steps": 135,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.37
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 45,
+      "seed": 10000045,
+      "success": true,
+      "steps": 141,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.59
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 46,
+      "seed": 10000046,
+      "success": true,
+      "steps": 134,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.37
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 47,
+      "seed": 10000047,
+      "success": true,
+      "steps": 131,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.79
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 48,
+      "seed": 10000048,
+      "success": true,
+      "steps": 144,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.18
+    },
+    {
+      "task_id": "cylinder_to_tray",
+      "index": 49,
+      "seed": 10000049,
+      "success": true,
+      "steps": 140,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.35
+    },
+    {
+      "task_id": "cylinder_to_container",
+      "index": 0,
+      "seed": 10100000,
+      "success": true,
+      "steps": 123,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.38
+    },
+    {
+      "task_id": "cylinder_to_container",
+      "index": 1,
+      "seed": 10100001,
+      "success": true,
+      "steps": 145,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.37
+    },
+    {
+      "task_id": "cylinder_to_container",
+      "index": 2,
+      "seed": 10100002,
+      "success": true,
+      "steps": 143,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.56
+    },
+    {
+      "task_id": "cylinder_to_container",
+      "index": 3,
+      "seed": 10100003,
+      "success": true,
+      "steps": 120,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.16
+    },
+    {
+      "task_id": "cylinder_to_container",
+      "index": 4,
+      "seed": 10100004,
+      "success": true,
+      "steps": 160,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.57
+    },
+    {
+      "task_id": "cylinder_to_container",
+      "index": 5,
+      "seed": 10100005,
+      "success": true,
+      "steps": 132,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.58
+    },
+    {
+      "task_id": "cylinder_to_container",
+      "index": 6,
+      "seed": 10100006,
+      "success": true,
+      "steps": 127,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.16
+    },
+    {
+      "task_id": "cylinder_to_container",
+      "index": 7,
+      "seed": 10100007,
+      "success": true,
+      "steps": 160,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.32
+    },
+    {
+      "task_id": "cylinder_to_container",
+      "index": 8,
+      "seed": 10100008,
+      "success": true,
+      "steps": 160,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.16
+    },
+    {
+      "task_id": "cylinder_to_container",
+      "index": 9,
+      "seed": 10100009,
+      "success": true,
+      "steps": 146,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.54
+    },
+    {
+      "task_id": "cylinder_to_container",
+      "index": 10,
+      "seed": 10100010,
+      "success": true,
+      "steps": 142,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.15
+    },
+    {
+      "task_id": "cylinder_to_container",
+      "index": 11,
+      "seed": 10100011,
+      "success": true,
+      "steps": 141,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.16
+    },
+    {
+      "task_id": "cylinder_to_container",
+      "index": 12,
+      "seed": 10100012,
+      "success": true,
+      "steps": 150,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.37
+    },
+    {
+      "task_id": "cylinder_to_container",
+      "index": 13,
+      "seed": 10100013,
+      "success": true,
+      "steps": 142,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.36
+    },
+    {
+      "task_id": "cylinder_to_container",
+      "index": 14,
+      "seed": 10100014,
+      "success": true,
+      "steps": 151,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.54
+    },
+    {
+      "task_id": "cylinder_to_container",
+      "index": 15,
+      "seed": 10100015,
+      "success": true,
+      "steps": 129,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.15
+    },
+    {
+      "task_id": "cylinder_to_container",
+      "index": 16,
+      "seed": 10100016,
+      "success": true,
+      "steps": 134,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.36
+    },
+    {
+      "task_id": "cylinder_to_container",
+      "index": 17,
+      "seed": 10100017,
+      "success": true,
+      "steps": 140,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.15
+    },
+    {
+      "task_id": "cylinder_to_container",
+      "index": 18,
+      "seed": 10100018,
+      "success": true,
+      "steps": 162,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.54
+    },
+    {
+      "task_id": "cylinder_to_container",
+      "index": 19,
+      "seed": 10100019,
+      "success": true,
+      "steps": 121,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.16
+    },
+    {
+      "task_id": "cylinder_to_container",
+      "index": 20,
+      "seed": 10100020,
+      "success": true,
+      "steps": 156,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.32
+    },
+    {
+      "task_id": "cylinder_to_container",
+      "index": 21,
+      "seed": 10100021,
+      "success": true,
+      "steps": 146,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.55
+    },
+    {
+      "task_id": "cylinder_to_container",
+      "index": 22,
+      "seed": 10100022,
+      "success": true,
+      "steps": 130,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.78
+    },
+    {
+      "task_id": "cylinder_to_container",
+      "index": 23,
+      "seed": 10100023,
+      "success": true,
+      "steps": 151,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.5
+    },
+    {
+      "task_id": "cylinder_to_container",
+      "index": 24,
+      "seed": 10100024,
+      "success": true,
+      "steps": 125,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.58
+    },
+    {
+      "task_id": "cylinder_to_container",
+      "index": 25,
+      "seed": 10100025,
+      "success": true,
+      "steps": 140,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.38
+    },
+    {
+      "task_id": "cylinder_to_container",
+      "index": 26,
+      "seed": 10100026,
+      "success": true,
+      "steps": 154,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.51
+    },
+    {
+      "task_id": "cylinder_to_container",
+      "index": 27,
+      "seed": 10100027,
+      "success": true,
+      "steps": 160,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.33
+    },
+    {
+      "task_id": "cylinder_to_container",
+      "index": 28,
+      "seed": 10100028,
+      "success": true,
+      "steps": 126,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.37
+    },
+    {
+      "task_id": "cylinder_to_container",
+      "index": 29,
+      "seed": 10100029,
+      "success": true,
+      "steps": 144,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.16
+    },
+    {
+      "task_id": "cylinder_to_container",
+      "index": 30,
+      "seed": 10100030,
+      "success": true,
+      "steps": 164,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.48
+    },
+    {
+      "task_id": "cylinder_to_container",
+      "index": 31,
+      "seed": 10100031,
+      "success": true,
+      "steps": 165,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.35
+    },
+    {
+      "task_id": "cylinder_to_container",
+      "index": 32,
+      "seed": 10100032,
+      "success": true,
+      "steps": 163,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.68
+    },
+    {
+      "task_id": "cylinder_to_container",
+      "index": 33,
+      "seed": 10100033,
+      "success": true,
+      "steps": 125,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.6
+    },
+    {
+      "task_id": "cylinder_to_container",
+      "index": 34,
+      "seed": 10100034,
+      "success": true,
+      "steps": 157,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.52
+    },
+    {
+      "task_id": "cylinder_to_container",
+      "index": 35,
+      "seed": 10100035,
+      "success": true,
+      "steps": 128,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.15
+    },
+    {
+      "task_id": "cylinder_to_container",
+      "index": 36,
+      "seed": 10100036,
+      "success": true,
+      "steps": 152,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.15
+    },
+    {
+      "task_id": "cylinder_to_container",
+      "index": 37,
+      "seed": 10100037,
+      "success": true,
+      "steps": 149,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.18
+    },
+    {
+      "task_id": "cylinder_to_container",
+      "index": 38,
+      "seed": 10100038,
+      "success": true,
+      "steps": 136,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 1.19
+    },
+    {
+      "task_id": "cylinder_to_container",
+      "index": 39,
+      "seed": 10100039,
+      "success": true,
+      "steps": 151,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.35
+    },
+    {
+      "task_id": "cylinder_to_container",
+      "index": 40,
+      "seed": 10100040,
+      "success": true,
+      "steps": 137,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.15
+    },
+    {
+      "task_id": "cylinder_to_container",
+      "index": 41,
+      "seed": 10100041,
+      "success": true,
+      "steps": 136,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.38
+    },
+    {
+      "task_id": "cylinder_to_container",
+      "index": 42,
+      "seed": 10100042,
+      "success": true,
+      "steps": 139,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.16
+    },
+    {
+      "task_id": "cylinder_to_container",
+      "index": 43,
+      "seed": 10100043,
+      "success": true,
+      "steps": 128,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.18
+    },
+    {
+      "task_id": "cylinder_to_container",
+      "index": 44,
+      "seed": 10100044,
+      "success": true,
+      "steps": 148,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.16
+    },
+    {
+      "task_id": "cylinder_to_container",
+      "index": 45,
+      "seed": 10100045,
+      "success": true,
+      "steps": 133,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.37
+    },
+    {
+      "task_id": "cylinder_to_container",
+      "index": 46,
+      "seed": 10100046,
+      "success": true,
+      "steps": 128,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.8
+    },
+    {
+      "task_id": "cylinder_to_container",
+      "index": 47,
+      "seed": 10100047,
+      "success": true,
+      "steps": 147,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.34
+    },
+    {
+      "task_id": "cylinder_to_container",
+      "index": 48,
+      "seed": 10100048,
+      "success": true,
+      "steps": 141,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.15
+    },
+    {
+      "task_id": "cylinder_to_container",
+      "index": 49,
+      "seed": 10100049,
+      "success": true,
+      "steps": 147,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.4
+    },
+    {
+      "task_id": "cube_to_tray",
+      "index": 0,
+      "seed": 10200000,
+      "success": true,
+      "steps": 140,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.37
+    },
+    {
+      "task_id": "cube_to_tray",
+      "index": 1,
+      "seed": 10200001,
+      "success": true,
+      "steps": 132,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 1.43
+    },
+    {
+      "task_id": "cube_to_tray",
+      "index": 2,
+      "seed": 10200002,
+      "success": true,
+      "steps": 146,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.54
+    },
+    {
+      "task_id": "cube_to_tray",
+      "index": 3,
+      "seed": 10200003,
+      "success": true,
+      "steps": 156,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.17
+    },
+    {
+      "task_id": "cube_to_tray",
+      "index": 4,
+      "seed": 10200004,
+      "success": true,
+      "steps": 162,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.41
+    },
+    {
+      "task_id": "cube_to_tray",
+      "index": 5,
+      "seed": 10200005,
+      "success": true,
+      "steps": 152,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 1.14
+    },
+    {
+      "task_id": "cube_to_tray",
+      "index": 6,
+      "seed": 10200006,
+      "success": true,
+      "steps": 129,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.17
+    },
+    {
+      "task_id": "cube_to_tray",
+      "index": 7,
+      "seed": 10200007,
+      "success": true,
+      "steps": 159,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.35
+    },
+    {
+      "task_id": "cube_to_tray",
+      "index": 8,
+      "seed": 10200008,
+      "success": true,
+      "steps": 165,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.47
+    },
+    {
+      "task_id": "cube_to_tray",
+      "index": 9,
+      "seed": 10200009,
+      "success": true,
+      "steps": 152,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.34
+    },
+    {
+      "task_id": "cube_to_tray",
+      "index": 10,
+      "seed": 10200010,
+      "success": true,
+      "steps": 130,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.35
+    },
+    {
+      "task_id": "cube_to_tray",
+      "index": 11,
+      "seed": 10200011,
+      "success": true,
+      "steps": 137,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.56
+    },
+    {
+      "task_id": "cube_to_tray",
+      "index": 12,
+      "seed": 10200012,
+      "success": true,
+      "steps": 131,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.35
+    },
+    {
+      "task_id": "cube_to_tray",
+      "index": 13,
+      "seed": 10200013,
+      "success": true,
+      "steps": 159,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.63
+    },
+    {
+      "task_id": "cube_to_tray",
+      "index": 14,
+      "seed": 10200014,
+      "success": true,
+      "steps": 155,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.37
+    },
+    {
+      "task_id": "cube_to_tray",
+      "index": 15,
+      "seed": 10200015,
+      "success": true,
+      "steps": 152,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.51
+    },
+    {
+      "task_id": "cube_to_tray",
+      "index": 16,
+      "seed": 10200016,
+      "success": true,
+      "steps": 163,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.33
+    },
+    {
+      "task_id": "cube_to_tray",
+      "index": 17,
+      "seed": 10200017,
+      "success": true,
+      "steps": 135,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.37
+    },
+    {
+      "task_id": "cube_to_tray",
+      "index": 18,
+      "seed": 10200018,
+      "success": true,
+      "steps": 152,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.15
+    },
+    {
+      "task_id": "cube_to_tray",
+      "index": 19,
+      "seed": 10200019,
+      "success": true,
+      "steps": 131,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.39
+    },
+    {
+      "task_id": "cube_to_tray",
+      "index": 20,
+      "seed": 10200020,
+      "success": true,
+      "steps": 144,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.33
+    },
+    {
+      "task_id": "cube_to_tray",
+      "index": 21,
+      "seed": 10200021,
+      "success": true,
+      "steps": 144,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.18
+    },
+    {
+      "task_id": "cube_to_tray",
+      "index": 22,
+      "seed": 10200022,
+      "success": true,
+      "steps": 135,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.42
+    },
+    {
+      "task_id": "cube_to_tray",
+      "index": 23,
+      "seed": 10200023,
+      "success": true,
+      "steps": 134,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.25
+    },
+    {
+      "task_id": "cube_to_tray",
+      "index": 24,
+      "seed": 10200024,
+      "success": true,
+      "steps": 141,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.17
+    },
+    {
+      "task_id": "cube_to_tray",
+      "index": 25,
+      "seed": 10200025,
+      "success": true,
+      "steps": 135,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.23
+    },
+    {
+      "task_id": "cube_to_tray",
+      "index": 26,
+      "seed": 10200026,
+      "success": true,
+      "steps": 129,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.8
+    },
+    {
+      "task_id": "cube_to_tray",
+      "index": 27,
+      "seed": 10200027,
+      "success": true,
+      "steps": 142,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.15
+    },
+    {
+      "task_id": "cube_to_tray",
+      "index": 28,
+      "seed": 10200028,
+      "success": true,
+      "steps": 167,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.8
+    },
+    {
+      "task_id": "cube_to_tray",
+      "index": 29,
+      "seed": 10200029,
+      "success": true,
+      "steps": 147,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.17
+    },
+    {
+      "task_id": "cube_to_tray",
+      "index": 30,
+      "seed": 10200030,
+      "success": true,
+      "steps": 143,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.18
+    },
+    {
+      "task_id": "cube_to_tray",
+      "index": 31,
+      "seed": 10200031,
+      "success": true,
+      "steps": 134,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.16
+    },
+    {
+      "task_id": "cube_to_tray",
+      "index": 32,
+      "seed": 10200032,
+      "success": true,
+      "steps": 137,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.72
+    },
+    {
+      "task_id": "cube_to_tray",
+      "index": 33,
+      "seed": 10200033,
+      "success": true,
+      "steps": 134,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.17
+    },
+    {
+      "task_id": "cube_to_tray",
+      "index": 34,
+      "seed": 10200034,
+      "success": true,
+      "steps": 146,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.73
+    },
+    {
+      "task_id": "cube_to_tray",
+      "index": 35,
+      "seed": 10200035,
+      "success": true,
+      "steps": 133,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.15
+    },
+    {
+      "task_id": "cube_to_tray",
+      "index": 36,
+      "seed": 10200036,
+      "success": true,
+      "steps": 119,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.24
+    },
+    {
+      "task_id": "cube_to_tray",
+      "index": 37,
+      "seed": 10200037,
+      "success": true,
+      "steps": 135,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.15
+    },
+    {
+      "task_id": "cube_to_tray",
+      "index": 38,
+      "seed": 10200038,
+      "success": true,
+      "steps": 148,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.32
+    },
+    {
+      "task_id": "cube_to_tray",
+      "index": 39,
+      "seed": 10200039,
+      "success": true,
+      "steps": 129,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.15
+    },
+    {
+      "task_id": "cube_to_tray",
+      "index": 40,
+      "seed": 10200040,
+      "success": true,
+      "steps": 140,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.79
+    },
+    {
+      "task_id": "cube_to_tray",
+      "index": 41,
+      "seed": 10200041,
+      "success": true,
+      "steps": 138,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.35
+    },
+    {
+      "task_id": "cube_to_tray",
+      "index": 42,
+      "seed": 10200042,
+      "success": true,
+      "steps": 142,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.34
+    },
+    {
+      "task_id": "cube_to_tray",
+      "index": 43,
+      "seed": 10200043,
+      "success": true,
+      "steps": 129,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.37
+    },
+    {
+      "task_id": "cube_to_tray",
+      "index": 44,
+      "seed": 10200044,
+      "success": true,
+      "steps": 150,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.15
+    },
+    {
+      "task_id": "cube_to_tray",
+      "index": 45,
+      "seed": 10200045,
+      "success": true,
+      "steps": 139,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.15
+    },
+    {
+      "task_id": "cube_to_tray",
+      "index": 46,
+      "seed": 10200046,
+      "success": true,
+      "steps": 134,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.36
+    },
+    {
+      "task_id": "cube_to_tray",
+      "index": 47,
+      "seed": 10200047,
+      "success": true,
+      "steps": 158,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.68
+    },
+    {
+      "task_id": "cube_to_tray",
+      "index": 48,
+      "seed": 10200048,
+      "success": true,
+      "steps": 134,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.16
+    },
+    {
+      "task_id": "cube_to_tray",
+      "index": 49,
+      "seed": 10200049,
+      "success": true,
+      "steps": 130,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.36
+    },
+    {
+      "task_id": "cylinder_left_of_cube",
+      "index": 0,
+      "seed": 10300000,
+      "success": true,
+      "steps": 129,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.58
+    },
+    {
+      "task_id": "cylinder_left_of_cube",
+      "index": 1,
+      "seed": 10300001,
+      "success": true,
+      "steps": 119,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.37
+    },
+    {
+      "task_id": "cylinder_left_of_cube",
+      "index": 2,
+      "seed": 10300002,
+      "success": true,
+      "steps": 165,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.13
+    },
+    {
+      "task_id": "cylinder_left_of_cube",
+      "index": 3,
+      "seed": 10300003,
+      "success": true,
+      "steps": 117,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.16
+    },
+    {
+      "task_id": "cylinder_left_of_cube",
+      "index": 4,
+      "seed": 10300004,
+      "success": true,
+      "steps": 120,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 1.26
+    },
+    {
+      "task_id": "cylinder_left_of_cube",
+      "index": 5,
+      "seed": 10300005,
+      "success": true,
+      "steps": 123,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 1.07
+    },
+    {
+      "task_id": "cylinder_left_of_cube",
+      "index": 6,
+      "seed": 10300006,
+      "success": true,
+      "steps": 127,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.14
+    },
+    {
+      "task_id": "cylinder_left_of_cube",
+      "index": 7,
+      "seed": 10300007,
+      "success": true,
+      "steps": 129,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.16
+    },
+    {
+      "task_id": "cylinder_left_of_cube",
+      "index": 8,
+      "seed": 10300008,
+      "success": true,
+      "steps": 127,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.58
+    },
+    {
+      "task_id": "cylinder_left_of_cube",
+      "index": 9,
+      "seed": 10300009,
+      "success": true,
+      "steps": 150,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.54
+    },
+    {
+      "task_id": "cylinder_left_of_cube",
+      "index": 10,
+      "seed": 10300010,
+      "success": true,
+      "steps": 136,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.71
+    },
+    {
+      "task_id": "cylinder_left_of_cube",
+      "index": 11,
+      "seed": 10300011,
+      "success": true,
+      "steps": 120,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.38
+    },
+    {
+      "task_id": "cylinder_left_of_cube",
+      "index": 12,
+      "seed": 10300012,
+      "success": true,
+      "steps": 115,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.4
+    },
+    {
+      "task_id": "cylinder_left_of_cube",
+      "index": 13,
+      "seed": 10300013,
+      "success": true,
+      "steps": 139,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.76
+    },
+    {
+      "task_id": "cylinder_left_of_cube",
+      "index": 14,
+      "seed": 10300014,
+      "success": true,
+      "steps": 130,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.37
+    },
+    {
+      "task_id": "cylinder_left_of_cube",
+      "index": 15,
+      "seed": 10300015,
+      "success": true,
+      "steps": 120,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.63
+    },
+    {
+      "task_id": "cylinder_left_of_cube",
+      "index": 16,
+      "seed": 10300016,
+      "success": true,
+      "steps": 119,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 1.06
+    },
+    {
+      "task_id": "cylinder_left_of_cube",
+      "index": 17,
+      "seed": 10300017,
+      "success": true,
+      "steps": 126,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.59
+    },
+    {
+      "task_id": "cylinder_left_of_cube",
+      "index": 18,
+      "seed": 10300018,
+      "success": true,
+      "steps": 120,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.9
+    },
+    {
+      "task_id": "cylinder_left_of_cube",
+      "index": 19,
+      "seed": 10300019,
+      "success": true,
+      "steps": 129,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.3
+    },
+    {
+      "task_id": "cylinder_left_of_cube",
+      "index": 20,
+      "seed": 10300020,
+      "success": true,
+      "steps": 132,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.56
+    },
+    {
+      "task_id": "cylinder_left_of_cube",
+      "index": 21,
+      "seed": 10300021,
+      "success": true,
+      "steps": 117,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.16
+    },
+    {
+      "task_id": "cylinder_left_of_cube",
+      "index": 22,
+      "seed": 10300022,
+      "success": true,
+      "steps": 116,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.4
+    },
+    {
+      "task_id": "cylinder_left_of_cube",
+      "index": 23,
+      "seed": 10300023,
+      "success": true,
+      "steps": 130,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.57
+    },
+    {
+      "task_id": "cylinder_left_of_cube",
+      "index": 24,
+      "seed": 10300024,
+      "success": true,
+      "steps": 121,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.16
+    },
+    {
+      "task_id": "cylinder_left_of_cube",
+      "index": 25,
+      "seed": 10300025,
+      "success": true,
+      "steps": 111,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.92
+    },
+    {
+      "task_id": "cylinder_left_of_cube",
+      "index": 26,
+      "seed": 10300026,
+      "success": true,
+      "steps": 120,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.38
+    },
+    {
+      "task_id": "cylinder_left_of_cube",
+      "index": 27,
+      "seed": 10300027,
+      "success": true,
+      "steps": 124,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.46
+    },
+    {
+      "task_id": "cylinder_left_of_cube",
+      "index": 28,
+      "seed": 10300028,
+      "success": true,
+      "steps": 151,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.14
+    },
+    {
+      "task_id": "cylinder_left_of_cube",
+      "index": 29,
+      "seed": 10300029,
+      "success": true,
+      "steps": 133,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.15
+    },
+    {
+      "task_id": "cylinder_left_of_cube",
+      "index": 30,
+      "seed": 10300030,
+      "success": true,
+      "steps": 122,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.58
+    },
+    {
+      "task_id": "cylinder_left_of_cube",
+      "index": 31,
+      "seed": 10300031,
+      "success": true,
+      "steps": 118,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.64
+    },
+    {
+      "task_id": "cylinder_left_of_cube",
+      "index": 32,
+      "seed": 10300032,
+      "success": true,
+      "steps": 127,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.81
+    },
+    {
+      "task_id": "cylinder_left_of_cube",
+      "index": 33,
+      "seed": 10300033,
+      "success": true,
+      "steps": 123,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.15
+    },
+    {
+      "task_id": "cylinder_left_of_cube",
+      "index": 34,
+      "seed": 10300034,
+      "success": true,
+      "steps": 119,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.16
+    },
+    {
+      "task_id": "cylinder_left_of_cube",
+      "index": 35,
+      "seed": 10300035,
+      "success": true,
+      "steps": 118,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 1.1
+    },
+    {
+      "task_id": "cylinder_left_of_cube",
+      "index": 36,
+      "seed": 10300036,
+      "success": true,
+      "steps": 119,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.59
+    },
+    {
+      "task_id": "cylinder_left_of_cube",
+      "index": 37,
+      "seed": 10300037,
+      "success": true,
+      "steps": 136,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 1.59
+    },
+    {
+      "task_id": "cylinder_left_of_cube",
+      "index": 38,
+      "seed": 10300038,
+      "success": true,
+      "steps": 125,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.38
+    },
+    {
+      "task_id": "cylinder_left_of_cube",
+      "index": 39,
+      "seed": 10300039,
+      "success": true,
+      "steps": 131,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.78
+    },
+    {
+      "task_id": "cylinder_left_of_cube",
+      "index": 40,
+      "seed": 10300040,
+      "success": true,
+      "steps": 127,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.6
+    },
+    {
+      "task_id": "cylinder_left_of_cube",
+      "index": 41,
+      "seed": 10300041,
+      "success": true,
+      "steps": 136,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.33
+    },
+    {
+      "task_id": "cylinder_left_of_cube",
+      "index": 42,
+      "seed": 10300042,
+      "success": true,
+      "steps": 146,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.15
+    },
+    {
+      "task_id": "cylinder_left_of_cube",
+      "index": 43,
+      "seed": 10300043,
+      "success": true,
+      "steps": 124,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.15
+    },
+    {
+      "task_id": "cylinder_left_of_cube",
+      "index": 44,
+      "seed": 10300044,
+      "success": true,
+      "steps": 119,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.39
+    },
+    {
+      "task_id": "cylinder_left_of_cube",
+      "index": 45,
+      "seed": 10300045,
+      "success": true,
+      "steps": 121,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.62
+    },
+    {
+      "task_id": "cylinder_left_of_cube",
+      "index": 46,
+      "seed": 10300046,
+      "success": true,
+      "steps": 125,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 1.53
+    },
+    {
+      "task_id": "cylinder_left_of_cube",
+      "index": 47,
+      "seed": 10300047,
+      "success": true,
+      "steps": 121,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.59
+    },
+    {
+      "task_id": "cylinder_left_of_cube",
+      "index": 48,
+      "seed": 10300048,
+      "success": true,
+      "steps": 119,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.38
+    },
+    {
+      "task_id": "cylinder_left_of_cube",
+      "index": 49,
+      "seed": 10300049,
+      "success": true,
+      "steps": 125,
+      "outcome": "success",
+      "lifted": true,
+      "mean_policy_ms": 0.15
+    }
+  ]
+}

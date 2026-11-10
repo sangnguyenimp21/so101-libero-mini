@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+#PBS -N so101_residual_eval
+#PBS -P personal-e1638612
+#PBS -l select=1:ncpus=36:mpiprocs=1:ompthreads=36:ngpus=1
+#PBS -l walltime=04:00:00
+#PBS -j oe
+#PBS -o /scratch/e1638612/so101-libero-mini/docs/residual/results/final_evaluation/pbs.log
+
+set -euo pipefail
+
+RESIDUAL_REPO=/scratch/e1638612/so101-libero-mini
+cd "$RESIDUAL_REPO"
+source /scratch/e1638612/miniforge3/bin/activate
+conda activate so101lm
+export MUJOCO_GL=egl
+export PYTHONUNBUFFERED=1
+export OMP_NUM_THREADS=2
+
+python -u scripts/residual/evaluate_residual.py
+python -u scripts/residual/finalize_results.py --evaluation-job "${PBS_JOBID:-unknown}"
+
+# Commit only this phase's logs/results; preserve any unrelated user changes.
+git add docs/residual/NOTES.md docs/residual/results/final_evaluation
+for RESIDUAL_FILE in \
+    docs/residual/results/ppo_main/config.json \
+    docs/residual/results/ppo_main/initial_evaluation.json \
+    docs/residual/results/ppo_main/evaluations.jsonl \
+    docs/residual/results/ppo_main/monitor.csv; do
+    if [[ -f "$RESIDUAL_FILE" ]]; then
+        git add "$RESIDUAL_FILE"
+    fi
+done
+if ! git diff --cached --quiet; then
+    git commit -m "residual: record final PPO evaluation"
+fi

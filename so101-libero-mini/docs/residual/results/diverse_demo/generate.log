@@ -1,0 +1,4 @@
+Traceback (most recent call last):
+  File "/scratch/e1638612/so101-libero-mini/scripts/residual/generate_diverse_demos.py", line 13, in <module>
+    from so101_libero.data.writer import DemoWriter
+ModuleNotFoundError: No module named 'so101_libero'

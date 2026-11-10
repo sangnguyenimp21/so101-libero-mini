@@ -1,0 +1,15 @@
+#!/bin/bash
+#PBS -N calibration_sweep
+#PBS -P personal-e1638612
+#PBS -l select=1:ncpus=8:mpiprocs=1:ompthreads=8:ngpus=1
+#PBS -l walltime=08:00:00
+#PBS -j oe
+#PBS -o /scratch/e1638612/so101-libero-mini/docs/residual/results/calibration/sweep.log
+set -euo pipefail
+cd /scratch/e1638612/so101-libero-mini
+source /scratch/e1638612/miniforge3/bin/activate
+conda activate so101lm
+export MUJOCO_GL=egl PYTHONPATH=.
+python -u scripts/residual/evaluate_calibration_baseline.py --split zero_test --out docs/residual/results/calibration/zero_test.json
+python -u scripts/residual/evaluate_calibration_baseline.py --split validation --out docs/residual/results/calibration/validation_sweep.json
+python -u scripts/residual/select_calibration_level.py

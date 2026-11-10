@@ -1,0 +1,155 @@
+Loading  HuggingFaceTB/SmolVLM2-500M-Video-Instruct weights ...
+`torch_dtype` is deprecated! Use `dtype` instead!
+Reducing the number of VLM layers to 16 ...
+Loading weights from local directory
+Loading  HuggingFaceTB/SmolVLM2-500M-Video-Instruct weights ...
+Reducing the number of VLM layers to 16 ...
+Loading weights from local directory
+1/100 success=True estimate_step=None
+2/100 success=False estimate_step=None
+3/100 success=True estimate_step=None
+4/100 success=False estimate_step=368
+5/100 success=True estimate_step=None
+6/100 success=False estimate_step=364
+7/100 success=True estimate_step=None
+8/100 success=False estimate_step=363
+9/100 success=True estimate_step=None
+10/100 success=True estimate_step=None
+11/100 success=True estimate_step=None
+12/100 success=True estimate_step=None
+13/100 success=True estimate_step=None
+14/100 success=True estimate_step=None
+15/100 success=True estimate_step=237
+16/100 success=True estimate_step=None
+17/100 success=True estimate_step=None
+18/100 success=True estimate_step=84
+19/100 success=True estimate_step=None
+20/100 success=True estimate_step=None
+21/100 success=True estimate_step=None
+22/100 success=False estimate_step=363
+23/100 success=True estimate_step=None
+24/100 success=False estimate_step=371
+25/100 success=True estimate_step=None
+26/100 success=True estimate_step=None
+27/100 success=False estimate_step=318
+28/100 success=True estimate_step=None
+29/100 success=False estimate_step=322
+30/100 success=True estimate_step=None
+31/100 success=True estimate_step=None
+32/100 success=True estimate_step=None
+33/100 success=False estimate_step=None
+34/100 success=True estimate_step=None
+35/100 success=True estimate_step=None
+36/100 success=True estimate_step=86
+37/100 success=True estimate_step=None
+38/100 success=True estimate_step=None
+39/100 success=True estimate_step=None
+40/100 success=False estimate_step=382
+41/100 success=False estimate_step=323
+42/100 success=False estimate_step=363
+43/100 success=False estimate_step=369
+44/100 success=True estimate_step=None
+45/100 success=True estimate_step=None
+46/100 success=False estimate_step=None
+47/100 success=False estimate_step=337
+48/100 success=False estimate_step=343
+49/100 success=False estimate_step=421
+50/100 success=True estimate_step=None
+51/100 success=True estimate_step=82
+52/100 success=False estimate_step=445
+53/100 success=True estimate_step=None
+54/100 success=False estimate_step=None
+55/100 success=True estimate_step=None
+56/100 success=True estimate_step=None
+57/100 success=True estimate_step=None
+58/100 success=False estimate_step=346
+59/100 success=True estimate_step=None
+60/100 success=True estimate_step=None
+61/100 success=True estimate_step=None
+62/100 success=True estimate_step=None
+63/100 success=True estimate_step=None
+64/100 success=True estimate_step=None
+65/100 success=False estimate_step=None
+66/100 success=True estimate_step=None
+67/100 success=False estimate_step=372
+68/100 success=False estimate_step=399
+69/100 success=True estimate_step=None
+70/100 success=True estimate_step=None
+71/100 success=True estimate_step=88
+72/100 success=True estimate_step=None
+73/100 success=False estimate_step=414
+74/100 success=True estimate_step=None
+75/100 success=True estimate_step=80
+76/100 success=True estimate_step=None
+77/100 success=False estimate_step=364
+78/100 success=True estimate_step=None
+79/100 success=True estimate_step=None
+80/100 success=False estimate_step=338
+81/100 success=True estimate_step=89
+82/100 success=True estimate_step=None
+83/100 success=True estimate_step=None
+84/100 success=True estimate_step=None
+85/100 success=False estimate_step=373
+86/100 success=True estimate_step=None
+87/100 success=True estimate_step=None
+88/100 success=False estimate_step=372
+89/100 success=False estimate_step=374
+90/100 success=True estimate_step=None
+91/100 success=False estimate_step=86
+92/100 success=False estimate_step=None
+93/100 success=False estimate_step=338
+94/100 success=True estimate_step=None
+95/100 success=False estimate_step=None
+96/100 success=True estimate_step=None
+97/100 success=True estimate_step=None
+98/100 success=False estimate_step=385
+99/100 success=False estimate_step=364
+100/100 success=False estimate_step=329
+{
+  "Lstar_deg": 2,
+  "episodes": 100,
+  "successes": 64,
+  "wilson95": [
+    0.542352199811621,
+    0.7272892540950986
+  ],
+  "baseline_successes": 63,
+  "fixed": 2,
+  "broken": 1,
+  "mcnemar_exact_two_sided_p": 1.0,
+  "failure_types": {
+    "lifted_not_flipped": 10,
+    "moved_but_missed": 26
+  },
+  "estimated_episodes": 36,
+  "mean_abs_bias_estimation_error_deg": [
+    0.5195041731628589,
+    0.6493362947180867,
+    0.6340355814993381,
+    0.6299938604235649,
+    0.7311451207846403
+  ],
+  "estimator": {
+    "window": 10,
+    "max_position_span_deg": 0.3,
+    "max_command_span_deg": 0.5,
+    "bias_hat": "median(measured_state - command)",
+    "correction": "SmolVLA_target - bias_hat"
+  }
+}
+[residual-rl 587b74b] residual: record non-learning calibration test
+ Committer: Mikhalchuk Valentin <e1638612@GN-A40-035.stdct.loc>
+Your name and email address were configured automatically based
+on your username and hostname. Please check that they are accurate.
+You can suppress this message by setting them explicitly. Run the
+following command and follow the instructions in your editor to edit
+your configuration file:
+
+    git config --global --edit
+
+After doing this, you may fix the identity used for this commit with:
+
+    git commit --amend --reset-author
+
+ 2 files changed, 4344 insertions(+)
+ create mode 100644 docs/residual/results/calibration/still_calibration_results.json

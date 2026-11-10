@@ -1,0 +1,37 @@
+#!/bin/bash
+#PBS -P CFP05-CF-002
+#PBS -j oe
+#PBS -k oed
+#PBS -N so101lm-smoke
+#PBS -q auto
+#PBS -l select=1:ngpus=1
+#PBS -l walltime=00:20:00
+# End-to-end plumbing test on a GPU node (EGL rendering + CUDA), throwaway outputs in $W:
+# EGL device diagnosis -> 6 demos (EGL) -> dataset validation -> 200 ACT steps -> 3-episode eval with video.
+# The tiny model is expected to fail the task; this only checks that every stage runs.
+#   qsub pbs/smoke.pbs        log: logs/pbs/<jobid>.log
+cd "$PBS_O_WORKDIR"
+set -o pipefail
+mkdir -p logs/pbs
+JOB="${PBS_JOBID%%.*}"
+W="/scratch/e1583535/tmp/so101lm_smoke_$JOB"
+export PYTHONFAULTHANDLER=1
+{
+set -e
+echo "==== host $(hostname) $(nvidia-smi --query-gpu=name --format=csv,noheader | head -1) $(date)"
+echo "==== 1/5 EGL devices"
+bash scripts/env.sh python tests/egl_devices.py
+echo "==== 2/5 generate 6 demos"
+bash scripts/env.sh python -m so101_libero.cli.generate --tasks cylinder_to_tray --num-demos 6 --workers 6 \
+    --repo-id local/smoke_$JOB --root "$W/data" 2>&1 | grep -v -e "^Svt" -e "^SVT" -e "moov atom"
+echo "==== 3/5 validate"
+bash scripts/env.sh python -m so101_libero.cli.validate_dataset --repo-id local/smoke_$JOB --root "$W/data" \
+    --min-episodes 6 --replay-episodes 3 --out "$W/check"
+echo "==== 4/5 train 200 ACT steps"
+STEPS=200 SAVE_FREQ=200 LOG_FREQ=50 NUM_WORKERS=8 bash scripts/train.sh local/smoke_$JOB "$W/act" \
+    --dataset.root="$W/data" 2>&1 | grep -v "Errno 16"
+echo "==== 5/5 eval 3 episodes (OSMesa rendering + CUDA policy; EGL next to CUDA aborts on some nodes)"
+SO101_RENDER=osmesa bash scripts/env.sh python -m so101_libero.cli.evaluate --policy "$W/act/checkpoints/last/pretrained_model" \
+    --tasks cylinder_to_tray --episodes 3 --videos 1 --max-steps 120 --out "$W/eval"
+echo "==== SMOKE TEST PASSED ($W)"
+} > "logs/pbs/$JOB.log" 2>&1

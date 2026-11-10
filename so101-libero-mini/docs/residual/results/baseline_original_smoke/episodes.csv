@@ -1,0 +1,6 @@
+task_id,index,seed,success,steps,outcome,lifted,max_lift_cm,other_objects_lifted,mean_policy_ms,video
+cube_flip,0,11400000,True,247,success,True,8.06,[],7.84,videos/cube_flip_ep000_success.mp4
+cube_flip,1,11400001,True,265,success,True,7.94,[],7.43,
+cube_flip,2,11400002,True,252,success,True,7.99,[],6.85,
+cube_flip,3,11400003,True,248,success,True,7.71,[],6.32,
+cube_flip,4,11400004,True,252,success,True,7.74,[],6.83,

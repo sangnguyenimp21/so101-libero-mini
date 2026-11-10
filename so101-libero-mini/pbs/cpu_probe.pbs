@@ -1,0 +1,11 @@
+#!/bin/bash
+#PBS -P CFP05-CF-002
+#PBS -j oe
+#PBS -k oed
+#PBS -N so101lm-cpuprobe
+#PBS -q interactive
+#PBS -l select=1:ncpus=16:mem=32gb
+#PBS -l walltime=00:05:00
+cd "$PBS_O_WORKDIR"; mkdir -p logs/pbs
+{ echo "host $(hostname) nproc $(nproc) gpu: $(ls /dev/nvidia0 2>/dev/null)"; date
+  bash scripts/env.sh python -m so101_libero.cli.check_env --out outputs/check_env_cpu_job 2>&1 | tail -12; } > "logs/pbs/${PBS_JOBID%%.*}.log" 2>&1

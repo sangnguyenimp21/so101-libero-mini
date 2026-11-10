@@ -1,0 +1,13 @@
+#!/bin/bash
+#PBS -N ppo_action_audit
+#PBS -P personal-e1638612
+#PBS -l select=1:ncpus=8:mpiprocs=1:ompthreads=8:ngpus=1
+#PBS -l walltime=04:00:00
+#PBS -j oe
+#PBS -o /scratch/e1638612/so101-libero-mini/docs/residual/results/ppo_action_audit.log
+set -euo pipefail
+cd /scratch/e1638612/so101-libero-mini
+source /scratch/e1638612/miniforge3/bin/activate
+conda activate so101lm
+export MUJOCO_GL=egl
+python -u scripts/residual/check_ppo_actions.py
